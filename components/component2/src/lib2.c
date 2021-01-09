@@ -1,5 +1,4 @@
 
-#include "lib1.h"
 #include "lib2.h"
 #include "lib2_private.h"
 #include "stdio.h"

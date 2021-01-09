@@ -1,0 +1,8 @@
+
+menu "libmaix configuration"
+    config LIBMAIX_ENABLED
+        bool "Enable libmaix, a embeded AI lib"
+        default y
+        help
+            Select this option to enable libmaix and show the submenu.
+endmenu

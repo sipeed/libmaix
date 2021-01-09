@@ -13,11 +13,7 @@ list(APPEND ADD_SRCS  "src/main.c"
 ###############################################
 
 ###### Add required/dependent components ######
-if(CONFIG_COMPONENT2_ENABLED)
-    list(APPEND ADD_REQUIREMENTS component1 component2)
-else()
-    list(APPEND ADD_REQUIREMENTS component1)
-endif()
+list(APPEND ADD_REQUIREMENTS libmaix)
 ###############################################
 
 ############ Add static libs ##################

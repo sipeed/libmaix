@@ -1,6 +1,17 @@
 libmaix
 =========
 
+[中文 README](README_ZH.md)
+
+-----
+
+A library for embeded AI model inference with hardware acceleration，let's build a better AIOT together~
+
+Now support platform:
+
+* V831
+
+
 ## Build
 
 

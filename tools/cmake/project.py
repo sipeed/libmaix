@@ -19,17 +19,18 @@ try:
 except Exception:
     sdk_path = os.path.abspath("../../")
 project_path = sys.path[0]
-project_name = ""
 project_cmake_path = project_path+"/CMakeLists.txt"
 project_cmake_content = ""
 with open(project_cmake_path) as f:
     project_cmake_content = f.read()
-match = re.findall(r"{}(.*){}".format(r"project\(", r"\)"), project_cmake_content, re.MULTILINE|re.DOTALL)
+match = re.findall(r"set\(PROJECT_NAME (.*)\)", project_cmake_content)
 if len(match) != 0:
     project_name = match[0]
-    print(project_name)
+    if("project_dir_name" in project_name):
+        project_name = os.path.basename(project_path)
+    print("-- project name: {}".format(project_name))
 if project_name == "":
-    print("[ERROR] Can not find project name in {}".format(project_cmake_path))
+    print("[ERROR] Can not find project name in {}, not set(PROJECT_NAME {})".format(project_cmake_path, "${project_name}"))
     exit(1)
 
 
@@ -240,7 +241,7 @@ elif project_args.cmd == "upload":
     if user_passwd:
         cmd = "sshpass -p {} scp -r dist/* {}".format(user_passwd, target)
     else:
-        cmd = "scp -r dist/* {}".format(user_passwd, target)
+        cmd = "scp -r dist/* {}".format(target)
     print("copy cmd:", cmd)
     p =subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     output, err = p.communicate("")

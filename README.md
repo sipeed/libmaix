@@ -20,7 +20,7 @@ Current only test pass on Ubuntu18.04 and Ubuntu20.04
 * Install dependence
 
 ```
-apt install build-essentioal cmake python3 sshpass
+apt install build-essential cmake python3 sshpass
 ```
 
 * Check `cmake` version, **should >= `v3.9`**
@@ -101,6 +101,10 @@ You can also config target info in the menuconfig, and upload by:
 ```
 python3 project.py upload
 ```
+> This uses `sshpass` + `scp` for transmission,
+> But `sshpass` will not let the user enter the password when it encounters the `ssh key` for identification, but will directly exit without reporting an error.
+> You can execute `sudo sh -c "echo StrictHostKeyChecking no >>/etc/ssh/ssh_config"` on the computer to close the check,
+> Or if you don’t fill in the password in `menuconfig`, you won’t use `sshpass`, or you can manually copy it once with `scp`
 
 Or you can just assign target info in command arg:
 ```

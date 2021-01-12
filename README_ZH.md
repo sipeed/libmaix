@@ -17,7 +17,7 @@ libmaix
 * 安装依赖
 
 ```
-apt install build-essentioal cmake python3 sshpass
+apt install build-essential cmake python3 sshpass
 ```
 
 * 检查 `cmake` 版本， **应该 >= `v3.9`**
@@ -98,6 +98,11 @@ python3 project.py build
 ```
 python3 project.py upload
 ```
+> 这使用了 `sshpass` + `scp` 进行传输，
+> 但是 `sshpass` 在遇到 `ssh key` 为识别时不会让用户输入密码，而是直接不报错退出，
+> 可以在电脑执行`sudo sh -c "echo StrictHostKeyChecking no >>/etc/ssh/ssh_config"` 来关闭检查，
+> 或者`menuconfig`中不填密码，就不会使用`sshpass`了，或者手动使用`scp`拷贝一次就好了
+
 
 或者直接传参数:
 ```

@@ -4,12 +4,46 @@ mainmenu "C/CPP CMake project framework Kconfig configuration"
 menu "Toolchain configuration"
 	config TOOLCHAIN_PATH
 		string "toolchain path"
-		default ""
+		default "/opt/toolchain-sunxi-musl/toolchain/bin"
 	
 	config TOOLCHAIN_PREFIX
 		string "toolchain prefix"
-		default ""
+		default "arm-openwrt-linux-muslgnueabi-"
 endmenu
+
+menu "Target chip configuration"
+	choice ARCH
+		prompt "Chip architecture"
+		help
+			"select compile platform architecture"
+
+		config ARCH_V831
+			bool "compile for arch V831"
+	endchoice
+	menu "upload dist configuration, only need if you use python3 project.py upload command"
+		config TARGET_IP
+			string "target's ip address"
+			default "192.168.0.123"
+			help
+				"only need if you use python3 project.py upload command"
+		config TARGET_USER
+			string "target's username"
+			default "root"
+			help
+				"only need if you use python3 project.py upload command"
+		config TARGET_DIST_DIR
+			string "which directory the dist files copy to"
+			default "/root/maix_dist"
+			help
+				"only need if you use python3 project.py upload command"
+		config TARGET_USER_PASSWD
+			string "target's user password"
+			default ""
+			help
+				"only need if you use python3 project.py upload command"
+	endmenu
+endmenu
+
 
 menu "Components configuration"
 	osource "${SDK_PATH}/components/*/Kconfig"

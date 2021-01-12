@@ -52,6 +52,7 @@ Mkfile.old
 dkms.conf
 
 build
+dist
 .vscode
 .config
 .config.old

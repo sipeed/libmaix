@@ -24,7 +24,7 @@ typedef enum
 
 extern char* libmaix_nn_err_strs[];
 
-inline char* libmaix_nn_get_err_msg(libmaix_nn_err_t err)
+static inline char* libmaix_nn_get_err_msg(libmaix_nn_err_t err)
 {
     return libmaix_nn_err_strs[err];
 }

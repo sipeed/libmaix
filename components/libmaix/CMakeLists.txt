@@ -1,7 +1,6 @@
 if(CONFIG_LIBMAIX_ENABLED)
     ################# Add include #################
     list(APPEND ADD_INCLUDE "include"
-                            "core/include"
         )
     # list(APPEND ADD_PRIVATE_INCLUDE "include_private")
     ###############################################
@@ -21,7 +20,23 @@ if(CONFIG_LIBMAIX_ENABLED)
     # list(APPEND ADD_STATIC_LIB "core/lib/libmaix_nn.a")
     ###############################################
 
-    list(APPEND ADD_DYNAMIC_LIB "core/lib/libmaix_nn.so")
+    ############ Add dynamic libs ##################
+    list(APPEND ADD_DYNAMIC_LIB "lib/arch/v831/libmaix_nn.so"
+                                "lib/arch/v831/libISP.so"
+                                "lib/arch/v831/libcdc_base.so"
+                                "lib/arch/v831/libion.so"
+                                "lib/arch/v831/libglog.so"
+                                "lib/arch/v831/liblog.so"
+                                "lib/arch/v831/libVE.so"
+                                "lib/arch/v831/libisp_ini.so"
+                                "lib/arch/v831/libmedia_utils.so"
+                                "lib/arch/v831/libMemAdapter.so"
+                                "lib/arch/v831/libmpp_isp.so"
+                                "lib/arch/v831/libmpp_vi.so"
+                                "lib/arch/v831/libmpp_mini.so"
+                                "lib/arch/v831/libmaix_cam.so"
+    )
+    ###############################################
 
     #### Add compile option for this component ####
     #### Just for this component, won't affect other 

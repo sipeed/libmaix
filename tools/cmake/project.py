@@ -5,7 +5,7 @@
 #
 
 
-import argparse
+import argparse, re
 import os, sys, time, re, shutil
 import subprocess
 from multiprocessing import cpu_count
@@ -56,10 +56,28 @@ project_parser.add_argument('--verbose',
                         help='for build command, execute `make VERBOSE=1` to compile',
                         action="store_true",
                         default=False)
-cmd_help ='''project command'''
+project_parser.add_argument('--target',
+                        help='remote target for upload by scp, e.g. root@192.168.0.123:/root/',
+                        default=None)
+project_parser.add_argument('--passwd',
+                        help='remote target password for upload by scp',
+                        default=None)
+cmd_help ='''
+project command:
+
+config:     config toolchain path
+clean_conf: clean toolchain path config
+menuconfig: open menuconfig pannel, a visual config pannel
+build:      start compile project, temp files in `build` dir, dist files in `dist` dir
+rebuild:    update cmakefiles and build, if new file added, shoud use this command
+clean:      clean build files, won't clean configuration
+distclean:  clean all build files and configuration except configuration configed by config conmand
+flash:      burn firmware to board's flash
+upload:     upload files to remote target by scp
+'''
 project_parser.add_argument("cmd",
                     help=cmd_help,
-                    choices=["config", "build", "rebuild", "menuconfig", "clean", "distclean", "clean_conf", "flash"]
+                    choices=["config", "build", "rebuild", "menuconfig", "clean", "distclean", "clean_conf", "flash", "upload"]
                     )
 
 project_args = project_parser.parse_args()
@@ -153,6 +171,8 @@ elif project_args.cmd == "distclean":
             print(output.decode())
         os.chdir("..")
         shutil.rmtree("build")
+    if os.path.exists("dist"):
+        shutil.rmtree("dist")
     print("clean complete")
 # menuconfig
 elif project_args.cmd == "menuconfig":
@@ -191,6 +211,59 @@ elif project_args.cmd == "clean_conf":
     with open(flash_file_path) as f:
         exec(f.read())
     print("clean complete")
+elif project_args.cmd == "upload":
+    user_passwd = None
+    if project_args.target:
+        target = project_args.target
+        if project_args.passwd:
+            user_passwd = project_args.passwd
+    else:
+        mk_path = "build/config/global_config.mk"
+        msg_no_config = "please config remote target ip address and user and passsword first by python3 project.py menuconfig"
+        if not os.path.exists(mk_path):
+            print(msg_no_config)
+            exit(1)
+        with open(mk_path) as f:
+            mk_content = f.read()
+        def mk_get_remote_target_info(mk_content):
+            match = re.findall(r'.*CONFIG_TARGET_IP="(.*)".*CONFIG_TARGET_USER="(.*)".*CONFIG_TARGET_DIST_DIR="(.*)".*TARGET_USER_PASSWD="(.*)".*', mk_content, re.MULTILINE|re.DOTALL)
+            if match:
+                return match[0]
+            return None
+        target = mk_get_remote_target_info(mk_content)
+        if not target:
+            print(msg_no_config)
+            exit(1)
+        user_passwd = target[3]
+        target = "{}@{}:{}".format(target[1], target[0], target[2])
+    print("upload dist to target by scp now, {}".format(target))
+    if user_passwd:
+        cmd = "sshpass -p {} scp -r dist/* {}".format(user_passwd, target)
+    else:
+        cmd = "scp -r dist/* {}".format(user_passwd, target)
+    print("copy cmd:", cmd)
+    p =subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    output, err = p.communicate("")
+    res = p.returncode
+    if res == 0:
+        print(output.decode())
+        print("scp ok")
+    else:
+        err = err.decode()
+        print(err)
+        if "No such file or directory" in err:
+            print("copy fail, target no {}, now try create and copy...".format(target))
+            cmd = cmd.replace("dist/*", "dist")
+            print("copy cmd:", cmd)
+            p =subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            output, err = p.communicate("")
+            res = p.returncode
+            if res == 0:
+                print(output.decode())
+                print("scp ok")
+            else:
+                print(err.decode())
+                print("scp error, please check config and password")
 else:
     print("Error: Unknown command")
     exit(1)

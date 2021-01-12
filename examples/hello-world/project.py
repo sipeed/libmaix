@@ -9,7 +9,7 @@
 
 import sys, os
 
-sdk_env_name = "MY_SDK_PATH"
+sdk_env_name = "LIBMAIX_SDK_PATH"
 
 # get SDK absolute path
 sdk_path = os.path.abspath(sys.path[0]+"/../../")

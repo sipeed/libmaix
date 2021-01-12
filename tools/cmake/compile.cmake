@@ -12,10 +12,14 @@ get_filename_component(parent_dir ${CMAKE_PARENT_LIST_FILE} DIRECTORY)
 get_filename_component(current_dir ${CMAKE_CURRENT_LIST_FILE} DIRECTORY)
 get_filename_component(parent_dir_name ${parent_dir} NAME)
 
+#  global variables
+set(g_dynamic_libs "" CACHE INTERNAL "g_dynamic_libs")
+
 # Set project dir, so just projec can include this cmake file!!!
 set(PROJECT_SOURCE_DIR ${parent_dir})
 set(PROJECT_PATH       ${PROJECT_SOURCE_DIR})
 set(PROJECT_BINARY_DIR "${parent_dir}/build")
+set(PROJECT_DIST_DIR   "${parent_dir}/dist")
 message(STATUS "SDK_PATH:${SDK_PATH}")
 message(STATUS "PROJECT_PATH:${PROJECT_SOURCE_DIR}")
 
@@ -85,8 +89,9 @@ function(register_component)
             target_link_libraries(${component_name} ${lib})
         endforeach()
     endif()
-    # Add static lib
+    # Add dynamic lib
     if(ADD_DYNAMIC_LIB)
+        set(dynamic_libs ${g_dynamic_libs})
         foreach(lib ${ADD_DYNAMIC_LIB})
             if(NOT EXISTS "${lib}")
                 prepend(lib_full "${component_dir}/" ${lib})
@@ -95,10 +100,12 @@ function(register_component)
                 endif()
                 set(lib ${lib_full})
             endif()
+            list(APPEND dynamic_libs ${lib})
             get_filename_component(lib_dir ${lib} DIRECTORY)
             get_filename_component(lib_name ${lib} NAME)
             target_link_libraries(${component_name} -L${lib_dir} ${lib_name})
         endforeach()
+        set(g_dynamic_libs ${dynamic_libs}  CACHE INTERNAL "g_dynamic_libs")
     endif()
 endfunction()
 

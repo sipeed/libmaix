@@ -1,116 +1,159 @@
-C CPP Project Framework (Template)
-===================
+libmaix
+=========
 
-[English](./README.md)
-
-一个足够 **简单易用** 并且 **可配置的**用于构建 `C/C++` 的模板工程
-> 使用 `CMake` 构建，并且支持带`GUI`配置界面的 `Kconfig`
-
-基于此工程，可以快速搭建你的项目构建系统，减少许多不必要的麻烦～
-
-希望能帮到你，如果帮到了请右上角给颗小星星哦  ～～ 如果有啥不足欢迎提 [issue](https://github.com/Neutree/c_cpp_project_framework/issues/new)。  `(´ε｀ ʃƪ)♡`
-
-本项目的目标人群：
-
-* 正准备写 `SDK` 并且需要自己写构建系统的开发者
-* 正准备开始编写一个需要写构建系统的开发者
-* 对`CMake`不太了解，但想学习 `CMake` 的开发者
-* 想重构代码工程构建系统的，比如因为之前写的构建系统太杂乱
-* 想给构建系统中加一个十分好用的配置系统，可以按需求快速增删代码模块的，而且最好带界面配置的 开发者
-* 想让项目可以生成多种 `IDE` 支持的工程
+## 编译构建
 
 
-![](assets/image/build.gif)
+目前仅在 Ubuntu18.04 和 Ubuntu20.04 测试通过
 
-
-## 快速上手
+* 安装依赖
 
 ```
-cd examples/demo1
-# python project.py --toolchain /opt/toolchain/bin --toolchain-prefix mips-elf- config
-mkdir build && cd build
-cmake ..
-make menuconfig
-make -j10
-./build/demo1
-make clean
-rm -rf ./*
+apt install build-essentioal cmake python3 sshpass
 ```
 
-or
+* 检查 `cmake` 版本， **应该 >= `v3.9`**
+
+执行命令：
 
 ```
-cd examples/demo1
-# python project.py --toolchain /opt/toolchain/bin --toolchain-prefix mips-elf- config
-python project.py menuconfig
-python project.py build
-./build/demo1
-python project.py clean
-python project.py distclean
-# python project.py clean_conf
+cmake --version
 ```
 
-* 切换工程目录
-* 设置工具链路径以及前缀（如果使用`gcc`不需要设置）
-* 建立一个临时目录并且切换当前路径到这个临时目录（`build`）
-* 使用命令 `cmake ..` 来生成 `Makefile`, 这里 `..` 表示上层目录，即项目的目录
-* 使用命令 `make menuconfig` 来通过终端图形界面配置工程, 这会在 `build/config` 目录生成几个配置文件（`global_config.*`), 我们可以直接在组件(`component`)的`CMakelists.txt` 文件中直接使用（详细看后面的说明）， 或者在 `C/CPP`源文件中通过语句 `#include "global_config.h"` 包含配置头文件来使用
-* 使用命令 `make` 来执行编译链接过程, 或者并行编译： [make -jN](http://www.gnu.org/software/make/manual/make.html#Parallel)， 以及通过 `make VERBOSE=1` 命令来打印编译时的调试信息
+`cmake` 的版本至少需要是 `v3.9`, 否则请从 [cmake 官网](https://cmake.org/download/) 下载安装包安装
 
-可以点击 `use this template` 按钮来使用这个模板创建一个你自己的 `github` 工程
+* 下载并设置工具链（toolchain）
 
-![](assets/image/use_template.png)
+先下载工具链: [toolchain-sunxi-musl-pack-2021-01-09.tar.xz]()
 
+解压到 `/opt/` 目录
 
-## 目录结构
+```shell
+tar -Jxvf toolchain-sunxi-musl-pack-2021-01-09.tar.xz -C /opt
+```
 
-| 目录/文件       | 功能 |
-| -------------- | -------- |
-| 根目录          | 本项目的根目录，也是 `SDK` 项目的 `SDK` 目录|
-| assets         | 存放多媒体资源的文件夹，比如图片等，如果不需要可以删除 |
-| components     | 组件(component)都放在这里 |
-| examples       | 工程目录，或者例程目录；在 `SDK` 项目中这个目录是可以和 `SDK` 目录分开放的， 只需要设置环境变量`MY_SDK_PATH`为`SDK`目录路径即可 |
-| tools          | 工具目录比如 `cmake`、`kconfig`、`burn tool` etc. |
-| Kconfig        | `Kconfig` 的最顶层配置 |
+然后通过 `ls /opt` 命令，在 `/opt` 目录下看到 `toolchain-sunxi-musl` 文件夹
 
-### 1) 组件（component）
+* 获取 `libmaix` 源码
 
-所有库均作为组件(component)被放在`components`目录下或者工程目录下，每个组件用一个目录，这个目录就是这个组件的名字， 为了使工程看起来更简洁，不对组件进行嵌套，所有组件都是一个层级，组件之间的关系依靠依赖关系（requirements）来维持
+```
+git clone https://github.com/sipeed/libmaix --recursive
+```
+注意这里用了`--recursive`参数， 因为工程中使用了子模块，子模块的好处是各个工程分开管理，比如这里用了`Kconfiglib`作为子模块，提供`menuconfig`带界面的功能配置功能
 
-所有源文件都必须在某个组件内，每个工程必须包含一个叫 `main` 的组件（即`examples/demo1/main` 目录），每个组件包含文件如下：
+**注意如果不更新子模块，将无法通过编译！！！**
 
-* `CMakeLists.txt`： 必须有，声明组件源文件以及依赖的组件，并且调用注册函数注册自己，详细可以参考`components/component1`和`components/component2`下`CMakeLists.txt`的写法
+如果克隆的时候忘记加这个参数了，也可以再使用下面这个命令来更新子模块：
+```
+git submodule update --init --recursive
+```
+另外，当远程仓库更新了，用户也需要使用以下命令来更新代码（即同时更新子模块代码）：
+```shell
+git pull --recursive
+```
+或者：
+```
+git pull
+git submodule update --init --recursive
+```
 
-* `Kconfig`： 可选，包含了本组件的配置选项， 在本组件或者其它依赖了本组件的组件的`CMakeLists.txt`中都可以在加一个`CONFIG_`前缀后使用这些配置项，比如在`components/component2`中，`Kconfig`中有`COMPONENT2_ENABLED` 选项，我们在它的`CMakeLists.txt`中就使用了这个变量`if(CONFIG_COMPONENT2_ENABLED)`来判断如果用户配置不用这个组件就不注册这个组件
+* 设置工程
 
-### 2) 工程目录
+```
+cd examples/hello-world
+python3 project.py menuconfig
+```
 
-工程目录在`examples`目录下，当然，这个目录的名字是可以随意根据实际需求修改的，下面可以包含多个实际的工程目录，需要编译那个工程时切换到对应的目录就可以编译。上面也说了，每个工程目录下必须有一个 `main` 组件， 当然也可以放很多自定义的组件。 可以参考`examples/demo1`工程目录。
+选择需要的模块和配置， 以及也可以设置目标开发板（系统）的 `IP` 和 用户相关信息，这会在上传可执行文件时用到
 
-工程目录下文件：
+![menuconfig](assets/image/menuconfig_1.jpg)
+![menuconfig](assets/image/menuconfig_2.jpg)
 
-* `CMakeLists.txt`： 工程属性文件，必须先包含`include(${SDK_PATH}/tools/cmake/compile.cmake)`，然后用`project`函数声明工程名称，比如`project(demo1)`，当然还可以编写其它的条件或者变量等，使用`CMake`语法， 参考`examples/demo1/CMakeLists.txt`的写法
+第一次编译，可以只使用默认配置即可
 
-* `config_defaults.mk`： 工程默认配置文件，执行`cmake`构建时会从这里加载默认配置，配置的格式是`Makefile`的格式，可以先使用终端界面配置(`make menuconfig`)生成配置文件复制过来，生成的配置文件在`build/config/global_config.mk`。
-> 注意：每次修改`config_defaults.mk` 后需要删除`build`目录下的文件(或者只删除`build/config/global_config.mk`文件)重新生成，因为当前构建系统会优先使用`build`目录下已经存在的配置文件
-
-
-
-
-## 开源许可
-
-**MIT**: 详情看 [LICENSE](./LICENSE) 文件
-
-
-## 使用了此框架的仓库
-
-* [MaixPy](https://github.com/sipeed/MaixPy/): 让针对`AIOT`应用的芯片`K210`用上`Micropython`
-* [MF1_SDK](https://github.com/sipeed/MF1_SDK): `MF1` AI 模组（开发板）的 SDK
+然后按`q` 按键退出配置， 选择 `yes` 来保存配置
 
 
-## 相关参考项目
+* 构建 `hello-world` 例程
 
-* [ESP_IDF](https://github.com/espressif/esp-idf)： `ESP32` 的 `SDK`， 写得挺不错
-* [Kconfiglib](https://github.com/ulfalizer/Kconfiglib)： `Kconfig` `Python` 实现
-* [RT-Thread](https://github.com/RT-Thread/rt-thread)：不是用的 `CMake`, 但是也是使用了组件的概念
+```
+python3 project.py build
+```
+
+然后可以在 `dist` 目录看到 `hello-world` 可执行文件
+
+* 上传可执行文件到目标开发板（系统）
+
+你可以手动拷贝整个`dist`文件夹到目标系统文件系统， 比如使用 `scp`
+
+你也可以在 menuconfig 中配置好目标系统信息， 然后执行命令上传:
+```
+python3 project.py upload
+```
+
+或者直接传参数:
+```
+python3 project.py upload --target root@192.168.0.123:/root/maix_dist --passwd 123
+```
+
+* 清除构建中间文件
+
+Clean temp build files:
+```
+python3 project.py clean
+```
+
+清除所有中间文件， 以及使用`python3 project.py menuconfig` 选择的配置：
+```
+python3 project.py distclean
+```
+
+* 执行可执行文件
+
+拷贝`dist` 目录下所有文件， 包括一些库， 比如 `*.a` 或者 `*.so`, 然后执行 `./start_app.sh`
+
+
+
+## 创建自己的工程
+
+有两种方法：
+
+### 方法 1. 在 libmaix SDK 目录下直接创建工程
+
+* 直接拷贝 `examples/hello-world` 中的内容到 `examples/my-project`
+
+* 或者新创建一个文件夹，比如 拷贝 `examples/hello-world` 的内容到 `projects/my-project`
+
+
+### 方法 2. 在文件系统任何地方放工程
+
+* 克隆 `libmaix` 到本地，比如 `/home/sipeed/libmaix`
+
+* 然后在终端导出变量 `export LIBMAIX_SDK_PATH=/home/neucrack/my_SDK`， 可以把语句放到  `~/.bashrc` or `~/.zshrc` 文件，这样就不用每次打开终端都执行一遍了
+
+* 然后在任意文件夹下创建一个目录`my-project`, 拷贝 `example/hello-world` 的内容到 `/home/sipeed/my_projects/my-project`
+
+* 最后到 `/home/sipeed/my_projects/my-project` 目录 编译：`python3 project.py build`, 可以先执行一遍 `python3 project.py distclean` 来清除之前的构建中间文件
+
+
+### 添加源码
+
+* 对于简单工程来说， 只需要在 `main/src` 和 `main/include` 添加代码.
+* 你也可以添加自己的组件，拷贝 `main` 文件夹 到一个新的目录比如 `examples/my-project/mylib`, 然后编辑 `examples/my-project/mylib/CMakeLists.txt` 来添加源文件, 同时需要编辑 `examples/my-project/main/CMakeLlist` 文件，修改：
+```
+list(APPEND ADD_REQUIREMENTS libmaix)
+```
+变成
+```
+list(APPEND ADD_REQUIREMENTS libmaix mylib)
+```
+
+更多关于工程编译框架参考 [c_cpp_project_framework](https://github.com/Neutree/c_cpp_project_framework) 中的说明
+
+
+
+## 开源协议
+
+遵循 **MIT** 开源协议， 详情请看 [LICENSE](./LICENSE)
+
 

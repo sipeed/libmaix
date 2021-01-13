@@ -19,7 +19,15 @@ void camera_test(struct libmaix_disp_t* disp)
     int ret = 0;
     struct libmaix_cam_t* cam = NULL;
     libmaix_image_t* img;
+    struct timeval start, end;
+    int64_t interval_s;
     uint32_t res_w = 240, res_h = 240;
+
+#define CALC_TIME_START() do{gettimeofday( &start, NULL );}while(0)
+#define CALC_TIME_END(name)   do{gettimeofday( &end, NULL ); \
+                            interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll; \
+                            printf("%s use time: %lld us\n", name, interval_s + end.tv_usec - start.tv_usec);\
+        }while(0)
 
     printf("--image module init\n");
     libmaix_image_module_init();
@@ -49,6 +57,7 @@ void camera_test(struct libmaix_disp_t* disp)
     while(1)
     {
         // printf("--cam capture\n");
+        CALC_TIME_START();
         ret = cam->capture(cam, (unsigned char*)img->data);
         if(ret != 0)
         {
@@ -64,6 +73,8 @@ void camera_test(struct libmaix_disp_t* disp)
                 break;
             }
         }
+        CALC_TIME_END("capture");
+        CALC_TIME_START();
         // printf("--conver YUV to RGB\n");
         libmaix_image_err_t err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, NULL);
         if(err0 != LIBMAIX_IMAGE_ERR_NONE)
@@ -71,9 +82,12 @@ void camera_test(struct libmaix_disp_t* disp)
             printf("conver to RGB888 fail:%s\r\n", libmaix_image_get_err_msg(err0));
             continue;
         }
+        CALC_TIME_END("convert to RGB888");
+        CALC_TIME_START();
         // printf("--convert test end\n");
         disp->draw(disp, img->data, (disp->width - img->width) / 2,(disp->height - img->height) / 2, img->width, img->height, 1);
         // disp->flush(disp); // disp->draw last arg=1, means will call flush in draw functioin
+        CALC_TIME_END("display");
     }
 end:
     if(cam)

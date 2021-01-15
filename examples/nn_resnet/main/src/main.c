@@ -109,7 +109,9 @@ void nn_test(struct libmaix_disp* disp)
         .h = 224,
         .c = 3,
         .dtype = LIBMAIX_NN_DTYPE_UINT8,
-        .data = NULL
+        .data = NULL,
+        .need_quantization = true,
+        .buff_quantization = NULL
     };
     libmaix_nn_layer_t out_fmap = {
         .w = 1,
@@ -135,7 +137,14 @@ void nn_test(struct libmaix_disp* disp)
         printf("no memory!!!\n");
         goto end;
     }
+    uint8_t* quantize_buffer = (uint8_t*)malloc(input.w * input.h * input.c);
+    if(!quantize_buffer)
+    {
+        printf("no memory!!!\n");
+        goto end;
+    }
     out_fmap.data = output_buffer;
+    input.buff_quantization = quantize_buffer;
     printf("-- nn create\n");
     nn = libmaix_nn_creat();
     if(!nn)
@@ -213,7 +222,15 @@ void nn_test(struct libmaix_disp* disp)
         CALC_TIME_END("maix nn forward");
         CALC_TIME_START();
         // printf("--convert test end\n");
-        disp->draw(disp, img->data, (disp->width - img->width) / 2,(disp->height - img->height) / 2, img->width, img->height, 1);
+        libmaix_image_color_t color ={
+            .rgb888.r = 255,
+            .rgb888.g = 0,
+            .rgb888.b = 0
+        };
+        char temp_str[100];
+        snprintf(temp_str, 100, "%f, %s", max_p, labels[max_idx]);
+        rgb_img->draw_string(rgb_img, temp_str, 4, 4, 16, color, NULL);
+        disp->draw(disp, rgb_img->data, (disp->width - rgb_img->width) / 2,(disp->height - rgb_img->height) / 2, rgb_img->width, rgb_img->height, 1);
         // disp->flush(disp); // disp->draw last arg=1, means will call flush in draw functioin
         CALC_TIME_END("display");
     }

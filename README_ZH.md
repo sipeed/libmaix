@@ -32,7 +32,7 @@ cmake --version
 
 * 下载并设置工具链（toolchain）
 
-先下载工具链: [toolchain-sunxi-musl-pack-2021-01-09.tar.xz]()
+先下载工具链: [toolchain-sunxi-musl-pack-2021-01-09.tar.xz](https://api.dl.sipeed.com/shareURL/MAIX/SDK_MaixII/Toolchain) ([备用下载链接](https://github.com/sipeed/libmaix/releases/download/v0.1.0/toolchain-sunxi-musl-pack-2021-01-09.tar.xz))
 
 解压到 `/opt/` 目录
 

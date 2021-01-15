@@ -34,7 +34,7 @@ The `cmake` version should be at least `v3.9`, if not, please install latest `cm
 
 * Setup toolchain
 
-Download toolchain first: [toolchain-sunxi-musl-pack-2021-01-09.tar.xz]()
+Download toolchain first: [toolchain-sunxi-musl-pack-2021-01-09.tar.xz](https://api.dl.sipeed.com/shareURL/MAIX/SDK_MaixII/Toolchain) (or download from [github](https://github.com/sipeed/libmaix/releases/download/v0.1.0/toolchain-sunxi-musl-pack-2021-01-09.tar.xz))
 
 Unzip to `/opt/` directory
 

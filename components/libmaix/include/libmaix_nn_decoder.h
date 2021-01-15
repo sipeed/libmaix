@@ -9,7 +9,7 @@
 #ifndef __LIBMAIX_NN_DECODER_H__
 #define __LIBMAIX_NN_DECODER_H__
 
-#include "libmaix_nn_err.h"
+#include "libmaix_err.h"
 #include "libmaix_nn.h"
 
 #ifdef __cplusplus
@@ -19,16 +19,16 @@ extern "C" {
 
 typedef struct libmaix_nn_decoder
 {
-    libmaix_nn_err_t (*init)(struct libmaix_nn_decoder *obj, void* config);
-    libmaix_nn_err_t (*deinit)(struct libmaix_nn_decoder *obj);
-    libmaix_nn_err_t (*decode)(struct libmaix_nn_decoder *obj, libmaix_nn_layer_t* feature_map, void* result);
+    libmaix_err_t (*init)(struct libmaix_nn_decoder *obj, void* config);
+    libmaix_err_t (*deinit)(struct libmaix_nn_decoder *obj);
+    libmaix_err_t (*decode)(struct libmaix_nn_decoder *obj, libmaix_nn_layer_t* feature_map, void* result);
 
     void* data;
 } libmaix_nn_decoder_t;
 
-typedef libmaix_nn_err_t (*libmaic_nn_decoder_init_func_t)(struct libmaix_nn_decoder *obj, void* config);
-typedef libmaix_nn_err_t (*libmaic_nn_decoder_deinit_func_t)(struct libmaix_nn_decoder *obj);
-typedef libmaix_nn_err_t (*libmaic_nn_decoder_decode_func_t)(struct libmaix_nn_decoder *obj, libmaix_nn_layer_t* feature_map, void* result);
+typedef libmaix_err_t (*libmaic_nn_decoder_init_func_t)(struct libmaix_nn_decoder *obj, void* config);
+typedef libmaix_err_t (*libmaic_nn_decoder_deinit_func_t)(struct libmaix_nn_decoder *obj);
+typedef libmaix_err_t (*libmaic_nn_decoder_decode_func_t)(struct libmaix_nn_decoder *obj, libmaix_nn_layer_t* feature_map, void* result);
 
 
 libmaix_nn_decoder_t* libmaix_nn_decoder_creat(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func, 

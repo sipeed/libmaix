@@ -9,7 +9,7 @@
 #ifndef __LIBMAIX_IMAGEW_H__
 #define __LIBMAIX_IMAGEW_H__
 
-#include "libmaix_image_err.h"
+#include "libmaix_err.h"
 #include "stdint.h"
 #include "stdbool.h"
 
@@ -48,22 +48,44 @@ typedef enum
 
 typedef struct libmaix_image
 {
-    uint32_t               width;
-    uint32_t               height;
+    int                    width;
+    int                    height;
     libmaix_image_mode_t   mode;
     libmaix_image_layout_t layout;
     void*                  data;
     bool                   is_data_alloc;  // data need to free when call destory
-
-    libmaix_image_err_t (*convert)(struct libmaix_image* obj, libmaix_image_mode_t mode, void* buff);
-    libmaix_image_err_t (*draw_rectangle)(struct libmaix_image* obj, int x, int y, int w, int h, libmaix_image_color_t color, bool fill, int thickness);
-	libmaix_image_err_t (*draw_string)(struct libmaix_image* obj, char *str, int x, int y, int size, libmaix_image_color_t color, libmaix_image_color_t* bg);
+    /**
+     * @param [in/out] new_img: if arg is address of libmaix_image_t pointer, and value is NULL,
+     *                          new image object and data memory will automatically created;
+     *                          if arg is NULL, return LIBMAIX_ERR_PARAM;
+     *                          if arg is address of libmaix_image_t pointer, and value is address of a libmaix_image_t object,
+     *                          data memory of object will automatically created.
+     */
+    libmaix_err_t (*convert)(struct libmaix_image* obj, libmaix_image_mode_t mode, struct libmaix_image** new_img);
+    libmaix_err_t (*draw_rectangle)(struct libmaix_image* obj, int x, int y, int w, int h, libmaix_image_color_t color, bool fill, int thickness);
+	libmaix_err_t (*draw_string)(struct libmaix_image* obj, char *str, int x, int y, int size, libmaix_image_color_t color, libmaix_image_color_t* bg);
+    /**
+     * @param [in/out] new_img: if arg is address of libmaix_image_t pointer, and value is NULL,
+     *                          new image object and data memory will automatically created;
+     *                          if arg is NULL, return LIBMAIX_ERR_PARAM;
+     *                          if arg is address of libmaix_image_t pointer, and value is address of a libmaix_image_t object,
+     *                          data memory of object will automatically created.
+     */
+    libmaix_err_t (*resize)(struct libmaix_image* obj, int w, int h, struct libmaix_image** new_img);
+    /**
+     * @param [in/out] new_img: if arg is address of libmaix_image_t pointer, and value is NULL,
+     *                          new image object and data memory will automatically created;
+     *                          if arg is NULL, return LIBMAIX_ERR_PARAM;
+     *                          if arg is address of libmaix_image_t pointer, and value is address of a libmaix_image_t object,
+     *                          data memory of object will automatically created.
+     */
+    libmaix_err_t (*crop)(struct libmaix_image* obj, int x, int y, int w, int h, struct libmaix_image** new_img);
 }libmaix_image_t;
 
 
 
-libmaix_image_err_t libmaix_image_module_init();
-libmaix_image_err_t libmaix_image_module_deinit();
+libmaix_err_t libmaix_image_module_init();
+libmaix_err_t libmaix_image_module_deinit();
 /**
  * 
  * @param [in] data: data pointer, can be NULL,
@@ -73,7 +95,7 @@ libmaix_image_err_t libmaix_image_module_deinit();
  *                   if arg data is not `NULL`,
  *                   this arg indicate the data if need to automatically free in libmaix_image_destroy
  */
-libmaix_image_t* libmaix_image_creat(uint32_t w, uint32_t h, libmaix_image_mode_t mode, libmaix_image_layout_t layout, void* data, bool is_data_alloc);
+libmaix_image_t* libmaix_image_create(int w, int h, libmaix_image_mode_t mode, libmaix_image_layout_t layout, void* data, bool is_data_alloc);
 void libmaix_image_destroy(libmaix_image_t** obj);
 
 #ifdef __cplusplus

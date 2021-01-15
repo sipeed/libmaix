@@ -3,15 +3,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "libmaix_err.h"
 
-struct libmaix_cam_t
+typedef struct libmaix_cam
 {
     int width;      /* 摄像头采集图像的宽度 */
     int height;     /* 摄像头采集图像的高度 */
 
     unsigned int fram_size; /* 一帧图片占用内存大小 */
 
-    int (*strat_capture)(struct libmaix_cam_t *cam);
+    libmaix_err_t (*strat_capture)(struct libmaix_cam *cam);
 
     /**
      * @brief 获取一帧图像
@@ -22,10 +23,10 @@ struct libmaix_cam_t
      * 
      * @return 0:成功，1: 未准备好， 其他: 出错
     */
-    int (*capture)(struct libmaix_cam_t *cam, unsigned char *buf);
+    libmaix_err_t (*capture)(struct libmaix_cam *cam, unsigned char *buf);
 
     void *reserved;
-};
+}libmaix_cam_t;
 
 /**
  * @brief 创建cam对象, 目前只支持创建一个对象
@@ -35,11 +36,11 @@ struct libmaix_cam_t
  * 
  * @return 创建的对象；NULL:出错
 */
-struct libmaix_cam_t * libmaix_cam_creat(int w, int h);
+struct libmaix_cam * libmaix_cam_creat(int w, int h);
 
 /**
  * @brief 销毁cam对象
 */
-void libmaix_cam_destroy(struct libmaix_cam_t **cam);
+void libmaix_cam_destroy(struct libmaix_cam **cam);
 
 #endif /* __LIBMAIX_CAM_H */

@@ -37,6 +37,7 @@ if(CONFIG_LIBMAIX_ENABLED)
                                 "lib/arch/v831/libmaix_cam.so"
                                 "lib/arch/v831/libmaix_disp.so"
                                 "lib/arch/v831/libmaix_image.so"
+                                "lib/arch/v831/libmaix_utils.so"
     )
     ###############################################
 

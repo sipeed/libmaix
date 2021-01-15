@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "libmaix_nn_err.h"
+#include "libmaix_err.h"
 #include "libmaix_nn_decoder.h"
 
 #ifdef __cplusplus
@@ -42,12 +42,12 @@ typedef struct
 }libmaix_nn_decoder_yolo2_result_t;
 
 
-typedef void (*callback_draw_result_func_t)(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t class_id, float prob, char* label);
+typedef void (*callback_draw_result_func_t)(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t class_id, float prob, char* label, void* arg);
 
-libmaix_nn_err_t libmaix_nn_decoder_yolo2_init(struct libmaix_nn_decoder* obj, void* config);
-libmaix_nn_err_t libmaix_nn_decoder_yolo2_deinit(struct libmaix_nn_decoder* obj);
-libmaix_nn_err_t libmaix_nn_decoder_yolo2_decode(struct libmaix_nn_decoder* obj, libmaix_nn_layer_t* feature_map, void* result);
-void libmaix_nn_decoder_yolo2_draw_result(struct libmaix_nn_decoder* obj, libmaix_nn_decoder_yolo2_result_t* result, uint32_t id, char** labels, callback_draw_result_func_t callback);
+libmaix_err_t libmaix_nn_decoder_yolo2_init(struct libmaix_nn_decoder* obj, void* config);
+libmaix_err_t libmaix_nn_decoder_yolo2_deinit(struct libmaix_nn_decoder* obj);
+libmaix_err_t libmaix_nn_decoder_yolo2_decode(struct libmaix_nn_decoder* obj, libmaix_nn_layer_t* feature_map, void* result);
+void libmaix_nn_decoder_yolo2_draw_result(struct libmaix_nn_decoder* obj, libmaix_nn_decoder_yolo2_result_t* result, uint32_t id, char** labels, callback_draw_result_func_t callback, void* arg);
 
 libmaix_nn_decoder_t* libmaix_nn_decoder_yolo2_creat();
 void libmaix_nn_decoder_yolo2_destroy(libmaix_nn_decoder_t** obj);

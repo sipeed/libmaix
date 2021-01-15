@@ -9,8 +9,8 @@
 #ifndef __LIBMAIX_NN_H__
 #define __LIBMAIX_NN_H__
 
-#include "libmaix_nn_err.h"
-#include "libmaix_nn_debug.h"
+#include "libmaix_err.h"
+#include "libmaix_debug.h"
 #include "stdint.h"
 #include "stdbool.h"
 
@@ -51,9 +51,14 @@ typedef struct
     int w;
     int h;
     int c;
-    libmaix_nn_dtype_t dtype;
+    libmaix_nn_dtype_t dtype;    // for awnn model, should be int8 if not need_quantization
+                                 //                 or uint8 when need_quantization
     libmaix_nn_layout_t layout;
-    void* data;
+    bool  need_quantization;     // need quantize data, for input layer
+    void* data;                  // layer data
+    void* buff_quantization;     // buffer for quantization temporary usage,
+                                 // if need_quantization is true and this buff set, will use this buff,
+                                 // if need_quantization but this buff is NULL, will return LIBMAIX_ERR_PARAM error
 }libmaix_nn_layer_t;
 
 typedef union
@@ -76,20 +81,20 @@ typedef struct libmaix_nn
     void* config;
     libmaix_nn_opt_param_t* opt_param;
 
-    libmaix_nn_err_t (*init)(struct libmaix_nn *obj);
-    libmaix_nn_err_t (*deinit)(struct libmaix_nn *obj);
-    libmaix_nn_err_t (*load)(struct libmaix_nn *obj, const libmaix_nn_model_path_t* path, libmaix_nn_opt_param_t* opt_param);
+    libmaix_err_t (*init)(struct libmaix_nn *obj);
+    libmaix_err_t (*deinit)(struct libmaix_nn *obj);
+    libmaix_err_t (*load)(struct libmaix_nn *obj, const libmaix_nn_model_path_t* path, libmaix_nn_opt_param_t* opt_param);
     /**
      * @param [in] inputs: dtype and data may be changed by forward
      *                      for awnn, it need to quantize input to int8 if dtype is uint8,
-     *                                if dtype is int8, will do nothing, other dtype will return LIBMAIX_NN_ERR_PARAM error
+     *                                if dtype is int8, will do nothing, other dtype will return LIBMAIX_ERR_PARAM error
      * @param [out] outputs: output feature maps, outputs[i].data must NOT be NULL, dtype is LIBMAIX_NN_DTYPE_FLOAT
      */
-    libmaix_nn_err_t (*forward)(struct libmaix_nn *obj, libmaix_nn_layer_t* inputs, libmaix_nn_layer_t* outputs);
+    libmaix_err_t (*forward)(struct libmaix_nn *obj, libmaix_nn_layer_t* inputs, libmaix_nn_layer_t* outputs);
 }libmaix_nn_t;
 
-libmaix_nn_err_t libmaix_nn_module_init();
-libmaix_nn_err_t libmaix_nn_module_deinit();
+libmaix_err_t libmaix_nn_module_init();
+libmaix_err_t libmaix_nn_module_deinit();
 libmaix_nn_t* libmaix_nn_creat();
 void libmaix_nn_destroy(libmaix_nn_t** obj);
 

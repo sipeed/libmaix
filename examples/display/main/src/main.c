@@ -13,14 +13,14 @@
 #include <unistd.h>
 
 
-void draw_test(struct libmaix_disp_t* disp, void* buff, int w, int h)
+void draw_test(struct libmaix_disp* disp, void* buff, int w, int h)
 {
     int count = 5;
 
     printf("--image module init\n");
     libmaix_image_module_init();
 
-    libmaix_image_t* img = libmaix_image_creat(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, buff, false);
+    libmaix_image_t* img = libmaix_image_create(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, buff, false);
     if(!img)
     {
         printf("create yuv image fail\n");
@@ -55,7 +55,7 @@ end:
 
 int main(int argc, char* argv[])
 {
-    struct libmaix_disp_t* disp = libmaix_disp_creat();
+    struct libmaix_disp* disp = libmaix_disp_creat();
     if(disp == NULL) {
         printf("creat disp object fail\n");
         return -1;

@@ -3,8 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "libmaix_err.h"
 
-struct libmaix_disp_t
+typedef struct libmaix_disp
 {
     int width;      /* FB的宽度 */
     int height;     /* FB的高度 */
@@ -23,28 +24,28 @@ struct libmaix_disp_t
      * 
      * @return 0
       */
-    int (*draw)(struct libmaix_disp_t *disp, unsigned char *buf, int x, int y, int w, int h, int flush);
+    libmaix_err_t (*draw)(struct libmaix_disp *disp, unsigned char *buf, int x, int y, int w, int h, int flush);
 
     /**
      * @brief 更新绘制的数据到屏幕
      * 
      * @param [in] disp: disp对象
      */ 
-    int (*flush)(struct libmaix_disp_t *disp);
+    libmaix_err_t (*flush)(struct libmaix_disp *disp);
 
     void *reserved;
-};
+}libmaix_disp_t;
 
 /**
  * @brief 创建disp对象
  * 
  * @return 创建的对象；NULL:出错
 */
-struct libmaix_disp_t * libmaix_disp_creat(void);
+struct libmaix_disp * libmaix_disp_creat(void);
 
 /**
  * @brief 销毁disp对象
 */
-void libmaix_disp_destroy(struct libmaix_disp_t** disp);
+void libmaix_disp_destroy(struct libmaix_disp** disp);
 
 #endif /* __LIBMAIX_DISP_H */

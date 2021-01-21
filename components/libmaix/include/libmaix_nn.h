@@ -79,7 +79,6 @@ typedef union
 typedef struct libmaix_nn
 {
     void* config;
-    libmaix_nn_opt_param_t* opt_param;
 
     libmaix_err_t (*init)(struct libmaix_nn *obj);
     libmaix_err_t (*deinit)(struct libmaix_nn *obj);

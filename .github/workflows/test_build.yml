@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7]
+        python-version: [2.7, 3.6, 3.7, 3.8, 3.9]
         cmake-version: [3.12.4]
 
     steps:
@@ -26,8 +26,7 @@ jobs:
         python -m pip install --upgrade pip
     - name: Test build
       run: |
-        cd examples/demo1
+        cd examples/hello-world
         python project.py build
-        ./build/demo1
         python project.py clean
         python project.py distclean

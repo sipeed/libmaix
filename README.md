@@ -20,7 +20,7 @@ Current only test pass on Ubuntu18.04 and Ubuntu20.04
 * Install dependence
 
 ```
-apt install build-essential cmake python3 sshpass
+apt install build-essential cmake python3 sshpass git
 ```
 
 * Check `cmake` version, **should >= `v3.9`**
@@ -71,6 +71,7 @@ git submodule update --init --recursive
 * Config project
 
 ```
+cd libmaix
 cd examples/hello-world
 python3 project.py menuconfig
 ```

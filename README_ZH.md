@@ -17,7 +17,7 @@ libmaix
 * 安装依赖
 
 ```
-apt install build-essential cmake python3 sshpass
+apt install build-essential cmake python3 sshpass git
 ```
 
 * 检查 `cmake` 版本， **应该 >= `v3.9`**
@@ -68,6 +68,7 @@ git submodule update --init --recursive
 * 设置工程
 
 ```
+cd libmaix
 cd examples/hello-world
 python3 project.py menuconfig
 ```

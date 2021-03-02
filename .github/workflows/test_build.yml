@@ -26,6 +26,8 @@ jobs:
         python -m pip install --upgrade pip
     - name: Test build
       run: |
+        wget https://github.com/sipeed/libmaix/releases/download/v0.1.0/toolchain-sunxi-musl-pack-2021-01-09.tar.xz
+        tar -Jxvf toolchain-sunxi-musl-pack-2021-01-09.tar.xz -C /opt
         cd examples/hello-world
         python project.py build
         python project.py clean

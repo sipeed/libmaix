@@ -47,6 +47,7 @@ void on_draw_box(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, ui
     struct libmaix_disp* disp = data ? data->disp : NULL;
     libmaix_image_t* img = data ? data->img : NULL;
     char* default_label = "unknown";
+    char temp[50];
     // libmaix_err_t err;
     static uint32_t last_id = 0xffffffff;
     if(id != last_id)
@@ -69,14 +70,15 @@ void on_draw_box(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, ui
         .rgb888.b = 255
     };
     libmaix_image_color_t color2 = {
-        .rgb888.r = 0,
-        .rgb888.g = 255,
+        .rgb888.r = 255,
+        .rgb888.g = 0,
         .rgb888.b = 0
     };
     if(disp && img)
     {
+        snprintf(temp, sizeof(temp), "%s:%.2f", label, prob);
         img->draw_rectangle(img, x, y, w, h, color, false, 4);
-        img->draw_string(img, label, x+4, y+4, 16, color2, NULL);
+        img->draw_string(img, temp, x+4, y+4, 16, color2, NULL);
     }
     last_id = id;
 }
@@ -93,6 +95,7 @@ void nn_test(struct libmaix_disp* disp)
 
     libmaix_nn_t* nn = NULL;
     libmaix_err_t err = LIBMAIX_ERR_NONE;
+    libmaix_err_t err0 = LIBMAIX_ERR_NONE;
 
     uint32_t res_w = 224, res_h = 224;
     char* labels[] = {"aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"};
@@ -194,11 +197,10 @@ void nn_test(struct libmaix_disp* disp)
     libmaix_nn_opt_param_t opt_param = {
         .awnn.input_names             = inputs_names,
         .awnn.output_names            = outputs_names,
-        .awnn.first_layer_conv_no_pad = 0, // 0/1
         .awnn.input_num               = 1,              // len(input_names)
         .awnn.output_num              = 1,              // len(output_names)
         .awnn.mean                    = {127.5, 127.5, 127.5},
-        .awnn.norm                    = {0.00784313725490196, 0.00784313725490196, 0.00784313725490196},
+        .awnn.norm                    = {0.0078125, 0.0078125, 0.0078125},
     };
     float* output_buffer = (float*)malloc(out_fmap.w * out_fmap.h * out_fmap.c * sizeof(float));
     if(!output_buffer)
@@ -286,8 +288,8 @@ void nn_test(struct libmaix_disp* disp)
         }
         CALC_TIME_END("capture");
         CALC_TIME_START();
-        // printf("--conver YUV to RGB\n");
-        libmaix_err_t err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
+        printf("--conver YUV to RGB\n");
+        err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
         if(err0 != LIBMAIX_ERR_NONE)
         {
             printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
@@ -296,7 +298,7 @@ void nn_test(struct libmaix_disp* disp)
         CALC_TIME_END("convert to RGB888");
 #endif
         CALC_TIME_START();
-        // printf("--maix nn forward\n");
+        printf("--maix nn forward\n");
         input.data = rgb_img->data;
         err = nn->forward(nn, &input, &out_fmap);
         if(err != LIBMAIX_ERR_NONE)

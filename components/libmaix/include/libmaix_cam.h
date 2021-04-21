@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include "libmaix_err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct libmaix_cam
 {
     int width;      /* 摄像头采集图像的宽度 */
@@ -42,5 +46,10 @@ struct libmaix_cam * libmaix_cam_creat(int w, int h);
  * @brief 销毁cam对象
 */
 void libmaix_cam_destroy(struct libmaix_cam **cam);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __LIBMAIX_CAM_H */

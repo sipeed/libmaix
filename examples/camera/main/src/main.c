@@ -5,25 +5,37 @@
 #include "global_config.h"
 #include "global_build_info_time.h"
 #include "global_build_info_version.h"
-
 #include "libmaix_cam.h"
 #include "libmaix_disp.h"
 #include "libmaix_image.h"
 #include "main.h"
 #include <sys/time.h>
 #include <unistd.h>
+#include "yuv2rgb.h"
+#include "string.h"
 
 
-#define TEST_RESIZE_IMAGE 1
+#define TEST_RESIZE_IMAGE 0
+#define SOFT_YUV2RGB      0
+
+#if SOFT_YUV2RGB
+    #include "yuv2rgb.h"
+    #include "string.h"
+#else
+    #include "libmaix_nn.h"
+#endif
+
 
 void camera_test(struct libmaix_disp* disp)
 {
     libmaix_err_t err = LIBMAIX_ERR_NONE;
+    libmaix_err_t err0 = LIBMAIX_ERR_NONE;
     struct libmaix_cam* cam     = NULL;
     libmaix_image_t* img        = NULL;
     struct timeval start, end;
     int64_t interval_s;
     uint32_t res_w = 240, res_h = 240;
+
 #if TEST_RESIZE_IMAGE
     libmaix_image_t* resize_img = NULL;
 #endif
@@ -33,6 +45,10 @@ void camera_test(struct libmaix_disp* disp)
                             interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll; \
                             printf("%s use time: %lld us\n", name, interval_s + end.tv_usec - start.tv_usec);\
         }while(0)
+#if !SOFT_YUV2RGB
+    printf("--nn module init\n");
+    libmaix_nn_module_init();
+#endif
 
     printf("--image module init\n");
     libmaix_image_module_init();
@@ -42,7 +58,7 @@ void camera_test(struct libmaix_disp* disp)
     if(!img)
     {
         printf("create yuv image fail\n");
-        goto end;
+        // goto end;
     }
     libmaix_image_t* rgb_img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     if(!rgb_img)
@@ -50,6 +66,14 @@ void camera_test(struct libmaix_disp* disp)
         printf("create rgb image fail\n");
         goto end;
     }
+
+    err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
+    if(err0 != LIBMAIX_ERR_NONE)
+    {
+        printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
+        return ;
+    }
+
     printf("--create cam\n");
     cam = libmaix_cam_creat(res_w, res_h);
     if(!cam)
@@ -96,12 +120,18 @@ void camera_test(struct libmaix_disp* disp)
         CALC_TIME_END("capture");
         CALC_TIME_START();
         // printf("--conver YUV to RGB\n");
-        libmaix_err_t err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
+#if SOFT_YUV2RGB
+        yuv420sp_to_yuv420p((unsigned char*)img->data , (unsigned char*) rgb_img->data, img->width, img->height, true);
+        memcpy(img->data, rgb_img->data, img->width * img->height * 3 / 2);
+        yuv420p_to_rgb24((unsigned char*)img->data, (unsigned char*) rgb_img->data, img->width, img->height);
+#else
+        err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
         if(err0 != LIBMAIX_ERR_NONE)
         {
             printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
             continue;
         }
+#endif
         CALC_TIME_END("convert to RGB888");
         CALC_TIME_START();
         // printf("--convert test end\n");
@@ -116,17 +146,19 @@ void camera_test(struct libmaix_disp* disp)
         CALC_TIME_START();
         disp->draw(disp, resize_img->data, (disp->width - resize_img->width) / 2,(disp->height - resize_img->height) / 2, resize_img->width, resize_img->height, 1);
 #else
-        disp->draw(disp, rgb_img->data, (disp->width - rgb_img->width) / 2,(disp->height - rgb_img->height) / 2, rgb_img->width, rgb_img->height, 1);
+        disp->draw(disp, (unsigned char*)rgb_img->data, (disp->width - rgb_img->width) / 2,(disp->height - rgb_img->height) / 2, rgb_img->width, rgb_img->height, 1);
 #endif
         // disp->flush(disp); // disp->draw last arg=1, means will call flush in draw functioin
         CALC_TIME_END("display");
     }
 end:
+#if TEST_RESIZE_IMAGE
     if(resize_img)
     {
         printf("--image destory\n");
         libmaix_image_destroy(&resize_img);
     }
+#endif
     if(cam)
     {
         printf("--cam destory\n");
@@ -144,6 +176,9 @@ end:
     }
     printf("--image module deinit\n");
     libmaix_image_module_deinit();
+#if !SOFT_YUV2RGB
+    libmaix_nn_module_deinit();
+#endif
 }
 
 int main(int argc, char* argv[])

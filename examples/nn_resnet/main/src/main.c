@@ -125,7 +125,6 @@ void nn_test(struct libmaix_disp* disp)
     libmaix_nn_opt_param_t opt_param = {
         .awnn.input_names             = inputs_names,
         .awnn.output_names            = outputs_names,
-        .awnn.first_layer_conv_no_pad = 0, // 0/1
         .awnn.input_num               = 1,              // len(input_names)
         .awnn.output_num              = 1,              // len(output_names)
         .awnn.mean                    = {127.5, 127.5, 127.5},

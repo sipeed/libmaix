@@ -67,7 +67,6 @@ typedef union
     {
         char**   input_names;
         char**   output_names;
-        uint8_t  first_layer_conv_no_pad; // 0/1
         uint8_t  input_num;               // len(input_names)
         uint8_t  output_num;              // len(output_names)
         float    mean[3];

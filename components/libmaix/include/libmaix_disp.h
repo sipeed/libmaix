@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include "libmaix_err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct libmaix_disp
 {
     int width;      /* FB的宽度 */
@@ -47,5 +51,10 @@ struct libmaix_disp * libmaix_disp_creat(void);
  * @brief 销毁disp对象
 */
 void libmaix_disp_destroy(struct libmaix_disp** disp);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __LIBMAIX_DISP_H */

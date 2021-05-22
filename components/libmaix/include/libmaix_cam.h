@@ -16,7 +16,7 @@ typedef struct libmaix_cam
 
     unsigned int fram_size; /* 一帧图片占用内存大小 */
 
-    libmaix_err_t (*strat_capture)(struct libmaix_cam *cam);
+    libmaix_err_t (*start_capture)(struct libmaix_cam *cam);
 
     /**
      * @brief 获取一帧图像
@@ -40,7 +40,7 @@ typedef struct libmaix_cam
  * 
  * @return 创建的对象；NULL:出错
 */
-struct libmaix_cam * libmaix_cam_creat(int w, int h);
+struct libmaix_cam * libmaix_cam_creat(int n, int w, int h);
 
 /**
  * @brief 销毁cam对象

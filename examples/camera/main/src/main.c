@@ -31,6 +31,7 @@ void camera_test(struct libmaix_disp* disp)
     libmaix_err_t err = LIBMAIX_ERR_NONE;
     libmaix_err_t err0 = LIBMAIX_ERR_NONE;
     struct libmaix_cam* cam     = NULL;
+    struct libmaix_cam* cam1     = NULL;
     libmaix_image_t* img        = NULL;
     struct timeval start, end;
     int64_t interval_s;
@@ -75,14 +76,27 @@ void camera_test(struct libmaix_disp* disp)
     }
 
     printf("--create cam\n");
-    cam = libmaix_cam_creat(res_w, res_h);
+    cam = libmaix_cam_creat(0, res_w, res_h);
     if(!cam)
     {
         printf("create cam fail\n");
         goto end;
     }
+    printf("--create cam1\n");
+    cam1 = libmaix_cam_creat(1, 1024, 600);
+    if(!cam1)
+    {
+        printf("create cam1 fail\n");
+        goto end;
+    }
     printf("--cam start capture\n");
-    err = cam->strat_capture(cam);
+    err = cam->start_capture(cam);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("start capture fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
+    err = cam1->start_capture(cam1);
     if(err != LIBMAIX_ERR_NONE)
     {
         printf("start capture fail: %s\n", libmaix_get_err_msg(err));
@@ -163,6 +177,11 @@ end:
     {
         printf("--cam destory\n");
         libmaix_cam_destroy(&cam);
+    }
+    if(cam1)
+    {
+        printf("--cam1 destory\n");
+        libmaix_cam_destroy(&cam1);
     }
     if(rgb_img)
     {

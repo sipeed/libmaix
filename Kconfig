@@ -19,6 +19,8 @@ menu "Target chip configuration"
 
 		config ARCH_V831
 			bool "compile for arch V831"
+		config ARCH_V833
+			bool "compile for arch V833"
 	endchoice
 	menu "upload dist configuration, only need if you use python3 project.py upload command"
 		config TARGET_IP

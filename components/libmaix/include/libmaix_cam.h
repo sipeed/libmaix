@@ -9,6 +9,10 @@
 extern "C" {
 #endif
 
+void libmaix_cam_init();
+
+void libmaix_cam_exit();
+
 typedef struct libmaix_cam
 {
     int width;      /* 摄像头采集图像的宽度 */
@@ -47,9 +51,34 @@ struct libmaix_cam * libmaix_cam_creat(int n, int w, int h);
 */
 void libmaix_cam_destroy(struct libmaix_cam **cam);
 
+// -----------mpp_vo-------------------
+
+typedef struct libmaix_vo
+{
+    void * (*get_frame)(struct libmaix_vo *vo, int layer);
+    libmaix_err_t (*set_frame)(struct libmaix_vo *vo, void *frame, int layer);
+    libmaix_err_t (*frame_addr)(struct libmaix_vo *vo, void *frame, unsigned int **viraddr, void **phyaddr);
+    void *reserved;
+}libmaix_vo_t;
+
+struct libmaix_vo * libmaix_vo_creat(int in_w, int in_h, int out_x, int out_y, int out_w, int out_h);
+
+void libmaix_vo_destroy(struct libmaix_vo **vo);
+
 #ifdef __cplusplus
 }
 #endif
 
+// ----------- g2d ----------------
+
+void g2d_rotate(char *buf, int w, int h, int rot);
+
+void g2d_nv21_rotate(char *buf, int w, int h, int rot);
+
+void g2d_exit();
+
+void g2d_init();
+
+// -----------
 
 #endif /* __LIBMAIX_CAM_H */

@@ -75,6 +75,8 @@ void g2d_rotate(char *buf, int w, int h, int rot);
 
 void g2d_nv21_rotate(char *buf, int w, int h, int rot);
 
+void g2d_argb_rotate(unsigned int *in_buf, void *out_phy, int w, int h, int rot);
+
 void g2d_exit();
 
 void g2d_init();

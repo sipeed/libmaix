@@ -169,11 +169,11 @@ void test_init() {
   
   test.w_vo = 1024, test.h_vo = 600;
   
-  test.vo = libmaix_vo_creat(test.w0, test.h0, 0, 0, test.w_vo, test.h_vo);
-  if (NULL == test.vo) return ;
+  // test.vo = libmaix_vo_creat(test.w0, test.h0, 0, 0, test.w_vo, test.h_vo);
+  // if (NULL == test.vo) return ;
 
-  test.argb_vo = malloc(test.w_vo * test.h_vo * 4);
-  if (NULL == test.argb_vo) return ;
+  // test.argb_vo = malloc(test.w_vo * test.h_vo * 4);
+  // if (NULL == test.argb_vo) return ;
 
   test.is_run = 1;
 
@@ -278,15 +278,15 @@ void test_work() {
         // }
         // cap_get("display");
         
-        cap_set();
-        void *frame = test.vo->get_frame(test.vo, 0);
-        if (frame != NULL) {
-          unsigned int *addr = NULL;
-          test.vo->frame_addr(test.vo, frame, &addr, NULL);
-          memcpy(addr[0], test.yuv_buf0, test.w0 * test.h0 * 3 / 2);
-          test.vo->set_frame(test.vo, frame, 0);
-        }
-        cap_get("1 display");
+        // cap_set();
+        // void *frame = test.vo->get_frame(test.vo, 0);
+        // if (frame != NULL) {
+        //   unsigned int *addr = NULL;
+        //   test.vo->frame_addr(test.vo, frame, &addr, NULL);
+        //   memcpy(addr[0], test.yuv_buf0, test.w0 * test.h0 * 3 / 2);
+        //   test.vo->set_frame(test.vo, frame, 0);
+        // }
+        // cap_get("1 display");
 
         // cap_set();
         // g2d_nv21_rotate(test.yuv_buf0, test.w0, test.h0, 3);
@@ -298,8 +298,6 @@ void test_work() {
         libmaix_image_t* yuv_img = libmaix_image_create(test.w0, test.h0, LIBMAIX_IMAGE_MODE_YUV420SP_NV21, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
         if(!yuv_img)
         {
-            libmaix_nn_module_deinit();
-            libmaix_nn_module_deinit();
             printf("create yuv image fail\n");
             return 1;
         }
@@ -328,85 +326,6 @@ void test_work() {
         // cap_get("fb_display");
           
       }
-      
-      if (LIBMAIX_ERR_NONE == test.cam1->capture(test.cam1, test.yuv_buf1))
-      {
-
-        // nna_covert_yuv(test.yuv_ptr1, test.rgb_ptr1);
-
-        cap_set();
-        buf = cpu_rotate_3(test.rgb_buf1, test.w1, test.h1, 3);
-        memcpy(test.rgb_buf1, buf, test.w1 * test.h1 * 3);
-        cap_get("1 cpu_rotate");
-
-        // cap_set();
-        // fb_display(test.rgb_buf1, 0, test.h1, test.w1, 0, 0, (600 - test.h1) / 2, (1024 - test.w1) / 2);
-        // cap_get("fb_display");
-
-        // break;
-      }
-      
-      if (LIBMAIX_ERR_NONE == test.cam2->capture(test.cam2, test.yuv_buf2))
-      {
-        // cap_set();
-        // YUV422PToRGB24(test.rgb_buf2, test.yuv_buf2, test.w2, test.h2);
-        // cap_get("2 yuv4222rgb888");
-
-        // cap_set();
-        // buf = cpu_rotate_3(test.rgb_buf2, test.w2, test.h2, 3);
-        // memcpy(test.rgb_buf2, test.buf, test.w2 * test.h2 * 3);
-        // cap_get("2:1 cpu_rotate");
-
-        // cap_set();
-        // void *frame = test.vo->get_frame(test.vo, 9);
-        // if (frame != NULL) {
-        //   unsigned int *addr = NULL;
-        //   test.vo->frame_addr(test.vo, frame, &addr, NULL);
-
-        //   draw_image_1(addr[0], 1024, 600, test.yuv_buf2, 0, 0, test.h2, test.w2);
-
-        //   draw_rectangle(addr[0], 1024, 600, 100, 200, 300, 400, 0xef00ff00, 5);
-
-        //   draw_rectangle(addr[0], 1024, 600, 200, 100, 400, 300, 0xef0000ff, 5);
-
-        //   test.vo->set_frame(test.vo, 0, frame);
-        // }
-        // cap_get("display");
-
-        cap_set();
-        buf = cpu_rotate_1(test.yuv_buf2, test.w2, test.h2, 3);
-        memcpy(test.yuv_buf2, buf, test.w2 * test.h2);
-        cap_get("2:2 cpu_rotate");
-
-        cap_set();
-        void *frame = test.vo->get_frame(test.vo, 9);
-        if (frame != NULL) {
-          unsigned int *vir = NULL, *phy = NULL;
-          test.vo->frame_addr(test.vo, frame, &vir, &phy);
-
-          draw_image_1(test.argb_vo, test.h_vo, test.w_vo, test.yuv_buf2, 0, 0, test.w2, test.h2);
-
-          draw_rectangle(test.argb_vo, test.h_vo, test.w_vo, 10, 20, 30, 40, 0xef00ff00, 5);
-
-          draw_rectangle(test.argb_vo, test.h_vo, test.w_vo, 200, 100, 400, 300, 0xef0000ff, 5);
-          
-          // printf("draw vir %p phy %p \r\n", vir[0], phy[0]);
-
-          g2d_argb_rotate(test.argb_vo, phy[0], test.h_vo, test.w_vo, 1);
-          test.vo->set_frame(test.vo, frame, 9);
-        }
-        cap_get("2 display");
-
-        cap_set();
-        YUV422PToGray(test.rgb_buf2, test.yuv_buf2, test.w2, test.h2);
-        cap_get("2 yuv422rgb888");
-        
-        // cap_set();
-        // fb_display(test.rgb_buf2, 0, test.h2, test.w2, 0, 0, (600 - test.h2) / 2, (1024 - test.w2) / 2);
-        // cap_get("fb_display");
-        break;
-      }
-    
       usleep(50 * 1000);
     }
 

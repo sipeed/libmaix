@@ -75,6 +75,8 @@ void camera_test(struct libmaix_disp* disp)
         return ;
     }
 
+    libmaix_cam_init();
+
     printf("--create cam\n");
     cam = libmaix_cam_creat(0, res_w, res_h);
     if(!cam)
@@ -193,6 +195,9 @@ end:
         printf("--image destory\n");
         libmaix_image_destroy(&img);
     }
+
+    libmaix_cam_exit();
+
     printf("--image module deinit\n");
     libmaix_image_module_deinit();
 #if !SOFT_YUV2RGB

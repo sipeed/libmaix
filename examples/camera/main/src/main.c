@@ -134,7 +134,7 @@ void test_init() {
 
   test.w0 = 1280, test.h0 = 640;
 
-  test.cam0 = libmaix_cam_creat(0, test.w0, test.h0);
+  test.cam0 = libmaix_cam_create(0, test.w0, test.h0);
   if (NULL == test.cam0) return ;
   test.yuv_buf0 = malloc(test.w0 * test.h0 * 3 / 2);
   if (NULL == test.yuv_buf0) return ;
@@ -147,7 +147,7 @@ void test_init() {
   
   test.w1 = 256, test.h1 = 160;
   
-  test.cam1 = libmaix_cam_creat(1, test.w1, test.h1);
+  test.cam1 = libmaix_cam_create(1, test.w1, test.h1);
   if (NULL == test.cam1) return ;
   test.yuv_buf1 = malloc(test.w1 * test.h1 * 3 / 2);
   if (NULL == test.yuv_buf1) return ;
@@ -160,7 +160,7 @@ void test_init() {
   
   test.w2 = 640, test.h2 = 480;
   
-  test.cam2 = libmaix_cam_creat(2, test.w2, test.h2);
+  test.cam2 = libmaix_cam_create(2, test.w2, test.h2);
   if (NULL == test.cam2) return ;
   test.yuv_buf2 = malloc(test.w2 * test.h2 * 2);
   if (NULL == test.yuv_buf2) return ;
@@ -204,8 +204,6 @@ void test_exit() {
 
   libmaix_cam_exit();
 
-  libmaix_image_module_deinit();
-  libmaix_nn_module_deinit();
   printf("--program end");
   // ALOGE(__FUNCTION__);
 }
@@ -254,14 +252,9 @@ void draw_image_1(uint32_t *dst, int ww, int hh, uint8_t *src, int x, int y, int
 
 void test_work() {
 
-  printf("--nn module init\n");
-  libmaix_nn_module_init();
-  printf("--image module init\n");
-  libmaix_image_module_init();
-
   test.cam0->start_capture(test.cam0);
-  // test.cam1->start_capture(test.cam1);
-  // test.cam2->start_capture(test.cam2);
+  test.cam1->start_capture(test.cam1);
+  test.cam2->start_capture(test.cam2);
 
   uint8_t *buf = NULL;
   while (test.is_run)
@@ -278,42 +271,21 @@ void test_work() {
         // }
         // cap_get("display");
         
-        // cap_set();
-        // void *frame = test.vo->get_frame(test.vo, 0);
-        // if (frame != NULL) {
-        //   unsigned int *addr = NULL;
-        //   test.vo->frame_addr(test.vo, frame, &addr, NULL);
-        //   memcpy(addr[0], test.yuv_buf0, test.w0 * test.h0 * 3 / 2);
-        //   test.vo->set_frame(test.vo, frame, 0);
-        // }
-        // cap_get("1 display");
+        cap_set();
+        void *frame = test.vo->get_frame(test.vo, 0);
+        if (frame != NULL) {
+          unsigned int *addr = NULL;
+          test.vo->frame_addr(test.vo, frame, &addr, NULL);
+          memcpy((void *)addr[0], test.yuv_buf0, test.w0 * test.h0 * 3 / 2);
+          test.vo->set_frame(test.vo, frame, 0);
+        }
+        cap_get("1 display");
 
         // cap_set();
         // g2d_nv21_rotate(test.yuv_buf0, test.w0, test.h0, 3);
         // cap_get("g2d_nv21_rotate");
 
         // nna_covert_yuv(test.yuv_ptr0, test.rgb_ptr0);
-
-        printf("--create image\n");
-        libmaix_image_t* yuv_img = libmaix_image_create(test.w0, test.h0, LIBMAIX_IMAGE_MODE_YUV420SP_NV21, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-        if(!yuv_img)
-        {
-            printf("create yuv image fail\n");
-            return 1;
-        }
-        printf("--conver YUV to RGB\n");
-
-        libmaix_image_t* new_img = NULL;
-        libmaix_err_t err0 = yuv_img->convert(yuv_img, LIBMAIX_IMAGE_MODE_RGB888, &new_img);
-        if(err0 != LIBMAIX_ERR_NONE)
-        {
-            printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
-        }
-        printf("--convert test end\n");
-
-        libmaix_image_destroy(&new_img);
-        libmaix_image_destroy(&yuv_img);
-        
         break;
 
         // cap_set();

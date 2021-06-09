@@ -85,7 +85,7 @@ void nn_test(struct libmaix_disp* disp)
         goto end;
     }
     printf("--create cam\n");
-    cam = libmaix_cam_creat(res_w, res_h);
+    cam = libmaix_cam_create(res_w, res_h);
     if(!cam)
     {
         printf("create cam fail\n");

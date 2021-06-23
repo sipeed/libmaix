@@ -37,14 +37,16 @@ typedef struct libmaix_cam
 }libmaix_cam_t;
 
 /**
- * @brief 创建cam对象, 目前只支持创建一个对象
+ * @brief 创建cam对象
  * 
  * @param [in] w: 设置采集图像的宽度
  * @param [in] h: 设置采集图像的高度
+ * @param [in] m: 设置摄像头水平翻转
+ * @param [in] f: 设置摄像头垂直翻转
  * 
  * @return 创建的对象；NULL:出错
 */
-struct libmaix_cam * libmaix_cam_create(int n, int w, int h);
+struct libmaix_cam * libmaix_cam_create(int n, int w, int h, int m, int f);
 
 /**
  * @brief 销毁cam对象

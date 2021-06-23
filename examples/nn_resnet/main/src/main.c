@@ -85,14 +85,14 @@ void nn_test(struct libmaix_disp* disp)
         goto end;
     }
     printf("--create cam\n");
-    cam = libmaix_cam_create(res_w, res_h);
+    cam = libmaix_cam_create(0, res_w, res_h, 1, 0);
     if(!cam)
     {
         printf("create cam fail\n");
         goto end;
     }
     printf("--cam start capture\n");
-    err = cam->strat_capture(cam);
+    err = cam->start_capture(cam);
     if(err != LIBMAIX_ERR_NONE)
     {
         printf("start capture fail:%s\n", libmaix_get_err_msg(err));

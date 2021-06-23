@@ -134,7 +134,7 @@ void test_init() {
 
   test.w0 = 1280, test.h0 = 640;
 
-  test.cam0 = libmaix_cam_create(0, test.w0, test.h0);
+  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 0);
   if (NULL == test.cam0) return ;
   test.yuv_buf0 = malloc(test.w0 * test.h0 * 3 / 2);
   if (NULL == test.yuv_buf0) return ;
@@ -147,7 +147,7 @@ void test_init() {
   
   test.w1 = 256, test.h1 = 160;
   
-  test.cam1 = libmaix_cam_create(1, test.w1, test.h1);
+  test.cam1 = libmaix_cam_create(1, test.w1, test.h1, 1, 0);
   if (NULL == test.cam1) return ;
   test.yuv_buf1 = malloc(test.w1 * test.h1 * 3 / 2);
   if (NULL == test.yuv_buf1) return ;
@@ -160,7 +160,7 @@ void test_init() {
   
   test.w2 = 640, test.h2 = 480;
   
-  test.cam2 = libmaix_cam_create(2, test.w2, test.h2);
+  test.cam2 = libmaix_cam_create(2, test.w2, test.h2, 1, 0);
   if (NULL == test.cam2) return ;
   test.yuv_buf2 = malloc(test.w2 * test.h2 * 2);
   if (NULL == test.yuv_buf2) return ;

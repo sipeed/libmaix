@@ -73,13 +73,17 @@ void libmaix_vo_destroy(struct libmaix_vo **vo);
 
 // ----------- g2d ----------------
 
+void g2d_init();
+
+void g2d_exit();
+
 int g2d_nv21_rotate(unsigned char *buf, int w, int h, int rot);
 
 int g2d_argb_rotate(unsigned int *in_buf, void *out_phy, int w, int h, int rot);
 
-void g2d_exit();
+int _g2d_nv21_rotate(void *s_vir_0, void *s_vir_1, void *d_vir_0, void *d_vir_1, int w, int h, int rot);
 
-void g2d_init();
+int _g2d_argb_rotate(void *in_phy, void *out_phy, int w, int h, int rot);
 
 int g2d_nv21_to_rgb(unsigned char *in, unsigned char *out, int w, int h);
 

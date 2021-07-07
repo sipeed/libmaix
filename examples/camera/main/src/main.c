@@ -6,7 +6,7 @@
 #include "time.h"
 
 #include "libmaix_cam.h"
-#include "libmaix_image.h"
+// #include "libmaix_image.h"
 // #include "libmaix_disp.h"
 // #include "fb_display.h"
 
@@ -132,7 +132,7 @@ void draw_rectangle(int *buffer, int width, int height, int x, int y, int w, int
 void test_init() {
   libmaix_cam_init();
 
-  test.w0 = 1280, test.h0 = 640;
+  test.w0 = 240, test.h0 = 240;
 
   test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 0);
   if (NULL == test.cam0) return ;
@@ -158,22 +158,22 @@ void test_init() {
   // test.rgb_ptr1 = nna_creat_rgb(test.rgb_buf1, test.w1, test.h1);
   // if (NULL == test.rgb_ptr1) return ;
   
-  test.w2 = 640, test.h2 = 480;
+  // test.w2 = 640, test.h2 = 480;
   
-  test.cam2 = libmaix_cam_create(2, test.w2, test.h2, 1, 0);
-  if (NULL == test.cam2) return ;
-  test.yuv_buf2 = malloc(test.w2 * test.h2 * 2);
-  if (NULL == test.yuv_buf2) return ;
-  test.rgb_buf2 = malloc(test.w2 * test.h2 * 3);
-  if (NULL == test.rgb_buf2) return ;
+  // test.cam2 = libmaix_cam_create(2, test.w2, test.h2, 1, 0);
+  // if (NULL == test.cam2) return ;
+  // test.yuv_buf2 = malloc(test.w2 * test.h2 * 2);
+  // if (NULL == test.yuv_buf2) return ;
+  // test.rgb_buf2 = malloc(test.w2 * test.h2 * 3);
+  // if (NULL == test.rgb_buf2) return ;
   
-  test.w_vo = 1024, test.h_vo = 600;
+  test.w_vo = 240, test.h_vo = 240;
   
-  // test.vo = libmaix_vo_creat(test.w0, test.h0, 0, 0, test.w_vo, test.h_vo);
-  // if (NULL == test.vo) return ;
+  test.vo = libmaix_vo_create(test.w0, test.h0, 0, 0, test.w_vo, test.h_vo);
+  if (NULL == test.vo) return ;
 
-  // test.argb_vo = malloc(test.w_vo * test.h_vo * 4);
-  // if (NULL == test.argb_vo) return ;
+  test.argb_vo = malloc(test.w_vo * test.h_vo * 4);
+  if (NULL == test.argb_vo) return ;
 
   test.is_run = 1;
 
@@ -254,8 +254,10 @@ void test_work() {
 
   test.cam0->start_capture(test.cam0);
   test.cam1->start_capture(test.cam1);
-  test.cam2->start_capture(test.cam2);
+  // test.cam2->start_capture(test.cam2);
 
+  CALC_FPS("maix_test");
+  
   uint8_t *buf = NULL;
   while (test.is_run)
   {

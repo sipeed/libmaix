@@ -70,6 +70,7 @@ void nn_test(struct libmaix_disp* disp)
     printf("--image module init\n");
     libmaix_image_module_init();
     libmaix_nn_module_init();
+    libmaix_cam_init();
 
     printf("--create image\n");
     img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_YUV420SP_NV21, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
@@ -260,6 +261,7 @@ end:
     printf("--image module deinit\n");
     libmaix_nn_module_deinit();
     libmaix_image_module_deinit();
+    libmaix_cam_exit();
 }
 
 int main(int argc, char* argv[])

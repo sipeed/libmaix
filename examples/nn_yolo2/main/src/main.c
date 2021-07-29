@@ -334,6 +334,7 @@ void nn_test(struct libmaix_disp* disp)
 end:
     if(yolo2_decoder)
     {
+        yolo2_decoder->deinit(yolo2_decoder);
         libmaix_nn_decoder_yolo2_destroy(&yolo2_decoder);
     }
     if(output_buffer)

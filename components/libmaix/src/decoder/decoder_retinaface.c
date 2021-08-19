@@ -103,6 +103,15 @@ static void do_nms_sort(uint32_t boxes_number, float nms_value, float score_thre
     }
 }
 
+int retinaface_get_channel_num(libmaix_nn_decoder_retinaface_config_t* config)
+{
+    int channel_num = 0;
+    for(int i=0; i< (sizeof(config->steps)/sizeof(int)); ++i)
+    {
+        channel_num += config->input_w / config->steps[i] * (config->input_h / config->steps[i]) * 2;
+    }
+    return channel_num;
+}
 
 retinaface_box_t* retinaface_get_priorboxes(libmaix_nn_decoder_retinaface_config_t* config, int* boxes_num)
 {
@@ -306,6 +315,7 @@ libmaix_err_t libmaix_nn_decoder_retinaface_init(struct libmaix_nn_decoder* obj,
         params->priors = NULL;
         return LIBMAIX_ERR_NO_MEM;
     }
+    ((libmaix_nn_decoder_retinaface_config_t*)config)->channel_num = retinaface_get_channel_num(config);
     params->config = config;
     return LIBMAIX_ERR_NONE;
 }

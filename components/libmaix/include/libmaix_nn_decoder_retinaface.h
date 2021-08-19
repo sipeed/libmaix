@@ -49,6 +49,9 @@ typedef struct
     float score_thresh;
     int   input_w;
     int   input_h;
+
+    // set by init func
+    int   channel_num;
 }libmaix_nn_decoder_retinaface_config_t;
 
 typedef struct
@@ -60,7 +63,7 @@ typedef struct
 /************ direct API ***********/
 retinaface_box_t* retinaface_get_priorboxes(libmaix_nn_decoder_retinaface_config_t* config, int* boxes_num);
 libmaix_err_t retinaface_decode(float* net_out_loc, float* net_out_conf, float* net_out_landmark, retinaface_box_t* prior_boxes, retinaface_face_t* faces, int* boxes_num, bool chw, libmaix_nn_decoder_retinaface_config_t* config);
-
+int retinaface_get_channel_num(libmaix_nn_decoder_retinaface_config_t* config);
 
 /************ libmaix API **********/
 libmaix_err_t libmaix_nn_decoder_retinaface_init(struct libmaix_nn_decoder* obj, void* config);

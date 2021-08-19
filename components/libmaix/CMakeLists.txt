@@ -10,6 +10,7 @@ if(CONFIG_LIBMAIX_ENABLED)
         )
     # aux_source_directory(src ADD_SRCS)
     # list(REMOVE_ITEM COMPONENT_SRCS "src/test.c")
+    append_srcs_dir(ADD_SRCS "src/decoder")
     ###############################################
 
     ###### Add required/dependent components ######

@@ -20,6 +20,7 @@ typedef enum
     LIBMAIX_ERR_NO_MEM = 2,
     LIBMAIX_ERR_NOT_IMPLEMENT = 3,
     LIBMAIX_ERR_NOT_READY     = 4,
+    LIBMAIX_ERR_NOT_INIT      = 5,
     LIBMAIX_ERR_UNKNOWN,
 }libmaix_err_t;         // update this enum you MUST update `libmaix_err_strs` definition too
 

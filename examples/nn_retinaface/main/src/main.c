@@ -84,7 +84,7 @@ void nn_test(struct libmaix_disp* disp)
     printf("--image module init\n");
     libmaix_image_module_init();
     libmaix_nn_module_init();
-    libmaix_cam_init();
+    libmaix_camera_module_init();
     printf("--cam create\n");
     libmaix_cam_t* cam = libmaix_cam_create(0, res_w, res_h, 1, 0);
     if(!cam)

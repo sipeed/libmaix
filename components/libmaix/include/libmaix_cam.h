@@ -9,9 +9,9 @@
 extern "C" {
 #endif
 
-void libmaix_cam_init();
+void libmaix_camera_module_init();
 
-void libmaix_cam_exit();
+void libmaix_camera_module_deinit();
 
 typedef struct libmaix_cam
 {

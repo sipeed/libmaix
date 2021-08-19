@@ -130,7 +130,7 @@ void draw_rectangle(int *buffer, int width, int height, int x, int y, int w, int
 }
 
 void test_init() {
-  libmaix_cam_init();
+  libmaix_camera_module_init();
 
   test.w0 = 240, test.h0 = 240;
 
@@ -202,7 +202,7 @@ void test_exit() {
 
   if (NULL != test.argb_vo) free(test.argb_vo), test.argb_vo = NULL;
 
-  libmaix_cam_exit();
+  libmaix_camera_module_deinit();
 
   printf("--program end");
   // ALOGE(__FUNCTION__);

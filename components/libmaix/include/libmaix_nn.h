@@ -96,8 +96,11 @@ typedef struct libmaix_nn
 
 libmaix_err_t libmaix_nn_module_init();
 libmaix_err_t libmaix_nn_module_deinit();
-libmaix_nn_t* libmaix_nn_creat();
+libmaix_nn_t* libmaix_nn_create();
 void libmaix_nn_destroy(libmaix_nn_t** obj);
+
+float libmaix_nn_feature_compare_int8(int8_t* a, int8_t* b, int len);
+float libmaix_nn_feature_compare_float(float* a, float* b, int len);
 
 #ifdef __cplusplus
 }

@@ -146,7 +146,7 @@ void nn_test(struct libmaix_disp* disp)
     out_fmap.data = output_buffer;
     input.buff_quantization = quantize_buffer;
     printf("-- nn create\n");
-    nn = libmaix_nn_creat();
+    nn = libmaix_nn_create();
     if(!nn)
     {
         printf("libmaix_nn object create fail\n");

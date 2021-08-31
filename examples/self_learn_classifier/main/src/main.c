@@ -127,7 +127,10 @@ void nn_test(struct libmaix_disp* disp)
     }
 
     printf("-- classifier init, samples_length: %d, class_num: %d, sample_num: %d\n", samples_length, class_num, sample_num);
-    libmaix_classifier_init(&classifier, nn, samples_length, res_w, res_h, class_num, sample_num);
+    if(libmaix_classifier_load(&classifier, "m.classifier", nn, &class_num, &sample_num) != LIBMAIX_ERR_NONE)
+    {
+        libmaix_classifier_init(&classifier, nn, samples_length, res_w, res_h, class_num, sample_num);
+    }
 
     printf("-- key init\n");
     board_init();
@@ -159,13 +162,14 @@ void nn_test(struct libmaix_disp* disp)
             continue;
         }
 #endif
-        int key_v = get_io(2);
+        int key_v, key_v2;
+        get_io(2, 3, &key_v, &key_v2);
         if(key_v == 0)
         {
             if(i_class_num < class_num)
             {
                 printf("== record class %d\n", i_class_num);
-                libmaix_classifier_add_class_img(classifier, rgb_img, i_class_num);
+                libmaix_classifier_add_class_img(classifier, rgb_img, &i_class_num);
                 ++i_class_num;
             }
             else if(i_sample_num < sample_num)
@@ -180,6 +184,11 @@ void nn_test(struct libmaix_disp* disp)
                     printf("== train complete\n");
                 }
             }
+        }
+        if(key_v2 == 0)
+        {
+           int ret = libmaix_classifier_save(classifier, "m.classifier");
+           printf("save ret: %d\n", ret);
         }
         float distance = 0;
         int class_id = libmaix_classifier_predict(classifier, rgb_img, &distance);

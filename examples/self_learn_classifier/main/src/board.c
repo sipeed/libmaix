@@ -25,9 +25,12 @@ int board_init()
     return 0;
 }
 
-int get_io(int key)
+int get_io(int key, int key2, int* v1, int* v2)
 {
     struct input_event t;
+
+    *v1 = -1;
+    *v2 = -1;
 
     if (read(keys_fd, &t, sizeof(t)) == sizeof(t))
     {
@@ -37,7 +40,15 @@ int get_io(int key)
             {
                 printf("key %d %s\n", t.code, (t.value) ? "Pressed" : "Released");
                 if(t.code == key)
+                {
+                    *v1 = t.value;
                     return t.value;
+                }
+                else if(t.code == key2)
+                {
+                    *v2 = t.value;
+                    return t.value;
+                }
                 // if (t.code == KEY_ESC)
                 //     break;
             }

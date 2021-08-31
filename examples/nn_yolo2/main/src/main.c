@@ -228,7 +228,7 @@ void nn_test(struct libmaix_disp* disp)
 #endif
     // nn model init
     printf("-- nn create\n");
-    nn = libmaix_nn_creat();
+    nn = libmaix_nn_create();
     if(!nn)
     {
         printf("libmaix_nn object create fail\n");

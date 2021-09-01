@@ -6,7 +6,7 @@
 #include "stdint.h"
 #include "stdbool.h"
 
-libmaix_err_t libmaix_classifier_init(void** obj, libmaix_nn_t* model, int samples_length, int input_w, int input_h, int class_num, int sample_num);
+libmaix_err_t libmaix_classifier_init(void** obj, libmaix_nn_t* model, int feature_length, int input_w, int input_h, int class_num, int sample_num);
 /**
  * 
  * @param[in/out] idx add class img as idx class, if idx < 0, will automatically add as next class, and set this value as set idx
@@ -23,6 +23,6 @@ libmaix_err_t libmaix_classifier_del(void** obj);
 libmaix_err_t libmaix_classifier_train(void* obj);
 libmaix_err_t libmaix_classifier_predict(void* obj, libmaix_image_t* img, int* idx, float* min_distance);
 libmaix_err_t libmaix_classifier_save(void* obj, const char* path);
-libmaix_err_t libmaix_classifier_load(void** obj, const char* path, libmaix_nn_t* kmodel, int* class_num, int* sample_num);
+libmaix_err_t libmaix_classifier_load(void** obj, const char* path, libmaix_nn_t* kmodel, int* feature_length, int* input_w, int* input_h, int* class_num, int* sample_num);
 
 #endif

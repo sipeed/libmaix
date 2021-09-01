@@ -35,7 +35,7 @@ void nn_test(struct libmaix_disp* disp)
     uint32_t res_w = 224, res_h = 224;
     int class_num = 3;
     int sample_num = 15;
-    int samples_length = 512;
+    int feature_length = 512;
 
     int i_class_num = 0;
     int i_sample_num = 0;
@@ -126,10 +126,11 @@ void nn_test(struct libmaix_disp* disp)
         goto end;
     }
 
-    printf("-- classifier init, samples_length: %d, class_num: %d, sample_num: %d\n", samples_length, class_num, sample_num);
-    if(libmaix_classifier_load(&classifier, "m.classifier", nn, &class_num, &sample_num) != LIBMAIX_ERR_NONE)
+    printf("-- classifier init, feature_length: %d, class_num: %d, sample_num: %d\n", feature_length, class_num, sample_num);
+    int input_w, input_h;
+    if(libmaix_classifier_load(&classifier, "m.classifier", nn, &feature_length, &input_w, &input_h, &class_num, &sample_num) != LIBMAIX_ERR_NONE)
     {
-        libmaix_classifier_init(&classifier, nn, samples_length, res_w, res_h, class_num, sample_num);
+        libmaix_classifier_init(&classifier, nn, feature_length, res_w, res_h, class_num, sample_num);
     }
 
     printf("-- key init\n");

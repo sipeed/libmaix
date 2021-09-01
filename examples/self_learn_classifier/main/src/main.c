@@ -175,7 +175,8 @@ void nn_test(struct libmaix_disp* disp)
             else if(i_sample_num < sample_num)
             {
                 printf("== record sample %d\n", i_sample_num);
-                libmaix_classifier_add_sample_img(classifier, rgb_img);
+                int idx = -1;
+                libmaix_classifier_add_sample_img(classifier, rgb_img, &idx);
                 ++i_sample_num;
                 if(i_sample_num == sample_num)
                 {
@@ -191,7 +192,12 @@ void nn_test(struct libmaix_disp* disp)
            printf("save ret: %d\n", ret);
         }
         float distance = 0;
-        int class_id = libmaix_classifier_predict(classifier, rgb_img, &distance);
+        int class_id = -1;
+        err = libmaix_classifier_predict(classifier, rgb_img, &class_id, &distance);
+        if(err != LIBMAIX_ERR_NONE)
+        {
+            printf("libmaix_classifier_predict error! code: %d\n", err);
+        }
         if(class_id >= 0)
         {
             printf("class id: %d, distance: %f\n", class_id, distance);

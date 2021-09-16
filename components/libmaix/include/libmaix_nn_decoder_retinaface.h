@@ -61,9 +61,9 @@ typedef struct
 }libmaix_nn_decoder_retinaface_result_t;
 
 /************ direct API ***********/
-retinaface_box_t* retinaface_get_priorboxes(libmaix_nn_decoder_retinaface_config_t* config, int* boxes_num);
-libmaix_err_t retinaface_decode(float* net_out_loc, float* net_out_conf, float* net_out_landmark, retinaface_box_t* prior_boxes, retinaface_face_t* faces, int* boxes_num, bool chw, libmaix_nn_decoder_retinaface_config_t* config);
-int retinaface_get_channel_num(libmaix_nn_decoder_retinaface_config_t* config);
+extern retinaface_box_t* retinaface_get_priorboxes(libmaix_nn_decoder_retinaface_config_t* config, int* boxes_num);
+extern libmaix_err_t retinaface_decode(float* net_out_loc, float* net_out_conf, float* net_out_landmark, retinaface_box_t* prior_boxes, retinaface_face_t* faces, int* boxes_num, bool chw, libmaix_nn_decoder_retinaface_config_t* config);
+extern int retinaface_get_channel_num(libmaix_nn_decoder_retinaface_config_t* config);
 
 /************ libmaix API **********/
 libmaix_err_t libmaix_nn_decoder_retinaface_init(struct libmaix_nn_decoder* obj, void* config);

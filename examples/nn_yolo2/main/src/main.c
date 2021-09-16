@@ -250,7 +250,7 @@ void nn_test(struct libmaix_disp* disp)
     }
     // decoder init
     printf("-- yolo2 decoder create\n");
-    yolo2_decoder = libmaix_nn_decoder_yolo2_creat();
+    yolo2_decoder = libmaix_nn_decoder_yolo2_create();
     if(!yolo2_decoder)
     {
         printf("no mem\n");

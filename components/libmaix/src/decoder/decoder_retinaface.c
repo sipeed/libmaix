@@ -67,12 +67,12 @@ static int nms_comparator(const void *pa, const void *pb)
     // else if (diff > 0)
     //     return -1;
     // return 0;
-    return -*(int32_t*)(&diff);
+    return (int)(-*(int32_t*)(&diff));
 }
 
 static void do_nms_sort(uint32_t boxes_number, float nms_value, float score_thresh, retinaface_face_t* faces)
 {
-    int i = 0, j = 0, k = 0;
+    uint32_t i = 0, j = 0, k = 0;
     sortable_box_t s[boxes_number];
 
     for (i = 0; i < boxes_number; ++i)
@@ -106,7 +106,7 @@ static void do_nms_sort(uint32_t boxes_number, float nms_value, float score_thre
 int retinaface_get_channel_num(libmaix_nn_decoder_retinaface_config_t* config)
 {
     int channel_num = 0;
-    for(int i=0; i< (sizeof(config->steps)/sizeof(int)); ++i)
+    for(unsigned int i=0; i< (sizeof(config->steps)/sizeof(int)); ++i)
     {
         channel_num += config->input_w / config->steps[i] * (config->input_h / config->steps[i]) * 2;
     }

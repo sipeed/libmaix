@@ -113,6 +113,7 @@ if(CONFIG_LIBMAIX_ENABLED)
     #                             -DAAAAA333=1)
     ###############################################
 
+    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -lmaix_nn -Wl,--end-group" PARENT_SCOPE)
 
     register_component()
 endif()

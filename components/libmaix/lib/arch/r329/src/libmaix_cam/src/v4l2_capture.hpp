@@ -185,19 +185,20 @@ int V4L2Capture::initDevice()
     perror("Buffers init error");
     //exit(-1);
   }
-
-  // struct v4l2_control ctrl;
-  // // V4L2_CID_HFLIP V4L2_CID_VFLIP 水平或者垂直翻转
-  // ctrl.id = V4L2_CID_HFLIP;
-  // ctrl.value = 1; // 0 或者 1 翻转或者不翻转
-  // ioctl(fd_cam, VIDIOC_S_CTRL, &ctrl);
-  
-  // struct v4l2_control ctrl;
-  // // V4L2_CID_HFLIP V4L2_CID_VFLIP 水平或者垂直翻转
-  // ctrl.id = V4L2_CID_VFLIP;
-  // ctrl.value = 1; // 0 或者 1 翻转或者不翻转
-  // ioctl(fd_cam, VIDIOC_S_CTRL, &ctrl);
-
+  // {
+  //   struct v4l2_control ctrl;
+  //   // V4L2_CID_HFLIP V4L2_CID_VFLIP 水平或者垂直翻转
+  //   ctrl.id = V4L2_CID_HFLIP;
+  //   ctrl.value = 0; // 0 或者 1 翻转或者不翻转
+  //   ioctl(fd_cam, VIDIOC_S_CTRL, &ctrl);
+  // }
+  // {
+  //   struct v4l2_control ctrl;
+  //   // V4L2_CID_HFLIP V4L2_CID_VFLIP 水平或者垂直翻转
+  //   ctrl.id = V4L2_CID_VFLIP;
+  //   ctrl.value = 0; // 0 或者 1 翻转或者不翻转
+  //   ioctl(fd_cam, VIDIOC_S_CTRL, &ctrl);
+  // }
   return 0;
 }
 

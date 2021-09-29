@@ -63,7 +63,7 @@ typedef struct libmaix_image
      */
     libmaix_err_t (*convert)(struct libmaix_image* obj, libmaix_image_mode_t mode, struct libmaix_image** new_img);
     libmaix_err_t (*draw_rectangle)(struct libmaix_image* obj, int x, int y, int w, int h, libmaix_image_color_t color, bool fill, int thickness);
-	libmaix_err_t (*draw_string)(struct libmaix_image* obj, char *str, int x, int y, int size, libmaix_image_color_t color, libmaix_image_color_t* bg);
+    libmaix_err_t (*draw_string)(struct libmaix_image* obj, char *str, int x, int y, int size, libmaix_image_color_t color, libmaix_image_color_t* bg);
     /**
      * @param [in/out] new_img: if arg is address of libmaix_image_t pointer, and value is NULL,
      *                          new image object and data memory will automatically created;

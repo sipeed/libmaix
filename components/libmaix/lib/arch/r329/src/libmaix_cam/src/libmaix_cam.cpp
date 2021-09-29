@@ -68,6 +68,13 @@ libmaix_err_t vi_priv_capture(struct libmaix_cam *cam, unsigned char *buf)
             // cv::imwrite("src.jpg", src);
             cv::Mat dst;
             cv::cvtColor(src, dst, cv::COLOR_YUV2RGB_YUYV);
+
+            // monkey patch 2021
+            cv::Mat patch;
+            cv::flip(dst, patch, 0); // cv::rotate(dst, patch, cv::ROTATE_180);
+            dst = patch;
+            // patch end
+
             // cv::imwrite("dst.jpg", dst);
             if (cam->fram_size != dst.total() * dst.elemSize()) {
               cv::Mat tmp;

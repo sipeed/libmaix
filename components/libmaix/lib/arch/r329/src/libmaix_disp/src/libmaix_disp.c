@@ -2,7 +2,7 @@
 #include "libmaix_disp_priv.h"
 #include <string.h>
 
-struct libmaix_disp * libmaix_disp_create(void)
+struct libmaix_disp * libmaix_disp_create(u_int8_t fbiopan)
 {
     struct libmaix_disp *disp = (struct libmaix_disp*)malloc(sizeof(struct libmaix_disp));
     if(NULL == disp) {
@@ -20,6 +20,7 @@ struct libmaix_disp * libmaix_disp_create(void)
     disp->reserved = (void*)priv;
 
     if(disp_priv_init(disp) != 0) {
+        priv->fbiopan = fbiopan;
         libmaix_disp_destroy(&disp);
         return NULL;
     }

@@ -33,7 +33,7 @@ typedef struct libmaix_disp
  * 
  * @return 创建的对象；NULL:出错
 */
-struct libmaix_disp * libmaix_disp_create(void);
+struct libmaix_disp * libmaix_disp_create(u_int8_t fbiopan);
 
 /**
  * @brief 销毁disp对象

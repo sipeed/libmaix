@@ -9,6 +9,7 @@ struct libmaix_disp_priv_t
 {
     char *fbp;
     int fbfd;
+    int fbiopan;
     struct fb_var_screeninfo vinfo;
     struct fb_fix_screeninfo finfo;
     

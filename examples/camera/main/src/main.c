@@ -34,7 +34,6 @@ void cap_set()
 
 void cap_get(const char *tips)
 {
-  return ;
   gettimeofday(&now, NULL);
   if (now.tv_usec > old.tv_usec)
     printf("%20s - %5ld us\r\n", tips, (now.tv_usec - old.tv_usec));
@@ -128,7 +127,7 @@ void test_init() {
   test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 0, 0);
   if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
   
-  test.disp = libmaix_disp_create();
+  test.disp = libmaix_disp_create(0);
   if(NULL == test.disp) return ;
 
   test.is_run = 1;
@@ -158,18 +157,22 @@ void test_work() {
     if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb888))
     {
       // test.disp->draw(test.disp, test.rgb888);
+      // cap_set();
       if (test.disp->bpp == 2 || test.disp->bpp == 1) {
         uint8_t *rgb888 = test.rgb888;
         uint16_t *rgb565 = (uint16_t *)tmp;
+        // cap_set();
         for (uint16_t * end = rgb565 + test.disp->width * test.disp->height; rgb565 < end; rgb565 += 1, rgb888 += 3) {
           // *rgb565 = make16color(rgb888[0], rgb888[1], rgb888[2]);
           *rgb565 = ((((rgb888[0] >> 3) & 31) << 11) | (((rgb888[1] >> 2) & 63) << 5) | ((rgb888[2] >> 3) & 31));
         }
+        // cap_get("565 2 888");
         test.disp->draw(test.disp, tmp);
       }
+      // cap_get("maix_disp");
     }
     // usleep(20 * 1000);
-    CALC_FPS("maix_test");
+    CALC_FPS("maix_cam");
   }
 
 }

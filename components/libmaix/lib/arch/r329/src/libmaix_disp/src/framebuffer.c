@@ -26,10 +26,12 @@ static libmaix_err_t disp_draw(struct libmaix_disp *disp, unsigned char *buf)
   priv->vinfo.reserved[2] = disp->width;
   priv->vinfo.reserved[3] = disp->height;
 
-  if (ioctl(priv->fbfd, FBIOPAN_DISPLAY, &priv->vinfo))
-  {
-    fprintf(stderr, "ioctl FBIOPAN_DISPLAY: %s\n", strerror(errno));
-    return LIBMAIX_ERR_UNKNOWN;
+  if (priv->fbiopan) {
+    if (ioctl(priv->fbfd, FBIOPAN_DISPLAY, &priv->vinfo))
+    {
+      fprintf(stderr, "ioctl FBIOPAN_DISPLAY: %s\n", strerror(errno));
+      return LIBMAIX_ERR_UNKNOWN;
+    }
   }
 
   return LIBMAIX_ERR_NONE;
@@ -52,7 +54,6 @@ static int priv_devInit(struct libmaix_disp *disp)
 
   if (priv->fbp == NULL)
   {
-
     priv->fbfd = open(FBDEV_PATH, O_RDWR);
     if (-1 == priv->fbfd)
     {

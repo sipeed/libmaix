@@ -1,12 +1,3 @@
-#include "stdio.h"
-#include <stdint.h>
-#include <stdbool.h>
-
-#include "global_config.h"
-#include "global_build_info_time.h"
-#include "global_build_info_version.h"
-
-#include "hello.h"
 #include "libmaix_disp.h"
 
 inline static unsigned char make8color(unsigned char r, unsigned char g, unsigned char b)
@@ -64,11 +55,7 @@ int main(int argc, char **argv)
 
     if (disp->bpp == 2 || disp->bpp == 1) {
       // maybe is RGB565 etc...
-      unsigned short *rgb565 = (unsigned short *)test;
-      for (int i = 0, sum = disp->width * disp->height; i < sum; i++) {
-        rgb565[i] = make16color(0xFF, 0xFF, 0x00);
-      }
-      disp->draw(disp, test);
+      // use make16color or make8color
     }
 
     libmaix_disp_destroy(&disp);

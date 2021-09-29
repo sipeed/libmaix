@@ -17,6 +17,8 @@ menu "Target chip configuration"
 		help
 			"select compile platform architecture"
 
+		config ARCH_R329
+			bool "compile for arch R329"
 		config ARCH_V831
 			bool "compile for arch V831"
 		config ARCH_V833

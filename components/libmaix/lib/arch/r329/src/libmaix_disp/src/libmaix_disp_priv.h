@@ -1,0 +1,21 @@
+#ifndef __LIBMAIX_DISP_PRIV_H
+#define __LIBMAIX_DISP_PRIV_H
+
+#include "libmaix_disp.h"
+
+#include <linux/fb.h>
+
+struct libmaix_disp_priv_t
+{
+    char *fbp;
+    int fbfd;
+    struct fb_var_screeninfo vinfo;
+    struct fb_fix_screeninfo finfo;
+    
+    int (*devInit)(struct libmaix_disp *disp);
+    int (*devDeinit)(struct libmaix_disp *disp);
+};
+
+int disp_priv_init(struct libmaix_disp *disp);
+
+#endif /* __LIBMAIX_DISP_PRIV_H */

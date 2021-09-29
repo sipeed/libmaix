@@ -80,6 +80,8 @@ python3 project.py menuconfig
 
 第一次编译，可以只使用默认配置即可
 
+python project.py --toolchain /usr/bin --toolchain-prefix aarch64-linux-gnu- config
+
 然后按`q` 按键退出配置， 选择 `yes` 来保存配置
 
 

@@ -126,8 +126,7 @@ void test_init() {
   test.w0 = 240, test.h0 = 240;
 
   test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 0, 0);
-  if (NULL == test.cam0) return ;
-  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
   
   test.disp = libmaix_disp_create();
   if(NULL == test.disp) return ;
@@ -148,34 +147,24 @@ void test_exit() {
   // ALOGE(__FUNCTION__);
 }
 
-void rgb888_to_565(uint8_t * rgb888, uint16_t width, uint16_t height, uint16_t * rgb565)
-{
-    // static uint16_t table[255*255*255] = {}, init_table = 1;
-    // if (init_table) {
-    //     init_table = 0;
-    //     for (int )
-    // }
-}
-
 void test_work() {
 
   test.cam0->start_capture(test.cam0);
 
-  // unsigned short rgb565[test.disp->width * test.disp->height];
-
   uint8_t tmp[test.disp->width * test.disp->height * 2];
+
   while (test.is_run)
   {
     if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb888))
     {
       // test.disp->draw(test.disp, test.rgb888);
       if (test.disp->bpp == 2 || test.disp->bpp == 1) {
-        unsigned short *rgb565 = (unsigned short *)tmp;
-        // for (int i = 0, sum = test.disp->width * test.disp->height; i < sum; i++) {
-        //   rgb565[i] = make16color(test.rgb888[i + 0], test.rgb888[i + 1], test.rgb888[i + 2]);
-        // }
-        extern void rgb888_to_rgb565(uint8_t * rgb888, uint16_t width, uint16_t height, uint16_t * rgb565);
-        rgb888_to_rgb565(test.rgb888, test.disp->width, test.disp->height, rgb565);
+        uint8_t *rgb888 = test.rgb888;
+        uint16_t *rgb565 = (uint16_t *)tmp;
+        for (uint16_t * end = rgb565 + test.disp->width * test.disp->height; rgb565 < end; rgb565 += 1, rgb888 += 3) {
+          // *rgb565 = make16color(rgb888[0], rgb888[1], rgb888[2]);
+          *rgb565 = ((((rgb888[0] >> 3) & 31) << 11) | (((rgb888[1] >> 2) & 63) << 5) | ((rgb888[2] >> 3) & 31));
+        }
         test.disp->draw(test.disp, tmp);
       }
     }

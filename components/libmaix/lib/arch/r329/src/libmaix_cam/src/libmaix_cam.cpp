@@ -185,13 +185,13 @@ int libmaix_cam_unit_test(char * tmp)
   return 0;
 }
 
-void rgb888_to_rgb565(uint8_t * rgb888, uint16_t width, uint16_t height, uint16_t * rgb565)
-{
-    cv::Mat tmp(width, height, CV_8UC3, (void*)rgb888);
-    // cv::imwrite("tmp.jpg", tmp);
-    cv::Mat img;
-    cv::cvtColor(tmp, img, cv::COLOR_RGB2BGR565);
-    memcpy(rgb565, img.data, width * height * 2);
-}
+// void rgb888_to_rgb565(uint8_t * rgb888, uint16_t width, uint16_t height, uint16_t * rgb565)
+// {
+//     cv::Mat tmp(width, height, CV_8UC3, (void*)rgb888);
+//     // cv::imwrite("tmp.jpg", tmp);
+//     cv::Mat img;
+//     cv::cvtColor(tmp, img, cv::COLOR_RGB2BGR565);
+//     memcpy(rgb565, img.data, width * height * 2);
+// }
 
 }

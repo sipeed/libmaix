@@ -64,35 +64,20 @@ libmaix_err_t vi_priv_capture(struct libmaix_cam *cam, unsigned char *buf)
         unsigned char *yuv422frame = NULL;
         size_t readlen = 0;
         if (0 == priv->vcap->getFrame((void **)&yuv422frame, (size_t *)&readlen)) {
-            cv::Mat tmp(priv->vcap->capW, priv->vcap->capH, CV_8UC2, (void*)yuv422frame);
-// {
-//             FILE *fp = NULL;
-//             fp = fopen("./src.yuv", "w+");
-//             fwrite(tmp.data, priv->vcap->capW * priv->vcap->capH * 2, 1, fp);
-//             fclose(fp);
-// }
-            cv::Mat img(priv->vcap->capW, priv->vcap->capH, CV_8UC3);
-            cv::cvtColor(tmp, img, cv::COLOR_YUV2RGB_YUYV);
-// {
-//             FILE *fp = NULL;
-//             fp = fopen("./src.rgb", "w+");
-//             fwrite(img.data, priv->vcap->capW * priv->vcap->capH * 3, 1, fp);
-//             fclose(fp);
-// }
-            if (cam->fram_size != img.total() * img.elemSize()) {
-              // printf("[vi_priv_capture] %d %d %d %d\r\n", img.rows, img.cols, priv->vcap->capW, priv->vcap->capH);
-              cv::Mat t = img(cv::Rect(priv->vi_y, priv->vi_x, priv->vi_h, priv->vi_w));
-              memcpy(buf, t.data, cam->fram_size);
-              // printf("[vi_priv_capture] %d %d %d %d\r\n", priv->vi_x, priv->vi_y, priv->vi_w, priv->vi_h);
+            cv::Mat src(priv->vcap->capH, priv->vcap->capW, CV_8UC2, (void*)yuv422frame);
+            // cv::imwrite("src.jpg", src);
+            cv::Mat dst;
+            cv::cvtColor(src, dst, cv::COLOR_YUV2RGB_YUYV);
+            // cv::imwrite("dst.jpg", dst);
+            if (cam->fram_size != dst.total() * dst.elemSize()) {
+              cv::Mat tmp;
+              dst(cv::Rect(priv->vi_x, priv->vi_y, priv->vi_w, priv->vi_h)).copyTo(tmp);
+              // cv::imwrite("tmp.jpg", tmp);
+              // printf("[vi_priv_capture] %d %d %d %d\r\n", t.cols, t.rows, priv->vcap->capW, priv->vcap->capH);
+              memcpy(buf, tmp.data, cam->fram_size);
             } else {
-              memcpy(buf, img.data, cam->fram_size);
+              memcpy(buf, dst.data, cam->fram_size);
             }
-// {
-//             FILE *fp = NULL;
-//             fp = fopen("./dst.rgb", "w+");
-//             fwrite(buf, priv->vi_w * priv->vi_h * 3, 1, fp);
-//             fclose(fp);
-// }
             priv->vcap->backFrame();
             return LIBMAIX_ERR_NONE;
         }
@@ -198,6 +183,15 @@ int libmaix_cam_unit_test(char * tmp)
   }
 
   return 0;
+}
+
+void rgb888_to_rgb565(uint8_t * rgb888, uint16_t width, uint16_t height, uint16_t * rgb565)
+{
+    cv::Mat tmp(width, height, CV_8UC3, (void*)rgb888);
+    // cv::imwrite("tmp.jpg", tmp);
+    cv::Mat img;
+    cv::cvtColor(tmp, img, cv::COLOR_RGB2BGR565);
+    memcpy(rgb565, img.data, width * height * 2);
 }
 
 }

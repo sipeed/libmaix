@@ -4,7 +4,7 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../r329/include/opencv4)
-link_directories("../../../r329")
+link_directories("../../../r329/opencv4")
 
 add_library(maix_cam SHARED # STATIC
         src/libmaix_cam.cpp

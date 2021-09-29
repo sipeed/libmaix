@@ -87,7 +87,7 @@ int YUV422PToRGB24(void *RGB24, void *YUV422P, int width, int height)
 struct {
   int w0, h0;
   struct libmaix_cam *cam0;
-  uint8_t *rgb_buf0;
+  uint8_t *rgb888;
   
   struct libmaix_disp *disp;
 
@@ -127,7 +127,7 @@ void test_init() {
 
   test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 0, 0);
   if (NULL == test.cam0) return ;
-  test.rgb_buf0 = malloc(test.w0 * test.h0 * 3);
+  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
   
   test.disp = libmaix_disp_create();
   if(NULL == test.disp) return ;
@@ -140,12 +140,21 @@ void test_init() {
 void test_exit() {
 
   if (NULL != test.cam0) libmaix_cam_destroy(&test.cam0);
-  if (NULL != test.rgb_buf0) free(test.rgb_buf0), test.rgb_buf0 = NULL;
+  if (NULL != test.rgb888) free(test.rgb888), test.rgb888 = NULL;
   if (NULL != test.disp) libmaix_disp_destroy(&test.disp), test.disp = NULL;
 
   libmaix_camera_module_deinit();
 
   // ALOGE(__FUNCTION__);
+}
+
+void rgb888_to_565(uint8_t * rgb888, uint16_t width, uint16_t height, uint16_t * rgb565)
+{
+    // static uint16_t table[255*255*255] = {}, init_table = 1;
+    // if (init_table) {
+    //     init_table = 0;
+    //     for (int )
+    // }
 }
 
 void test_work() {
@@ -154,18 +163,21 @@ void test_work() {
 
   // unsigned short rgb565[test.disp->width * test.disp->height];
 
+  uint8_t tmp[test.disp->width * test.disp->height * 2];
   while (test.is_run)
   {
-    if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb_buf0))
+    if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb888))
     {
-      // if (test.disp->bpp == 2 || test.disp->bpp == 1) {
-      //   uint8_t tmp[test.disp->width * test.disp->height * 2];
-      //   unsigned short *rgb565 = (unsigned short *)tmp;
-      //   for (int i = 0, sum = test.disp->width * test.disp->height; i < sum; i++) {
-      //     rgb565[i] = make16color(test.rgb_buf0[i + 0], test.rgb_buf0[i + 1], test.rgb_buf0[i + 2]);
-      //   }
-      //   test.disp->draw(test.disp, rgb565);
-      // }
+      // test.disp->draw(test.disp, test.rgb888);
+      if (test.disp->bpp == 2 || test.disp->bpp == 1) {
+        unsigned short *rgb565 = (unsigned short *)tmp;
+        // for (int i = 0, sum = test.disp->width * test.disp->height; i < sum; i++) {
+        //   rgb565[i] = make16color(test.rgb888[i + 0], test.rgb888[i + 1], test.rgb888[i + 2]);
+        // }
+        extern void rgb888_to_rgb565(uint8_t * rgb888, uint16_t width, uint16_t height, uint16_t * rgb565);
+        rgb888_to_rgb565(test.rgb888, test.disp->width, test.disp->height, rgb565);
+        test.disp->draw(test.disp, tmp);
+      }
     }
     // usleep(20 * 1000);
     CALC_FPS("maix_test");

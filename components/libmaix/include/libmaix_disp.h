@@ -2,6 +2,7 @@
 #define __LIBMAIX_DISP_H
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include "libmaix_err.h"
 
@@ -34,7 +35,7 @@ typedef struct libmaix_disp
  * @param [in] fbiopan: draw 是否启用 fbiopan
  * @return 创建的对象；NULL:出错
 */
-struct libmaix_disp * libmaix_disp_create(u_int8_t fbiopan);
+struct libmaix_disp * libmaix_disp_create(uint8_t fbiopan);
 
 /**
  * @brief 销毁disp对象

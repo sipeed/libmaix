@@ -25,19 +25,19 @@
     }                                                                                                      \
   }
 
-static struct timeval old, now;
+// static struct timeval old, now;
 
-void cap_set()
-{
-  gettimeofday(&old, NULL);
-}
+// void cap_set()
+// {
+//   gettimeofday(&old, NULL);
+// }
 
-void cap_get(const char *tips)
-{
-  gettimeofday(&now, NULL);
-  if (now.tv_usec > old.tv_usec)
-    printf("%20s - %5ld us\r\n", tips, (now.tv_usec - old.tv_usec));
-}
+// void cap_get(const char *tips)
+// {
+//   gettimeofday(&now, NULL);
+//   if (now.tv_usec > old.tv_usec)
+//     printf("%20s - %5ld us\r\n", tips, (now.tv_usec - old.tv_usec));
+// }
 
 /******************************************************
  *YUV422：Y：U：V=2:1:1

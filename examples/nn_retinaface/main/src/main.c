@@ -375,7 +375,7 @@ static void handle_signal(int signo)
 
 int main(int argc, char* argv[])
 {
-    struct libmaix_disp* disp = libmaix_disp_create();
+    struct libmaix_disp* disp = libmaix_disp_create(0);
     if(disp == NULL) {
         printf("creat disp object fail\n");
         return -1;

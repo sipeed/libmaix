@@ -78,7 +78,7 @@ python3 project.py menuconfig
 ![menuconfig](assets/image/menuconfig_1.jpg)
 ![menuconfig](assets/image/menuconfig_2.jpg)
 
-第一次编译，可以只使用默认配置即可
+第一次编译，可以只使用默认配置即可，也可以使用下属配置选择自己系统的编译链（R329需要）。
 
 python project.py --toolchain /usr/bin --toolchain-prefix aarch64-linux-gnu- config
 

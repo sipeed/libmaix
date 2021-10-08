@@ -17,12 +17,12 @@ menu "Target chip configuration"
 		help
 			"select compile platform architecture"
 
-		config ARCH_R329
-			bool "compile for arch R329"
 		config ARCH_V831
 			bool "compile for arch V831"
 		config ARCH_V833
 			bool "compile for arch V833"
+		config ARCH_R329
+			bool "compile for arch R329"
 	endchoice
 	menu "upload dist configuration, only need if you use python3 project.py upload command"
 		config TARGET_IP

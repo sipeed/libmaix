@@ -44,8 +44,7 @@ void draw_test(struct libmaix_disp* disp, void* buff, int w, int h)
         img->draw_rectangle(img, 16, 142, 120, 24, color, false, 4);
         img->draw_rectangle(img, 0, 240 - 24, 240, 24, color, true, 0);
         img->draw_rectangle(img, 200, 142, 120, 24, color, false, 4);
-        disp->draw(disp, img->data, (disp->width - img->width) / 2,(disp->height - img->height) / 2, img->width, img->height, 0);
-        disp->flush(disp);
+        disp->draw(disp, img->data);
         sleep(2);
     }
 end:
@@ -55,7 +54,7 @@ end:
 
 int main(int argc, char* argv[])
 {
-    struct libmaix_disp* disp = libmaix_disp_creat();
+    struct libmaix_disp* disp = libmaix_disp_create();
     if(disp == NULL) {
         printf("creat disp object fail\n");
         return -1;
@@ -66,20 +65,17 @@ int main(int argc, char* argv[])
     int64_t interval_s;
     int count = 10;
 
-    disp->swap_rb = 1;
+    
 
     while(count --)
     {
         printf("display now\n");
         gettimeofday( &start, NULL );
-        disp->draw(disp, image_logo.pixel_data, (disp->width - w) / 2,(disp->height - h) / 2, w, h, 0);
+        disp->draw(disp, image_logo.pixel_data);
         gettimeofday( &end, NULL );
         interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll;
         printf("use time: %lld us\n", interval_s + end.tv_usec - start.tv_usec);
 
-        printf("flush\n");
-        gettimeofday( &start, NULL );
-        disp->flush(disp);
         gettimeofday( &end, NULL );
         interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll;
         printf("use time: %lld us\n", interval_s + end.tv_usec - start.tv_usec);

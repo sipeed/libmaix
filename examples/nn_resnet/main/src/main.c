@@ -230,8 +230,7 @@ void nn_test(struct libmaix_disp* disp)
         char temp_str[100];
         snprintf(temp_str, 100, "%f, %s", max_p, labels[max_idx]);
         rgb_img->draw_string(rgb_img, temp_str, 4, 4, 16, color, NULL);
-        disp->draw(disp, rgb_img->data, (disp->width - rgb_img->width) / 2,(disp->height - rgb_img->height) / 2, rgb_img->width, rgb_img->height, 1);
-        // disp->flush(disp); // disp->draw last arg=1, means will call flush in draw functioin
+        disp->draw(disp, rgb_img->data);
         CALC_TIME_END("display");
     }
 end:
@@ -266,13 +265,13 @@ end:
 
 int main(int argc, char* argv[])
 {
-    struct libmaix_disp* disp = libmaix_disp_creat();
+    struct libmaix_disp* disp = libmaix_disp_create();
     if(disp == NULL) {
         printf("creat disp object fail\n");
         return -1;
     }
 
-    disp->swap_rb = 1;
+    
 
     printf("draw test\n");
     nn_test(disp);

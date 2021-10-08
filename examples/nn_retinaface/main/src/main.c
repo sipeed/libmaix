@@ -320,7 +320,7 @@ void nn_test(struct libmaix_disp* disp)
                 }
             }
         }
-        disp->draw(disp, img_disp->data, (disp->width - img_disp->width) / 2, (disp->height - img_disp->height) / 2, img_disp->width, img_disp->height, 1);
+        disp->draw(disp, img_disp->data);
         printf("-- draw complete\n");
 #if LOAD_IMAGE
         break;
@@ -375,13 +375,13 @@ static void handle_signal(int signo)
 
 int main(int argc, char* argv[])
 {
-    struct libmaix_disp* disp = libmaix_disp_creat();
+    struct libmaix_disp* disp = libmaix_disp_create();
     if(disp == NULL) {
         printf("creat disp object fail\n");
         return -1;
     }
 
-    disp->swap_rb = 1;
+    
 
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);

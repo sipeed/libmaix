@@ -322,7 +322,7 @@ void nn_test(struct libmaix_disp* disp)
         {
             libmaix_nn_decoder_yolo2_draw_result(yolo2_decoder, &yolo2_result, count++, labels, on_draw_box, (void*)&callback_arg);
         }
-        disp->draw(disp, rgb_img->data, (disp->width - rgb_img->width) / 2,(disp->height - rgb_img->height) / 2, rgb_img->width, rgb_img->height, 1);
+        disp->draw(disp, rgb_img->data);
         // disp->flush(disp); // disp->draw last arg=1, means will call flush in draw functioin
         CALC_TIME_START();
         // printf("--convert test end\n");
@@ -368,13 +368,13 @@ end:
 
 int main(int argc, char* argv[])
 {
-    struct libmaix_disp* disp = libmaix_disp_creat();
+    struct libmaix_disp* disp = libmaix_disp_create();
     if(disp == NULL) {
         printf("creat disp object fail\n");
         return -1;
     }
 
-    disp->swap_rb = 1;
+    
 
     printf("draw test\n");
     nn_test(disp);

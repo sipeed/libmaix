@@ -12,10 +12,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "libmaix_disp.h"
-
-#include "image.hpp"
-
 inline static unsigned char make8color(unsigned char r, unsigned char g, unsigned char b)
 {
 	return (

@@ -6,9 +6,6 @@
 #include "global_build_info_time.h"
 #include "global_build_info_version.h"
 
-#include "libmaix_nn.h"
-#include "libmaix_nn_decoder_retinaface.h"
-
 #include "hello.h"
 
 void hello()

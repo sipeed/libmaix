@@ -12,83 +12,71 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "libmaix_disp.h"
 
-void draw_test(struct libmaix_disp* disp, void* buff, int w, int h)
+inline static unsigned char make8color(unsigned char r, unsigned char g, unsigned char b)
 {
-    int count = 5;
-
-    printf("--image module init\n");
-    libmaix_image_module_init();
-
-    libmaix_image_t* img = libmaix_image_create(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, buff, false);
-    if(!img)
-    {
-        printf("create yuv image fail\n");
-        goto end;
-    }
-
-    libmaix_image_color_t color = {
-        .rgb888.r = 255,
-        .rgb888.g = 255,
-        .rgb888.b = 255
-    };
-    libmaix_image_color_t bg = {
-        .rgb888.r = 241,
-        .rgb888.g = 102,
-        .rgb888.b = 102
-    };
-    while(count--)
-    {
-        img->draw_string(img, "hello", 20, 146, 16, color, NULL);
-        img->draw_string(img, "libmaix", 20 + 50, 146, 16, color, &bg);
-        img->draw_rectangle(img, 16, 142, 120, 24, color, false, 4);
-        img->draw_rectangle(img, 0, 240 - 24, 240, 24, color, true, 0);
-        img->draw_rectangle(img, 200, 142, 120, 24, color, false, 4);
-        disp->draw(disp, img->data);
-        sleep(2);
-    }
-end:
-    printf("--image module deinit\n");
-    libmaix_image_module_deinit();
+	return (
+	(((r >> 5) & 7) << 5) |
+	(((g >> 5) & 7) << 2) |
+	 ((b >> 6) & 3)	   );
 }
 
-int main(int argc, char* argv[])
+inline static unsigned short make16color(unsigned char r, unsigned char g, unsigned char b)
 {
-    struct libmaix_disp* disp = libmaix_disp_create(0);
-    if(disp == NULL) {
-        printf("creat disp object fail\n");
+	return (
+	(((r >> 3) & 31) << 11) |
+	(((g >> 2) & 63) << 5)  |
+	 ((b >> 3) & 31)		);
+}
+
+int main(int argc, char **argv)
+{
+    struct libmaix_disp *disp = libmaix_disp_create(0);
+
+    if(NULL == disp) {
+        printf("creat disp fail\n");
         return -1;
     }
 
-    int w = 240, h = 240;
-    struct timeval start, end;
-    int64_t interval_s;
-    int count = 10;
+    #define IMG_W 1024
+    #define IMG_H 1024
+    #define IMG_B 4
 
+    unsigned char test[IMG_W*IMG_H*IMG_B];
+
+    printf("[lcd] w %d h %d bpp %d\r\n", disp->width, disp->height, disp->bpp);
     
-
-    while(count --)
-    {
-        printf("display now\n");
-        gettimeofday( &start, NULL );
-        disp->draw(disp, image_logo.pixel_data);
-        gettimeofday( &end, NULL );
-        interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll;
-        printf("use time: %lld us\n", interval_s + end.tv_usec - start.tv_usec);
-
-        gettimeofday( &end, NULL );
-        interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll;
-        printf("use time: %lld us\n", interval_s + end.tv_usec - start.tv_usec);
-        printf("flush end\n");
+    if (disp->bpp == 4) {
+      // maybe is ARGB RGBA etc...
+      unsigned int *argb = (unsigned int *)test;
+      for (int i = 0, sum = disp->width * disp->height; i < sum; i++) {
+        argb[i] = 0xFF0000FF; // maybe is R + A or A + B
+      }
+      disp->draw(disp, test);
     }
 
-    sleep(1);
+    if (disp->bpp == 3) {
+      // maybe is RGB BGR etc...
+      unsigned char *rgb = (unsigned char *)test;
+      for (int i = 0, sum = disp->width * disp->height * disp->bpp; i < sum; i += disp->bpp) {
+        rgb[i + 0] = 0xFF; // maybe is RGB or BGR
+        rgb[i + 1] = 0xFF;
+        rgb[i + 2] = 0x00;
+      }
+      disp->draw(disp, test);
+    }
 
-    printf("draw test\n");
-    draw_test(disp, image_logo.pixel_data, image_logo.width, image_logo.height);
-    printf("display end\n");
+    if (disp->bpp == 2 || disp->bpp == 1) {
+      // maybe is RGB565 etc...
+      unsigned short *rgb565 = (unsigned short *)test;
+      for (int i = 0, sum = disp->width * disp->height; i < sum; i++) {
+        rgb565[i] = make16color(0xFF, 0xFF, 0x00);
+      }
+      disp->draw(disp, test);
+    }
 
     libmaix_disp_destroy(&disp);
+
     return 0;
 }
-

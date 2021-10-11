@@ -30,6 +30,9 @@ inline static unsigned short make16color(unsigned char r, unsigned char g, unsig
 
 int main(int argc, char **argv)
 {
+    extern void libimage_cpp();
+    libimage_cpp();
+
     struct libmaix_disp *disp = libmaix_disp_create(0);
 
     if(NULL == disp) {

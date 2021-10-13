@@ -86,6 +86,9 @@ int YUV422PToRGB24(void *RGB24, void *YUV422P, int width, int height)
 struct {
   int w0, h0;
   struct libmaix_cam *cam0;
+  #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+  struct libmaix_cam *cam1;
+  #endif
   uint8_t *rgb888;
   
   struct libmaix_disp *disp;
@@ -126,7 +129,12 @@ void test_init() {
 
   test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 0, 0);
   if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
-  
+    
+  #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+  test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 0, 0);
+  if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  #endif
+
   test.disp = libmaix_disp_create(0);
   if(NULL == test.disp) return ;
 
@@ -138,6 +146,11 @@ void test_init() {
 void test_exit() {
 
   if (NULL != test.cam0) libmaix_cam_destroy(&test.cam0);
+
+  #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+  if (NULL != test.cam1) libmaix_cam_destroy(&test.cam1);
+  #endif
+
   if (NULL != test.rgb888) free(test.rgb888), test.rgb888 = NULL;
   if (NULL != test.disp) libmaix_disp_destroy(&test.disp), test.disp = NULL;
 
@@ -150,12 +163,24 @@ void test_work() {
 
   test.cam0->start_capture(test.cam0);
 
+  #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+  test.cam1->start_capture(test.cam1);
+  #endif
+
   uint8_t tmp[test.disp->width * test.disp->height * 2];
 
   while (test.is_run)
   {
     if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb888))
     {
+
+      #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+      if (LIBMAIX_ERR_NONE == test.cam1->capture(test.cam1, test.rgb888))
+      {
+        CALC_FPS("/dev/video1");
+      }
+      #endif
+
       // test.disp->draw(test.disp, test.rgb888);
       // cap_set();
       if (test.disp->bpp == 2 || test.disp->bpp == 1) {
@@ -169,7 +194,10 @@ void test_work() {
         // cap_get("565 2 888");
         test.disp->draw(test.disp, tmp);
       }
-      // cap_get("maix_disp");
+
+      if (test.disp->bpp == 3) {
+      
+      }
     }
     // usleep(20 * 1000);
     CALC_FPS("maix_cam");

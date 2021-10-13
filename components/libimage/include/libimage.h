@@ -22,10 +22,11 @@ typedef enum
     LIBMAIX_IMAGE_MODE_INVALID = 0,
     LIBMAIX_IMAGE_MODE_BINARY,
     LIBMAIX_IMAGE_MODE_GRAY  ,
-    LIBMAIX_IMAGE_MODE_RGB888,          // supported
+    LIBMAIX_IMAGE_MODE_RGB888,          // software supported
     LIBMAIX_IMAGE_MODE_RGB565,
-    LIBMAIX_IMAGE_MODE_RGBA8888,
-    LIBMAIX_IMAGE_MODE_YUV420SP_NV21,   // supported
+    LIBMAIX_IMAGE_MODE_ARGB8888,
+    LIBMAIX_IMAGE_MODE_YUV420SP_NV21,   // hardware supported
+    LIBMAIX_IMAGE_MODE_YUV422_YUYV,     // software supported
 }libtest_image_mode_t;
 
 typedef union
@@ -35,10 +36,9 @@ typedef union
         uint8_t r;
         uint8_t g;
         uint8_t b;
-        uint8_t reserved;
+        uint8_t reserved;   
     }rgb888;
 }libtest_image_color_t;
-
 
 typedef enum
 {

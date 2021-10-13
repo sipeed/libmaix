@@ -44,7 +44,7 @@ extern "C" {
           return NULL;
       }
       if( !(w==0 || h==0 || mode==LIBMAIX_IMAGE_MODE_INVALID) )
-      {
+      { 
           if(!data)
           {
               switch(mode)
@@ -53,6 +53,9 @@ extern "C" {
                       img_size = w * h * 3;
                       break;
                   case LIBMAIX_IMAGE_MODE_YUV420SP_NV21:
+                      img_size = w * h * 3 / 2;
+                      break;
+                  case LIBMAIX_IMAGE_MODE_YUV422_YUYV:
                       img_size = w * h * 3 / 2;
                       break;
                   default:
@@ -125,7 +128,7 @@ extern "C" {
     libtest_image_destroy(&img);
 
     puts("libtest_image");
-    
+     
   }
 
 }

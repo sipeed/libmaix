@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 set(CMAKE_VERBOSE_MAKEFILE on)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix/include)
+link_directories("../../../r329/")
 
 add_library(maix_disp SHARED # STATIC
         src/framebuffer.c
@@ -10,6 +11,11 @@ add_library(maix_disp SHARED # STATIC
 )
 
 set(export_dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix)
+
+target_link_libraries(
+        maix_disp
+        libmaix_image.so
+)
 
 set_target_properties(
         maix_disp

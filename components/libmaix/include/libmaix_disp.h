@@ -2,8 +2,8 @@
 #define __LIBMAIX_DISP_H
 
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "libmaix_err.h"
 
 #ifdef __cplusplus
@@ -14,7 +14,7 @@ typedef struct libmaix_disp
 {
     int width;      /* FB的宽度 */
     int height;     /* FB的高度 */
-    int bpp;        /* FB的数据格式 RGB8 RGB565 RGB888 RGB8888 */
+    int bpp;     /* FB的数据格式 RGB8 RGB565 RGB888 RGB8888 */
 
     /**
      * @brief 绘制图像到 framebuffer ，根据 width * height * bpp 进行 memcpy

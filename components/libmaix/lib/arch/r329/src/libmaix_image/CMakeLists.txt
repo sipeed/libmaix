@@ -5,17 +5,15 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../r329/include/opencv4)
 link_directories("../../../r329/opencv4")
-link_directories("../../../r329/")
 
-add_library(maix_cam SHARED # STATIC
-        src/libmaix_cam.cpp
+add_library(maix_image SHARED # STATIC
+        src/libmaix_image.cpp
 )
 
 set(export_dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix)
 
 target_link_libraries(
-        maix_cam
-        libmaix_image.so
+        maix_image
         libopencv_aruco.so
         libopencv_dnn.so
         libopencv_hfs.so
@@ -64,7 +62,7 @@ target_link_libraries(
 )
 
 set_target_properties(
-        maix_cam
+        maix_image
         PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${export_dir}/lib/arch/r329")
 
 add_custom_command(
@@ -73,6 +71,6 @@ add_custom_command(
         # PRE_BUILD：在 hello 运行其他规则前执行
         # PRE_LINK：在编译源文件之后但在 链接其他二进制文件 或 运行静态库的库管理器 或 归档工具 之前执行
         # POST_BUILD：最后执行
-        TARGET maix_cam POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_CURRENT_SOURCE_DIR}/src/libmaix_cam.h" "${export_dir}/include/libmaix_cam.h"
+        TARGET maix_image POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_CURRENT_SOURCE_DIR}/src/libmaix_image.h" "${export_dir}/include/libmaix_image.h"
 )

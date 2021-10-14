@@ -84,6 +84,8 @@ python3 project.py menuconfig
 
 python project.py --toolchain /usr/bin --toolchain-prefix aarch64-linux-gnu- config
 
+python3 project.py menuconfig
+
 然后在 menuconfig 勾选 R329 平台的动态链接库 (Target chip configuration  ---> Chip architecture (compile for arch R329)  ---> (X) compile for arch R329)
 
 ## V83x

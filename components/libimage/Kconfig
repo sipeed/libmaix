@@ -1,6 +1,0 @@
-
-config COMPONENT_IMAGE_ENABLE
-    bool "Enable libimage component"
-    default y
-    help
-        Select this option to enable use libimage base on opencv4.

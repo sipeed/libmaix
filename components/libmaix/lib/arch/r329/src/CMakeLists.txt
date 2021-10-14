@@ -17,6 +17,7 @@ set(lib_build_DIR ${lib_src_DIR}/build)
 file(MAKE_DIRECTORY ${lib_build_DIR})
 
 # 添加子项目
+add_subdirectory(${lib_src_DIR}/libmaix_utils ${lib_build_DIR}/libmaix_utils)
 add_subdirectory(${lib_src_DIR}/libmaix_image ${lib_build_DIR}/libmaix_image)
 add_subdirectory(${lib_src_DIR}/libmaix_disp ${lib_build_DIR}/libmaix_disp)
 add_subdirectory(${lib_src_DIR}/libmaix_cam ${lib_build_DIR}/libmaix_cam)

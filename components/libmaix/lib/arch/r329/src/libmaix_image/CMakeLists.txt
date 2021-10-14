@@ -5,15 +5,18 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../r329/include/opencv4)
 link_directories("../../../r329/opencv4")
+link_directories("../../../r329/")
 
 add_library(maix_image SHARED # STATIC
-        src/libmaix_image.cpp
+        src/opencv_image.cpp
+        src/libmaix_image.c
 )
 
 set(export_dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix)
 
 target_link_libraries(
         maix_image
+        libmaix_utils.so
         libopencv_aruco.so
         libopencv_dnn.so
         libopencv_hfs.so

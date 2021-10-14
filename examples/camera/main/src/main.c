@@ -5,8 +5,9 @@
 #include <string.h>
 #include "time.h"
 
+#include "libmaix_err.h"
 #include "libmaix_cam.h"
-// #include "libmaix_image.h"
+#include "libmaix_image.h"
 #include "libmaix_disp.h"
 
 // #include "rotate.h"
@@ -160,6 +161,10 @@ void test_exit() {
 }
 
 void test_work() {
+
+  libmaix_image_module_init();
+
+  libmaix_image_module_deinit();
 
   test.cam0->start_capture(test.cam0);
 

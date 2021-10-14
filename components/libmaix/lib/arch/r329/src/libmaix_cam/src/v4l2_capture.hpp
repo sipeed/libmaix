@@ -316,7 +316,7 @@ int V4L2Capture::getFrame(void **frame_buf, size_t *len)
   queue_buf.memory = V4L2_MEMORY_MMAP;
   if (-1 == ioctl(fd_cam, VIDIOC_DQBUF, &queue_buf))
   {
-    printf("VIDIOC_DQBUF error\n");
+    // printf("VIDIOC_DQBUF error\n");
     return -1;
   }
   *frame_buf = buffers[queue_buf.index].start;

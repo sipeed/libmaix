@@ -5,6 +5,8 @@
 #include <string.h>
 #include "time.h"
 
+#include "global_config.h"
+#include "libmaix_debug.h"
 #include "libmaix_err.h"
 #include "libmaix_cam.h"
 #include "libmaix_image.h"
@@ -87,7 +89,7 @@ int YUV422PToRGB24(void *RGB24, void *YUV422P, int width, int height)
 struct {
   int w0, h0;
   struct libmaix_cam *cam0;
-  #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+  #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   struct libmaix_cam *cam1;
   #endif
   uint8_t *rgb888;
@@ -131,7 +133,7 @@ void test_init() {
   test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 0, 0);
   if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
     
-  #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+  #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 0, 0);
   if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
   #endif
@@ -148,7 +150,7 @@ void test_exit() {
 
   if (NULL != test.cam0) libmaix_cam_destroy(&test.cam0);
 
-  #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+  #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   if (NULL != test.cam1) libmaix_cam_destroy(&test.cam1);
   #endif
 
@@ -161,25 +163,47 @@ void test_exit() {
 }
 
 void test_work() {
-
+  
   libmaix_image_module_init();
 
   libmaix_image_module_deinit();
 
   test.cam0->start_capture(test.cam0);
 
-  #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+  #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   test.cam1->start_capture(test.cam1);
   #endif
-
-  uint8_t tmp[test.disp->width * test.disp->height * 2];
-
   while (test.is_run)
   {
-    if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb888))
+    // goal code
+    libmaix_image_t *tmp = NULL;
+    if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
+    {
+        test.disp->draw_image(test.disp, tmp);
+        CALC_FPS("maix_cam");
+    }
+
+    continue; // new code 
+    
+    if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
+    {
+        // printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
+        libmaix_image_t *rgb565 = libmaix_image_create(tmp->width, tmp->height, LIBMAIX_IMAGE_MODE_RGB565, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+        if (LIBMAIX_ERR_NONE == tmp->convert(tmp, LIBMAIX_IMAGE_MODE_RGB565, &rgb565))
+        {
+            printf("w %d h %d p %d \r\n", rgb565->width, rgb565->height, rgb565->mode);
+            test.disp->draw(test.disp, rgb565->data);
+        }
+        libmaix_image_destroy(&rgb565);
+        CALC_FPS("maix_cam");
+    }
+
+    continue; // old code 
+
+    if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb888))// 
     {
 
-      #ifdef __VERSION__ == "6.4.1" // is v83x arm-openwrt-linux-gcc
+      #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
       if (LIBMAIX_ERR_NONE == test.cam1->capture(test.cam1, test.rgb888))
       {
         CALC_FPS("/dev/video1");
@@ -189,6 +213,7 @@ void test_work() {
       // test.disp->draw(test.disp, test.rgb888);
       // cap_set();
       if (test.disp->bpp == 2 || test.disp->bpp == 1) {
+        uint8_t tmp[test.disp->width * test.disp->height * 2];
         uint8_t *rgb888 = test.rgb888;
         uint16_t *rgb565 = (uint16_t *)tmp;
         // cap_set();
@@ -203,9 +228,9 @@ void test_work() {
       if (test.disp->bpp == 3) {
       
       }
+      CALC_FPS("maix_cam");
     }
     // usleep(20 * 1000);
-    CALC_FPS("maix_cam");
   }
 
 }

@@ -8,8 +8,7 @@ link_directories("../../../r329/opencv4")
 link_directories("../../../r329/")
 
 add_library(maix_image SHARED # STATIC
-        src/opencv_image.cpp
-        src/libmaix_image.c
+        src/libmaix_image.cpp
 )
 
 set(export_dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix)

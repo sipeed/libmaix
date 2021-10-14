@@ -14,6 +14,45 @@
 #define FBDEV_PATH "/dev/fb0"
 #endif
 
+static libmaix_err_t disp_draw_image(struct libmaix_disp *disp, struct libmaix_image *img)
+{
+  struct libmaix_disp_priv_t *priv = (struct libmaix_disp_priv_t *)disp->reserved;
+
+  if (priv->disp_img == NULL) {
+    // bind disp->bpp && LIBMAIX_IMAGE_MODE_RGB565
+    libmaix_image_mode_t mode;
+    switch (disp->bpp) {
+      case 4: mode = LIBMAIX_IMAGE_MODE_RGBA8888; break;
+      case 3: mode = LIBMAIX_IMAGE_MODE_RGB888; break;
+      case 2: mode = LIBMAIX_IMAGE_MODE_RGB565; break;
+    }
+    priv->disp_img = libmaix_image_create(disp->width, disp->height, mode, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    if(!priv->disp_img) return LIBMAIX_ERR_NO_MEM;
+  }
+
+  if (LIBMAIX_ERR_NONE == img->convert(img, LIBMAIX_IMAGE_MODE_RGB565, &priv->disp_img))
+  {
+      memcpy((unsigned char *)priv->fbp, priv->disp_img, disp->width * disp->height * disp->bpp);
+
+      priv->vinfo.yoffset = 0;
+      priv->vinfo.reserved[0] = 0;
+      priv->vinfo.reserved[1] = 0;
+      priv->vinfo.reserved[2] = disp->width;
+      priv->vinfo.reserved[3] = disp->height;
+
+      if (priv->fbiopan) {
+        if (ioctl(priv->fbfd, FBIOPAN_DISPLAY, &priv->vinfo))
+        {
+          fprintf(stderr, "ioctl FBIOPAN_DISPLAY: %s\n", strerror(errno));
+          return LIBMAIX_ERR_UNKNOWN;
+        }
+      }
+
+      return LIBMAIX_ERR_NONE;
+  }
+  return LIBMAIX_ERR_NOT_IMPLEMENT;
+}
+
 static libmaix_err_t disp_draw(struct libmaix_disp *disp, unsigned char *buf)
 {
   struct libmaix_disp_priv_t *priv = (struct libmaix_disp_priv_t *)disp->reserved;
@@ -44,6 +83,9 @@ static int priv_devDeinit(struct libmaix_disp *disp)
   {
     munmap(priv->fbp, priv->finfo.smem_len);
     close(priv->fbfd);
+    if(priv->disp_img != NULL) {
+        libmaix_image_destroy(&priv->disp_img);
+    }
   }
   return 0;
 }
@@ -75,7 +117,7 @@ static int priv_devInit(struct libmaix_disp *disp)
       return -1;
     }
 
-    printf("%dx%d, %dbpp\n", priv->vinfo.xres, priv->vinfo.yres, priv->vinfo.bits_per_pixel);
+    printf("[framebuffer](%d,%d, %dbpp)\n", priv->vinfo.xres, priv->vinfo.yres, priv->vinfo.bits_per_pixel);
 
     // Map the device to memory
     priv->fbp = (char *)mmap(0, priv->finfo.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, priv->fbfd, 0);
@@ -88,7 +130,7 @@ static int priv_devInit(struct libmaix_disp *disp)
     disp->width = priv->vinfo.xres;
     disp->height = priv->vinfo.yres;
     disp->bpp = priv->vinfo.bits_per_pixel / 8;
-
+    
     // printf("The framebuffer device was mapped to memory successfully.\n");
 
     return LIBMAIX_ERR_NONE;
@@ -102,7 +144,9 @@ int disp_priv_init(struct libmaix_disp *disp)
   struct libmaix_disp_priv_t *priv = (struct libmaix_disp_priv_t *)disp->reserved;
 
   disp->draw = disp_draw;
+  disp->draw_image = disp_draw_image;
 
+  priv->disp_img = NULL;
   priv->devInit = priv_devInit;
   priv->devDeinit = priv_devDeinit;
 

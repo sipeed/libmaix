@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "libmaix_err.h"
+#include "libmaix_image.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,6 +26,16 @@ typedef struct libmaix_disp
      * @return 0
       */
     libmaix_err_t (*draw)(struct libmaix_disp *disp, unsigned char *buf);
+
+    /**
+     * @brief 绘制图像到 framebuffer (libmaix_image)
+     * 
+     * @param [in] disp: disp对象
+     * @param [in] img: 传入 libmaix_image 对象其内部会自行转换并显示。
+     * 
+     * @return 0
+      */
+    libmaix_err_t (*draw_image)(struct libmaix_disp *disp, struct libmaix_image *img);
 
     void *reserved;
 }libmaix_disp_t;

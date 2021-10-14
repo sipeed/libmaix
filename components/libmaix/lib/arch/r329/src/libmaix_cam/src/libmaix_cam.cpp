@@ -8,6 +8,7 @@
 #include "opencv2/core/types_c.h"
 
 extern "C" {
+
 void libmaix_camera_module_init()
 {
     return ;
@@ -26,6 +27,7 @@ int vi_init_capture(struct libmaix_cam *cam)
     priv->vcap = new V4L2Capture(dev_name, priv->vi_w, priv->vi_h);
     priv->vcap->openDevice();
     priv->vcap->initDevice();
+    priv->vi_img = NULL;
     priv->inited = 1;
     return 0;
 }
@@ -53,6 +55,47 @@ libmaix_err_t vi_start_capture(struct libmaix_cam *cam)
         if (priv->vi_w < priv->vcap->capW) priv->vi_x = (priv->vcap->capW - priv->vi_w) / 2;
         if (priv->vi_h < priv->vcap->capH) priv->vi_y = (priv->vcap->capH - priv->vi_h) / 2;
         return LIBMAIX_ERR_NONE;
+    }
+    return LIBMAIX_ERR_NOT_READY;
+}
+
+libmaix_err_t vi_priv_capture_image(struct libmaix_cam *cam, struct libmaix_image **img)
+{
+    struct libmaix_cam_priv_t *priv = (libmaix_cam_priv_t*)cam->reserved;
+    if (priv->vi_img == NULL) {
+      priv->vi_img = libmaix_image_create(priv->vi_w, priv->vi_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+      if(!priv->vi_img) return LIBMAIX_ERR_NO_MEM;
+    }
+
+    if (priv->inited) {
+        unsigned char *yuv422frame = NULL;
+        size_t readlen = 0;
+        if (0 == priv->vcap->getFrame((void **)&yuv422frame, (size_t *)&readlen)) {
+            cv::Mat src(priv->vcap->capH, priv->vcap->capW, CV_8UC2, (void*)yuv422frame);
+            // cv::imwrite("src.jpg", src);
+            cv::Mat dst;
+            cv::cvtColor(src, dst, cv::COLOR_YUV2RGB_YUYV);
+
+            // monkey patch 2021
+            cv::Mat patch;
+            cv::flip(dst, patch, 0); // cv::rotate(dst, patch, cv::ROTATE_180);
+            dst = patch;
+            // patch end
+
+            // cv::imwrite("dst.jpg", dst);
+            if (cam->fram_size != dst.total() * dst.elemSize()) {
+              cv::Mat tmp;
+              dst(cv::Rect(priv->vi_x, priv->vi_y, priv->vi_w, priv->vi_h)).copyTo(tmp);
+              // cv::imwrite("tmp.jpg", tmp);
+              // printf("[vi_priv_capture] %d %d %d %d\r\n", t.cols, t.rows, priv->vcap->capW, priv->vcap->capH);
+              memcpy(priv->vi_img->data, tmp.data, cam->fram_size);
+            } else {
+              memcpy(priv->vi_img->data, dst.data, cam->fram_size);
+            }
+            priv->vcap->backFrame();
+            *img = priv->vi_img;
+            return LIBMAIX_ERR_NONE;
+        }
     }
     return LIBMAIX_ERR_NOT_READY;
 }
@@ -109,6 +152,7 @@ int cam_priv_init(struct libmaix_cam *cam)
 
     cam->start_capture = vi_start_capture;
     cam->capture = vi_priv_capture;
+    cam->capture_image = vi_priv_capture_image;
     
     return priv->devInit(cam);
 }
@@ -158,6 +202,9 @@ void libmaix_cam_destroy(struct libmaix_cam **cam)
     struct libmaix_cam_priv_t *priv = (struct libmaix_cam_priv_t*)(*cam)->reserved;
 
     if(priv) {
+        if(priv->vi_img != NULL) {
+            libmaix_image_destroy(&priv->vi_img);
+        }
         if(priv->devDeinit) {
             priv->devDeinit(*cam);
         }

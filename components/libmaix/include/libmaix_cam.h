@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "libmaix_err.h"
+#include "libmaix_image.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +33,16 @@ typedef struct libmaix_cam
      * @return 0:成功，1: 未准备好， 其他: 出错
     */
     libmaix_err_t (*capture)(struct libmaix_cam *cam, unsigned char *buf);
+
+    /**
+     * @brief 获取一帧图像
+     * 
+     * @param [in] cam: cam对象
+     * @param [in] img: img对象指针（由内部提供）
+     * 
+     * @return 0:成功，1: 未准备好， 其他: 出错
+    */
+    libmaix_err_t (*capture_image)(struct libmaix_cam *cam, struct libmaix_image **img);
 
     void *reserved;
 }libmaix_cam_t;

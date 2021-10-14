@@ -23,11 +23,12 @@ extern "C" {
 #endif
 
 #if DEBUG // from makefile environment variable
-    #define LIBMAIX_DEBUG_PRINTF(fmt, ...) printf(fmt, ##__VA_ARGS__)
+    #define LIBMAIX_INFO_PRINTF(fmt, ...) printf("{%s:%d}[INFO:%s]( " fmt " )\r\n" , __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
+    #define LIBMAIX_DEBUG_PRINTF(fmt, ...) printf("{%s:%d}[DEBUG:%s]( " fmt " )\r\n" , __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 #else
+    #define LIBMAIX_INFO_PRINTF(fmt, ...) printf("{%s:%d}[INFO:%s]( " fmt " )\r\n" , __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
     #define LIBMAIX_DEBUG_PRINTF(fmt, ...)
 #endif
-
 
 #define LIBMAIX_ERROR_PRINTF(fmt, ...) do{ \
         printf("[ERROR] libmaix: "); \
@@ -35,11 +36,9 @@ extern "C" {
     }while(0)
 #define LIBMAIX_IMAGE_ERROR(err_num) LIBMAIX_ERROR_PRINTF("%s\n", libmaix_get_err_msg(err_num))
 
-
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif
 

@@ -20,6 +20,8 @@ Time:25 May 2017
 #include <iomanip>
 #include <string>
 
+#define V4L2_PRINTF(fmt, ...) // printf("{%s:%d}[INFO:%s]( " fmt " )\r\n" , __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
+
 using namespace std;
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
@@ -80,11 +82,11 @@ V4L2Capture::~V4L2Capture()
 int V4L2Capture::openDevice()
 {
   /*设备的打开*/
-  printf("video dev : %s\n", devName);
+  V4L2_PRINTF("video dev : %s\n", devName);
   fd_cam = open(devName, O_RDWR);
   if (fd_cam < 0)
   {
-    perror("Can't open video device");
+    V4L2_PRINTF("Can't open video device");
   }
   return 0;
 }
@@ -96,7 +98,7 @@ int V4L2Capture::closeDevice()
     int ret = 0;
     if ((ret = close(fd_cam)) < 0)
     {
-      perror("Can't close video device");
+      V4L2_PRINTF("Can't close video device");
     }
     return 0;
   }
@@ -119,9 +121,9 @@ int V4L2Capture::initDevice()
   ret = ioctl(fd_cam, VIDIOC_QUERYCAP, &cam_cap);
   if (ret < 0)
   {
-    perror("Can't get device information: VIDIOCGCAP");
+    V4L2_PRINTF("Can't get device information: VIDIOCGCAP");
   }
-  printf(
+  V4L2_PRINTF(
       "Driver Name:%s\nCard Name:%s\nBus info:%s\nDriver Version:%u.%u.%u\n",
       cam_cap.driver, cam_cap.card, cam_cap.bus_info,
       (cam_cap.version >> 16) & 0XFF, (cam_cap.version >> 8) & 0XFF,
@@ -130,10 +132,10 @@ int V4L2Capture::initDevice()
   /* 使用IOCTL命令VIDIOC_ENUM_FMT，获取摄像头所有支持的格式*/
   cam_fmtdesc.index = 0;
   cam_fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  printf("Support format:\n");
+  V4L2_PRINTF("Support format:\n");
   while (ioctl(fd_cam, VIDIOC_ENUM_FMT, &cam_fmtdesc) != -1)
   {
-    printf("\t%d.%s\n", cam_fmtdesc.index + 1, cam_fmtdesc.description);
+    V4L2_PRINTF("\t%d.%s\n", cam_fmtdesc.index + 1, cam_fmtdesc.description);
     cam_fmtdesc.index++;
   }
 
@@ -141,7 +143,7 @@ int V4L2Capture::initDevice()
   cam_cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   if (0 == ioctl(fd_cam, VIDIOC_CROPCAP, &cam_cropcap))
   {
-    printf("Default rec:\n\tleft:%d\n\ttop:%d\n\twidth:%d\n\theight:%d\n",
+    V4L2_PRINTF("Default rec:\n\tleft:%d\n\ttop:%d\n\twidth:%d\n\theight:%d\n",
            cam_cropcap.defrect.left, cam_cropcap.defrect.top,
            cam_cropcap.defrect.width, cam_cropcap.defrect.height);
     /* 使用IOCTL命令VIDIOC_S_CROP，获取摄像头的窗口取景参数*/
@@ -149,12 +151,12 @@ int V4L2Capture::initDevice()
     cam_crop.c = cam_cropcap.defrect; //默认取景窗口大小
     if (-1 == ioctl(fd_cam, VIDIOC_S_CROP, &cam_crop))
     {
-      //printf("Can't set crop para\n");
+      //V4L2_PRINTF("Can't set crop para\n");
     }
   }
   else
   {
-    printf("Can't set cropcap para\n");
+    V4L2_PRINTF("Can't set cropcap para\n");
   }
 
   /* 使用IOCTL命令VIDIOC_S_FMT，设置摄像头帧信息*/
@@ -166,23 +168,24 @@ int V4L2Capture::initDevice()
   ret = ioctl(fd_cam, VIDIOC_S_FMT, &cam_format);
   if (ret < 0)
   {
-    perror("Can't set frame information");
+    V4L2_PRINTF("Can't set frame information");
   }
   /* 使用IOCTL命令VIDIOC_G_FMT，获取摄像头帧信息*/
   cam_format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   ret = ioctl(fd_cam, VIDIOC_G_FMT, &cam_format);
   if (ret < 0)
   {
-    perror("Can't get frame information");
+    V4L2_PRINTF("Can't get frame information");
   }
-  printf("Current data format information:\n\twidth:%d\n\theight:%d\n",
-         cam_format.fmt.pix.width, cam_format.fmt.pix.height);
+  
+  printf("[v4l2] Current data format information:\n\twidth:%d\n\theight:%d\n\tpixelformat:%X\n",
+         cam_format.fmt.pix.width, cam_format.fmt.pix.height, cam_format.fmt.pix.pixelformat);
   capW = cam_format.fmt.pix.width;// cam_cropcap.defrect.width;
   capH = cam_format.fmt.pix.height;// cam_cropcap.defrect.height;
   ret = initBuffers();
   if (ret < 0)
   {
-    perror("Buffers init error");
+    V4L2_PRINTF("Buffers init error");
     //exit(-1);
   }
   // {
@@ -214,16 +217,16 @@ int V4L2Capture::initBuffers()
   ret = ioctl(fd_cam, VIDIOC_REQBUFS, &req);
   if (ret < 0)
   {
-    perror("Request frame buffers failed");
+    V4L2_PRINTF("Request frame buffers failed");
   }
   if (req.count < 2)
   {
-    perror("Request frame buffers while insufficient buffer memory");
+    V4L2_PRINTF("Request frame buffers while insufficient buffer memory");
   }
   buffers = (struct cam_buffer *)calloc(req.count, sizeof(*buffers));
   if (!buffers)
   {
-    perror("Out of memory");
+    V4L2_PRINTF("Out of memory");
   }
   for (n_buffers = 0; n_buffers < req.count; n_buffers++)
   {
@@ -236,11 +239,11 @@ int V4L2Capture::initBuffers()
     ret = ioctl(fd_cam, VIDIOC_QUERYBUF, &buf);
     if (ret < 0)
     {
-      printf("VIDIOC_QUERYBUF %d failed\n", n_buffers);
+      V4L2_PRINTF("VIDIOC_QUERYBUF %d failed\n", n_buffers);
       return -1;
     }
     buffers[n_buffers].length = buf.length;
-    //printf("buf.length= %d\n",buf.length);
+    //V4L2_PRINTF("buf.length= %d\n",buf.length);
     // 映射内存
     buffers[n_buffers].start = mmap(
         NULL, // start anywhere
@@ -248,7 +251,7 @@ int V4L2Capture::initBuffers()
         buf.m.offset);
     if (MAP_FAILED == buffers[n_buffers].start)
     {
-      printf("mmap buffer%d failed\n", n_buffers);
+      V4L2_PRINTF("mmap buffer%d failed\n", n_buffers);
       return -1;
     }
   }
@@ -267,7 +270,7 @@ int V4L2Capture::startCapture()
     buf.index = i;
     if (-1 == ioctl(fd_cam, VIDIOC_QBUF, &buf))
     {
-      printf("VIDIOC_QBUF buffer%d failed\n", i);
+      V4L2_PRINTF("VIDIOC_QBUF buffer%d failed\n", i);
       return -1;
     }
   }
@@ -275,7 +278,7 @@ int V4L2Capture::startCapture()
   type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   if (-1 == ioctl(fd_cam, VIDIOC_STREAMON, &type))
   {
-    printf("VIDIOC_STREAMON error");
+    V4L2_PRINTF("VIDIOC_STREAMON error");
     return -1;
   }
   return 0;
@@ -287,7 +290,7 @@ int V4L2Capture::stopCapture()
   type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   if (-1 == ioctl(fd_cam, VIDIOC_STREAMOFF, &type))
   {
-    printf("VIDIOC_STREAMOFF error\n");
+    V4L2_PRINTF("VIDIOC_STREAMOFF error\n");
     return -1;
   }
   return 0;
@@ -300,7 +303,7 @@ int V4L2Capture::freeBuffers()
   {
     if (-1 == munmap(buffers[i].start, buffers[i].length))
     {
-      printf("munmap buffer%d failed\n", i);
+      V4L2_PRINTF("munmap buffer%d failed\n", i);
       return -1;
     }
   }
@@ -316,7 +319,7 @@ int V4L2Capture::getFrame(void **frame_buf, size_t *len)
   queue_buf.memory = V4L2_MEMORY_MMAP;
   if (-1 == ioctl(fd_cam, VIDIOC_DQBUF, &queue_buf))
   {
-    // printf("VIDIOC_DQBUF error\n");
+    // V4L2_PRINTF("VIDIOC_DQBUF error\n");
     return -1;
   }
   *frame_buf = buffers[queue_buf.index].start;
@@ -336,7 +339,7 @@ int V4L2Capture::backFrame()
     queue_buf.index = frameIndex;
     if (-1 == ioctl(fd_cam, VIDIOC_QBUF, &queue_buf))
     {
-      printf("VIDIOC_QBUF error\n");
+      V4L2_PRINTF("VIDIOC_QBUF error\n");
       return -1;
     }
     return 0;
@@ -344,9 +347,9 @@ int V4L2Capture::backFrame()
   return -1;
 }
 
-/*
+#ifdef unit_test_v4l2_capture
 
-int main()
+int v4l2_capture()
 {
   unsigned char *yuv422frame = NULL;
   unsigned long yuvframeSize = 0, w = 0, h = 0;
@@ -363,7 +366,7 @@ int main()
 
     vcap->getFrame((void **)&yuv422frame, (size_t *)&yuvframeSize);
 
-    printf("yuv422frame\r\n");
+    V4L2_PRINTF("yuv422frame\r\n");
 
     FILE *fp = NULL;
 
@@ -380,4 +383,4 @@ int main()
   vcap->closeDevice();
 }
 
-*/
+#endif

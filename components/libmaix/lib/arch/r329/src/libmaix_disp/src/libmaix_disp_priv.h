@@ -13,6 +13,8 @@ struct libmaix_disp_priv_t
     struct fb_var_screeninfo vinfo;
     struct fb_fix_screeninfo finfo;
     
+    libmaix_image_t* disp_img;
+    
     int (*devInit)(struct libmaix_disp *disp);
     int (*devDeinit)(struct libmaix_disp *disp);
 };

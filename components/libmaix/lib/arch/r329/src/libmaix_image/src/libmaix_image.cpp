@@ -141,10 +141,12 @@ extern "C"
   {
     uint64_t img_size = 0;
 
-    if (!(mode == LIBMAIX_IMAGE_MODE_RGB888 ||
-          mode == LIBMAIX_IMAGE_MODE_YUV420SP_NV21 ||
-          mode == LIBMAIX_IMAGE_MODE_RGB565 ||
-          mode == LIBMAIX_IMAGE_MODE_RGBA8888))
+    if( !(mode==LIBMAIX_IMAGE_MODE_RGB565 || 
+          mode==LIBMAIX_IMAGE_MODE_RGB888 || 
+          mode==LIBMAIX_IMAGE_MODE_BGR888 || 
+          mode==LIBMAIX_IMAGE_MODE_RGBA8888 || 
+          mode==LIBMAIX_IMAGE_MODE_YUV420SP_NV21 || 
+          mode==LIBMAIX_IMAGE_MODE_YUV422_YUYV) )
     {
       LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_PARAM);
       return NULL;
@@ -153,23 +155,25 @@ extern "C"
     {
       if (!data)
       {
-        switch (mode)
+        switch(mode)
         {
-        case LIBMAIX_IMAGE_MODE_RGB565:
-          img_size = w * h * 2;
-          break;
-        case LIBMAIX_IMAGE_MODE_RGB888:
-          img_size = w * h * 3;
-          break;
-        case LIBMAIX_IMAGE_MODE_RGBA8888:
-          img_size = w * h * 3;
-          break;
-        case LIBMAIX_IMAGE_MODE_YUV420SP_NV21:
-          img_size = w * h * 3 / 2;
-          break;
-        default:
-          LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_PARAM);
-          return NULL;
+            case LIBMAIX_IMAGE_MODE_RGBA8888:
+                img_size = w * h * 4;
+                break;
+            case LIBMAIX_IMAGE_MODE_BGR888:
+            case LIBMAIX_IMAGE_MODE_RGB888:
+                img_size = w * h * 3;
+                break;
+            case LIBMAIX_IMAGE_MODE_RGB565:
+            case LIBMAIX_IMAGE_MODE_YUV422_YUYV:
+                img_size = w * h * 2;
+                break;
+            case LIBMAIX_IMAGE_MODE_YUV420SP_NV21:
+                img_size = w * h * 3 / 2;
+                break;
+            default:
+                LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_PARAM);
+                return NULL;
         }
         data = malloc(img_size);
         if (!data)

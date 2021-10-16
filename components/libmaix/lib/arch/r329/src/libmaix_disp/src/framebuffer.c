@@ -17,40 +17,44 @@
 static libmaix_err_t disp_draw_image(struct libmaix_disp *disp, struct libmaix_image *img)
 {
   struct libmaix_disp_priv_t *priv = (struct libmaix_disp_priv_t *)disp->reserved;
-
+  // printf("disp_draw_image %d %d %p \r\n", img->width, img->height, priv->disp_img);
   if (priv->disp_img == NULL) {
     // bind disp->bpp && LIBMAIX_IMAGE_MODE_RGB565
-    libmaix_image_mode_t mode;
+    libmaix_image_mode_t mode = LIBMAIX_IMAGE_MODE_INVALID;
     switch (disp->bpp) {
       case 4: mode = LIBMAIX_IMAGE_MODE_RGBA8888; break;
-      case 3: mode = LIBMAIX_IMAGE_MODE_RGB888; break;
+      // case 3: mode = LIBMAIX_IMAGE_MODE_RGB888; break;
+      case 3: mode = LIBMAIX_IMAGE_MODE_BGR888; break; // v83x fb set bgr888 is bug!!!! : (
       case 2: mode = LIBMAIX_IMAGE_MODE_RGB565; break;
     }
     priv->disp_img = libmaix_image_create(disp->width, disp->height, mode, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     if(!priv->disp_img) return LIBMAIX_ERR_NO_MEM;
   }
-
-  if (LIBMAIX_ERR_NONE == img->convert(img, LIBMAIX_IMAGE_MODE_RGB565, &priv->disp_img))
-  {
-      memcpy((unsigned char *)priv->fbp, priv->disp_img, disp->width * disp->height * disp->bpp);
-
-      priv->vinfo.yoffset = 0;
-      priv->vinfo.reserved[0] = 0;
-      priv->vinfo.reserved[1] = 0;
-      priv->vinfo.reserved[2] = disp->width;
-      priv->vinfo.reserved[3] = disp->height;
-
-      if (priv->fbiopan) {
-        if (ioctl(priv->fbfd, FBIOPAN_DISPLAY, &priv->vinfo))
-        {
-          fprintf(stderr, "ioctl FBIOPAN_DISPLAY: %s\n", strerror(errno));
-          return LIBMAIX_ERR_UNKNOWN;
-        }
+  if (img->mode != priv->disp_img->mode){
+      if (LIBMAIX_ERR_NONE != img->convert(img, priv->disp_img->mode, &priv->disp_img))
+      {
+          return LIBMAIX_ERR_NOT_IMPLEMENT;
       }
-
-      return LIBMAIX_ERR_NONE;
+      memcpy((unsigned char *)priv->fbp, priv->disp_img->data, disp->width * disp->height * disp->bpp);
+  } else {
+      memcpy((unsigned char *)priv->fbp, img->data, disp->width * disp->height * disp->bpp);
   }
-  return LIBMAIX_ERR_NOT_IMPLEMENT;
+
+  priv->vinfo.yoffset = 0;
+  priv->vinfo.reserved[0] = 0;
+  priv->vinfo.reserved[1] = 0;
+  priv->vinfo.reserved[2] = disp->width;
+  priv->vinfo.reserved[3] = disp->height;
+
+  if (priv->fbiopan) {
+    if (ioctl(priv->fbfd, FBIOPAN_DISPLAY, &priv->vinfo))
+    {
+      fprintf(stderr, "ioctl FBIOPAN_DISPLAY: %s\n", strerror(errno));
+      return LIBMAIX_ERR_UNKNOWN;
+    }
+  }
+
+  return LIBMAIX_ERR_NONE;
 }
 
 static libmaix_err_t disp_draw(struct libmaix_disp *disp, unsigned char *buf)

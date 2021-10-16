@@ -164,10 +164,6 @@ void test_exit() {
 
 void test_work() {
   
-  libmaix_image_module_init();
-
-  libmaix_image_module_deinit();
-
   test.cam0->start_capture(test.cam0);
 
   #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
@@ -179,8 +175,17 @@ void test_work() {
     libmaix_image_t *tmp = NULL;
     if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
     {
+        printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
         test.disp->draw_image(test.disp, tmp);
-        CALC_FPS("maix_cam");
+        CALC_FPS("maix_cam 0");
+
+        #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
+        libmaix_image_t *t = NULL;
+        if (LIBMAIX_ERR_NONE == test.cam1->capture_image(test.cam1, &t))
+        {
+            CALC_FPS("maix_cam 1");
+        }
+        #endif
     }
 
     continue; // new code 
@@ -240,9 +245,13 @@ int main(int argc, char **argv)
   signal(SIGINT, test_handlesig);
   signal(SIGTERM, test_handlesig);
 
+  libmaix_image_module_init();
+
   test_init();
   test_work();
   test_exit();
+
+  libmaix_image_module_deinit();
 
   return 0;
 }

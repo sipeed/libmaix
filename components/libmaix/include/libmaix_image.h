@@ -23,9 +23,11 @@ typedef enum
     LIBMAIX_IMAGE_MODE_BINARY,
     LIBMAIX_IMAGE_MODE_GRAY  ,
     LIBMAIX_IMAGE_MODE_RGB888,          // supported
+    LIBMAIX_IMAGE_MODE_BGR888,          // supported
     LIBMAIX_IMAGE_MODE_RGB565,
     LIBMAIX_IMAGE_MODE_RGBA8888,
     LIBMAIX_IMAGE_MODE_YUV420SP_NV21,   // supported
+    LIBMAIX_IMAGE_MODE_YUV422_YUYV,     // supported
 }libmaix_image_mode_t;
 
 typedef union

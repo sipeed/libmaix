@@ -153,7 +153,7 @@ int cam_priv_init(struct libmaix_cam *cam)
     cam->start_capture = vi_start_capture;
     cam->capture = vi_priv_capture;
     cam->capture_image = vi_priv_capture_image;
-    
+
     return priv->devInit(cam);
 }
 
@@ -190,7 +190,7 @@ struct libmaix_cam * libmaix_cam_create(int n, int w, int h, int m, int f)
         libmaix_cam_destroy(&cam);
         return NULL;
     }
-    
+
     return cam;
 }
 
@@ -227,7 +227,7 @@ int libmaix_cam_unit_test(char * tmp)
   if (frame.empty())
     std::cout << "frame.empty()" << std::endl; // Ran out of film
   std::cout << time(NULL) << std::endl;
-  
+
   while (1) {
     cap >> frame;
     if (!frame.empty()) {

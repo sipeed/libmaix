@@ -8,76 +8,30 @@
 
 #include "libmaix_disp.h"
 #include "libmaix_image.h"
+#include "libmaix_cv_image.h"
 
 #include <sys/time.h>
 #include <unistd.h>
 
-inline static unsigned char make8color(unsigned char r, unsigned char g, unsigned char b)
-{
-	return (
-	(((r >> 5) & 7) << 5) |
-	(((g >> 5) & 7) << 2) |
-	 ((b >> 6) & 3)	   );
-}
-
-inline static unsigned short make16color(unsigned char r, unsigned char g, unsigned char b)
-{
-	return (
-	(((r >> 3) & 31) << 11) |
-	(((g >> 2) & 63) << 5)  |
-	 ((b >> 3) & 31)		);
-}
-
 int main(int argc, char **argv)
 {
-    extern void libimage_cpp();
-    libimage_cpp();
+    libmaix_cv_image_test();
 
+    libmaix_image_module_init();
     struct libmaix_disp *disp = libmaix_disp_create(0);
+    if (disp)
+    {
+        libmaix_image_t *rgb888 = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+        if (rgb888)
+        {
+            printf("w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
 
-    if(NULL == disp) {
-        printf("creat disp fail\n");
-        return -1;
+            disp->draw_image(disp, rgb888);
+
+            libmaix_image_destroy(&rgb888);
+        }
+        libmaix_disp_destroy(&disp);
     }
-
-    #define IMG_W 1024
-    #define IMG_H 1024
-    #define IMG_B 4
-
-    unsigned char test[IMG_W*IMG_H*IMG_B];
-
-    printf("[lcd] w %d h %d bpp %d\r\n", disp->width, disp->height, disp->bpp);
-    
-    if (disp->bpp == 4) {
-      // maybe is ARGB RGBA etc...
-      unsigned int *argb = (unsigned int *)test;
-      for (int i = 0, sum = disp->width * disp->height; i < sum; i++) {
-        argb[i] = 0xFF0000FF; // maybe is R + A or A + B
-      }
-      disp->draw(disp, test);
-    }
-
-    if (disp->bpp == 3) {
-      // maybe is RGB BGR etc...
-      unsigned char *rgb = (unsigned char *)test;
-      for (int i = 0, sum = disp->width * disp->height * disp->bpp; i < sum; i += disp->bpp) {
-        rgb[i + 0] = 0xFF; // maybe is RGB or BGR
-        rgb[i + 1] = 0xFF;
-        rgb[i + 2] = 0x00;
-      }
-      disp->draw(disp, test);
-    }
-
-    if (disp->bpp == 2 || disp->bpp == 1) {
-      // maybe is RGB565 etc...
-      unsigned short *rgb565 = (unsigned short *)test;
-      for (int i = 0, sum = disp->width * disp->height; i < sum; i++) {
-        rgb565[i] = make16color(0xFF, 0xFF, 0x00);
-      }
-      disp->draw(disp, test);
-    }
-
-    libmaix_disp_destroy(&disp);
-
+    libmaix_image_module_deinit();
     return 0;
 }

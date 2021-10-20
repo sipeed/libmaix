@@ -20,11 +20,17 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
             "../libmaix/lib/arch/v83x/lib/libjpeg.so"
             "../libmaix/lib/arch/v83x/lib/libpng12.so"
             "../libmaix/lib/arch/v83x/lib/libwebp.so"
+            "../libmaix/lib/arch/v83x/lib/libfreetype.so"
+            "../libmaix/lib/arch/v83x/lib/libharfbuzz.so"
+            "../libmaix/lib/arch/v83x/lib/libglib-2.0.so"
+            "../libmaix/lib/arch/v83x/lib/libpcre.so"
+            "../libmaix/lib/arch/v83x/lib/libbz2.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_videoio.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_highgui.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_imgcodecs.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_imgproc.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_core.so"
+            "../libmaix/lib/arch/v83x/opencv4/libopencv_freetype.so"
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_aruco.so"
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_dnn.so"
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_hfs.so"
@@ -50,7 +56,6 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_quality.so"
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_superres.so"
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_ximgproc.so"
-            # "../libmaix/lib/arch/v83x/opencv4/libopencv_freetype.so"
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_line_descriptor.so"
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_reg.so"
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_surface_matching.so"
@@ -69,16 +74,22 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
     elseif(CONFIG_ARCH_V833)
         include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/v83x/include/opencv4)
         list(APPEND ADD_DYNAMIC_LIB
-            "../libmaix/lib/arch/v833/libmaix_nn.so"
-            "../libmaix/lib/arch/v833/libmaix_image.so"
+            "../libmaix/lib/arch/v831/libmaix_nn.so"
+            "../libmaix/lib/arch/v831/libmaix_image.so"
             "../libmaix/lib/arch/v83x/lib/libjpeg.so"
             "../libmaix/lib/arch/v83x/lib/libpng12.so"
             "../libmaix/lib/arch/v83x/lib/libwebp.so"
+            "../libmaix/lib/arch/v83x/lib/libfreetype.so"
+            "../libmaix/lib/arch/v83x/lib/libharfbuzz.so"
+            "../libmaix/lib/arch/v83x/lib/libglib-2.0.so"
+            "../libmaix/lib/arch/v83x/lib/libpcre.so"
+            "../libmaix/lib/arch/v83x/lib/libbz2.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_videoio.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_highgui.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_imgcodecs.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_imgproc.so"
             "../libmaix/lib/arch/v83x/opencv4/libopencv_core.so"
+            "../libmaix/lib/arch/v83x/opencv4/libopencv_freetype.so"
         )
     elseif(CONFIG_ARCH_R329)
         include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/r329/include/opencv4)
@@ -89,6 +100,7 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
             "../libmaix/lib/arch/r329/opencv4/libopencv_imgcodecs.so"
             "../libmaix/lib/arch/r329/opencv4/libopencv_imgproc.so"
             "../libmaix/lib/arch/r329/opencv4/libopencv_core.so"
+            "../libmaix/lib/arch/r329/opencv4/libopencv_freetype.so"
         )
     else()
 

@@ -34,7 +34,7 @@ int main(int argc, char **argv)
         {
             printf("w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
 
-            libmaix_cv_image_test(rgb888, rgb888);
+            libmaix_cv_image_draw(rgb888, rgb888);
 
             disp->draw_image(disp, rgb888);
 

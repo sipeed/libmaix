@@ -10,21 +10,6 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/freetype.hpp>
 
-// class libmaix_cv_image
-// {
-// private:
-//     /* data */
-// public:
-//     libmaix_cv_image(/* args */);
-//     ~libmaix_cv_image();
-// };
-
-// libmaix_cv_image::libmaix_cv_image(/* args */)
-// {
-// }
-
-// libmaix_cv_image::~libmaix_cv_image(){};
-
 void overlayImage(const cv::Mat &background, const cv::Mat &foreground,
                   cv::Mat &output, cv::Point2i location)
 {
@@ -134,6 +119,8 @@ cv::Ptr<cv::freetype::FreeType2> libmaix_font::ft = cv::freetype::createFreeType
 
 extern "C"
 {
+    #include "libmaix_debug.h"
+    
     libmaix_err_t libmaix_cv_image_draw_ellipse(libmaix_image_t *src, int x, int y, int w, int h, double angle, double startAngle, double endAngle, libmaix_image_color_t color, int thickness)
     {
         if (src->data == NULL)
@@ -270,7 +257,174 @@ extern "C"
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
 
-    libmaix_err_t libmaix_cv_image_draw(libmaix_image_t *src, libmaix_image_t *dst)
+    static inline int libmaix_cv_image_load(struct libmaix_image *obj, struct libmaix_image **new_img) 
+    {
+        int new_mem = 0;
+
+        if((*new_img) == NULL)
+        {
+            *new_img = libmaix_image_create(obj->width, obj->height, obj->mode, obj->layout, NULL, true);
+            if(!(*new_img))
+            {
+            return LIBMAIX_ERR_NO_MEM;
+            }
+            new_mem = 1;
+        }
+        else
+        {
+            if( (*new_img)->data == NULL)	
+            {
+            (*new_img)->data = malloc(obj->width * obj->height * 3);
+            if(!(*new_img)->data)
+            {
+                return LIBMAIX_ERR_NO_MEM;
+            }
+            (*new_img)->is_data_alloc = true;
+            new_mem = 2;
+            }
+            (*new_img)->layout = obj->layout;
+            (*new_img)->width = obj->width;
+            (*new_img)->height = obj->height;
+        }
+
+    }
+    
+    static inline void libmaix_cv_image_free(int err, int new_mem, struct libmaix_image **new_img)
+    {
+        if(err != LIBMAIX_ERR_NONE)
+        {
+            if(new_mem == 2)
+            {
+            free((*new_img)->data);
+            (*new_img)->data = NULL;
+            }
+            else if (new_mem == 1)
+            {
+            libmaix_image_destroy(new_img);
+            }
+        }
+    }
+
+    libmaix_err_t libmaix_cv_image_convert(struct libmaix_image *obj, libmaix_image_mode_t mode, struct libmaix_image **new_img)
+    {
+        libmaix_err_t err = LIBMAIX_ERR_NONE;
+        if(new_img == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if(mode == obj->mode)
+        {
+            return LIBMAIX_ERR_NONE;
+        }
+        if(obj->width==0 || obj->height==0 || obj->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+
+        int new_mem = libmaix_cv_image_load(obj, new_img);
+        // -------------------------------
+        switch(obj->mode)
+        {
+            case LIBMAIX_IMAGE_MODE_RGB888: {
+            switch (mode)
+            {
+                case LIBMAIX_IMAGE_MODE_RGB565: {
+                if (obj == *new_img || obj->width != (*new_img)->width || obj->height != (*new_img)->height) return LIBMAIX_ERR_PARAM;
+                uint8_t *rgb888 = (uint8_t *)obj->data;
+                uint16_t *rgb565 = (uint16_t *)(*new_img)->data;
+                for (uint16_t *end = rgb565 + obj->width * obj->height; rgb565 < end; rgb565 += 1, rgb888 += 3) {
+                    // *rgb565 = make16color(rgb888[0], rgb888[1], rgb888[2]);
+                    *rgb565 = ((((rgb888[0] >> 3) & 31) << 11) | (((rgb888[1] >> 2) & 63) << 5) | ((rgb888[2] >> 3) & 31));
+                }
+                (*new_img)->mode = mode;
+                break;
+                }
+                case LIBMAIX_IMAGE_MODE_BGR888: {
+                // printf("libmaix_image_hal_convert obj->mode %d mode %d \r\n", obj->mode, mode);
+                uint8_t *rgb = (uint8_t *)(obj->data), *bgr = (uint8_t *)(*new_img)->data;
+                for (uint8_t *end = rgb + obj->width * obj->height * 3; rgb < end; rgb += 3, bgr += 3) {
+                    bgr[2] = rgb[0], bgr[1] = rgb[1], bgr[0] = rgb[2];
+                }
+                (*new_img)->mode = mode;
+                break;
+                }
+                default:
+                err = LIBMAIX_ERR_PARAM;
+                break;
+            }
+            break;
+            }
+            default:
+            err = LIBMAIX_ERR_NOT_IMPLEMENT;
+            break;
+        }
+        // -------------------------------
+        libmaix_cv_image_free(err, new_mem, new_img);
+
+        return err;
+    }
+
+    libmaix_err_t libmaix_cv_image_resize(struct libmaix_image *obj, int w, int h, struct libmaix_image **new_img)
+    {
+        libmaix_err_t err = LIBMAIX_ERR_NONE;
+        if(new_img == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if(obj->width==0 || obj->height==0 || obj->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+
+        int new_mem = libmaix_cv_image_load(obj, new_img);
+        // -------------------------------
+        LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+        // -------------------------------
+        libmaix_cv_image_free(err, new_mem, new_img);
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
+    libmaix_err_t libmaix_cv_image_crop(struct libmaix_image *obj, int x, int y, int w, int h, struct libmaix_image **new_img)
+    {
+        libmaix_err_t err = LIBMAIX_ERR_NONE;
+        if(new_img == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if(obj->width==0 || obj->height==0 || obj->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+
+        int new_mem = libmaix_cv_image_load(obj, new_img);
+        // -------------------------------
+        LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+        // -------------------------------
+        libmaix_cv_image_free(err, new_mem, new_img);
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
+    libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *obj, int rotate, libmaix_image_t **new_img)
+    {
+        libmaix_err_t err = LIBMAIX_ERR_NONE;
+        if(new_img == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if(obj->width==0 || obj->height==0 || obj->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+
+        int new_mem = libmaix_cv_image_load(obj, new_img);
+        // -------------------------------
+        LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+        // -------------------------------
+        libmaix_cv_image_free(err, new_mem, new_img);
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
+    libmaix_err_t libmaix_cv_image_test(libmaix_image_t *src, libmaix_image_t *dst)
     {
         if (dst->data == NULL && src->data == NULL && src->mode != dst->mode)
         {

@@ -28,7 +28,7 @@ libmaix_err_t libmaix_image_soft_convert(struct libmaix_image *obj, libmaix_imag
 		return LIBMAIX_ERR_PARAM;
 	}
 
-  int ret = 0, new_mem = 0;
+  int new_mem = 0;
   if((*new_img) == NULL)
   {
     *new_img = libmaix_image_create(obj->width, obj->height, obj->mode, obj->layout, NULL, true);

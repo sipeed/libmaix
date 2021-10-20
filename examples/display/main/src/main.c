@@ -15,12 +15,6 @@
 
 int main(int argc, char **argv)
 {
-    // NOT_IMPLEMENT     
-    // libmaix_err_t libmaix_cv_image_crop(libmaix_image_t *src, int x, int y, int w, int h, libmaix_image_t *dst);
-    // libmaix_err_t libmaix_cv_image_resize(libmaix_image_t *src, int w, int h, libmaix_image_t *dst);
-    // libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, int rotate);
-    // libmaix_err_t libmaix_cv_image_convert(libmaix_image_t *src, libmaix_image_t *dst);
-
     libmaix_image_module_init();
     struct libmaix_disp *disp = libmaix_disp_create(0);
     if (disp)

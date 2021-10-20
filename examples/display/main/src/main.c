@@ -15,7 +15,15 @@
 
 int main(int argc, char **argv)
 {
-    libmaix_cv_image_test();
+    // libmaix_cv_image_convert();
+    // libmaix_cv_image_resize();
+    // libmaix_cv_image_rotate();
+    // libmaix_cv_image_crop();
+    // libmaix_cv_image_paste();
+    // libmaix_cv_image_tobytes();
+
+    // libmaix_cv_image_draw_string();
+    // libmaix_cv_image_draw_xxxxxx();
 
     libmaix_image_module_init();
     struct libmaix_disp *disp = libmaix_disp_create(0);
@@ -25,6 +33,8 @@ int main(int argc, char **argv)
         if (rgb888)
         {
             printf("w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
+
+            libmaix_cv_image_test(rgb888, rgb888);
 
             disp->draw_image(disp, rgb888);
 

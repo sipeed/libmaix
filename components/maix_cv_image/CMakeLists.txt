@@ -9,6 +9,8 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
     # list(APPEND ADD_STATIC_LIB "core/lib/libmaix_nn.a")
     ###############################################
 
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/include)
+
     ############ Add dynamic libs ##################
     if(CONFIG_ARCH_V831)
         include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/v83x/include/opencv4)

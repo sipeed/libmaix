@@ -159,7 +159,7 @@ extern "C"
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
 
-    libmaix_err_t libmaix_cv_image_draw_rectangle(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness)
+    libmaix_err_t libmaix_cv_image_draw_rectangle(libmaix_image_t *src, int x1, int y1, int x2, int y2, libmaix_image_color_t color, int thickness)
     {
         if (src->data == NULL)
         {
@@ -168,14 +168,14 @@ extern "C"
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
             cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
-            cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+            cv::rectangle(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
             memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
 
-    libmaix_err_t libmaix_cv_image_draw_line(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness)
+    libmaix_err_t libmaix_cv_image_draw_line(libmaix_image_t *src, int x1, int y1, int x2, int y2, libmaix_image_color_t color, int thickness)
     {
         if (src->data == NULL)
         {
@@ -184,9 +184,47 @@ extern "C"
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
             cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
-            cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+            cv::line(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
             memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
+        }
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
+    libmaix_err_t libmaix_cv_image_draw_image(libmaix_image_t *src, int x, int y, libmaix_image_t *dst, libmaix_image_color_t color)
+    {
+        if (src->data == NULL || dst->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888 && src->mode == dst->mode)
+        {
+            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat temp(dst->width, dst->height, CV_8UC3, const_cast<char *>((char *)dst->data));
+            mergeImage(input, temp, cv::Point(x, y));
+            memcpy(src->data, input.data, src->width * src->height * 3);
+            return LIBMAIX_ERR_NONE;
+        }
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
+    libmaix_err_t libmaix_cv_image_draw_image_open(libmaix_image_t *src, int x, int y, const char *path, libmaix_image_color_t color)
+    {
+        if (src->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat image = cv::imread(path, CV_LOAD_IMAGE_UNCHANGED); // maybe need export
+            if (!image.empty())
+            {
+                mergeImage(input, image, cv::Point(x, y));
+                memcpy(src->data, input.data, src->width * src->height * 3);
+                return LIBMAIX_ERR_NONE;
+            }
+            return LIBMAIX_ERR_NOT_READY;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }

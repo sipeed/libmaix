@@ -1,6 +1,6 @@
 /**
  * maix neural network lib
- * 
+ *
  * @copyright © 2020-2021 Sipeed Ltd, All rights reserved
  * @author neucrack
  * @update --2021.1.7--neucrack: create lib
@@ -37,10 +37,11 @@ typedef union
         uint8_t r;
         uint8_t g;
         uint8_t b;
-        uint8_t reserved;
+        uint8_t a;
     }rgb888;
 }libmaix_image_color_t;
 
+#define MaixColor(r, g, b) (libmaix_image_color_t){ .rgb888 = { r, g, b } }
 
 typedef enum
 {
@@ -89,11 +90,11 @@ typedef struct libmaix_image
 libmaix_err_t libmaix_image_module_init();
 libmaix_err_t libmaix_image_module_deinit();
 /**
- * 
+ *
  * @param [in] data: data pointer, can be NULL,
  *                   it will automaticlly allocc memory according to the w,h,mode,
  *                   if one of them is `0`, nothing will do
- * @param [in] is_data_alloc: 
+ * @param [in] is_data_alloc:
  *                   if arg data is not `NULL`,
  *                   this arg indicate the data if need to automatically free in libmaix_image_destroy
  */

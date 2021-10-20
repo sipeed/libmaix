@@ -34,7 +34,16 @@ int main(int argc, char **argv)
         {
             printf("w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
 
-            libmaix_cv_image_draw(rgb888, rgb888);
+            // libmaix_cv_image_draw(rgb888, rgb888);
+
+            libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, 0, 0, 360, MaixColor(255, 0, 0), 2);
+            libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, 45, 0, 360, MaixColor(0, 255, 0), 2);
+            libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, -45, 0, 360, MaixColor(0, 0, 255), 2);
+            libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, 90, 0, 360, MaixColor(255, 255, 255), 2);
+
+            libmaix_cv_image_draw_circle(rgb888, 200, 200, 10, MaixColor(255, 0, 0), 1);
+            libmaix_cv_image_draw_circle(rgb888, 150, 200, 20, MaixColor(0, 255, 0), 5);
+            libmaix_cv_image_draw_circle(rgb888, 200, 150, 30, MaixColor(0, 0, 255), 10);
 
             disp->draw_image(disp, rgb888);
 

@@ -1,5 +1,5 @@
 
-#include "libmaix_image.h"
+#include "libmaix_cv_image.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
@@ -66,7 +66,7 @@ void overlayImage(const cv::Mat &background, const cv::Mat &foreground,
 }
 
 //图片混合
-bool MixImage(cv::Mat &srcImage, cv::Mat mixImage, cv::Point startPoint)
+bool mergeImage(cv::Mat &srcImage, cv::Mat mixImage, cv::Point startPoint)
 {
     //检查图片数据
     if (!srcImage.data || !mixImage.data)
@@ -127,6 +127,70 @@ bool MixImage(cv::Mat &srcImage, cv::Mat mixImage, cv::Point startPoint)
 
 extern "C"
 {
+    libmaix_err_t libmaix_cv_image_draw_ellipse(libmaix_image_t *src, int x, int y, int w, int h, double angle, double startAngle, double endAngle, libmaix_image_color_t color, int thickness)
+    {
+        if (src->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::ellipse(input, cv::Point(x, y), cv::Size(w, h), angle, startAngle, endAngle, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+            memcpy(src->data, input.data, src->width * src->height * 3);
+            return LIBMAIX_ERR_NONE;
+        }
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
+    libmaix_err_t libmaix_cv_image_draw_circle(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness)
+    {
+        if (src->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+            memcpy(src->data, input.data, src->width * src->height * 3);
+            return LIBMAIX_ERR_NONE;
+        }
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
+    libmaix_err_t libmaix_cv_image_draw_rectangle(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness)
+    {
+        if (src->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+            memcpy(src->data, input.data, src->width * src->height * 3);
+            return LIBMAIX_ERR_NONE;
+        }
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
+    libmaix_err_t libmaix_cv_image_draw_line(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness)
+    {
+        if (src->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+            memcpy(src->data, input.data, src->width * src->height * 3);
+            return LIBMAIX_ERR_NONE;
+        }
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+
     libmaix_err_t libmaix_cv_image_draw(libmaix_image_t *src, libmaix_image_t *dst)
     {
         if (dst->data == NULL && src->data == NULL && src->mode != dst->mode)
@@ -145,7 +209,7 @@ extern "C"
 
         if (!image.empty())
         {
-            MixImage(input, image, cv::Point(5, 3));
+            mergeImage(input, image, cv::Point(5, 3));
         }
 
         cv::rectangle(input, cv::Rect(170, 50, 50, 50), cv::Scalar(0, 255, 0), 4);

@@ -125,6 +125,13 @@ bool mergeImage(cv::Mat &srcImage, cv::Mat mixImage, cv::Point startPoint)
     return LIBMAIX_ERR_NOT_IMPLEMENT;
 }
 
+class libmaix_font {
+public:
+    static cv::Ptr<cv::freetype::FreeType2> ft;
+};
+
+cv::Ptr<cv::freetype::FreeType2> libmaix_font::ft = cv::freetype::createFreeType2();
+
 extern "C"
 {
     libmaix_err_t libmaix_cv_image_draw_ellipse(libmaix_image_t *src, int x, int y, int w, int h, double angle, double startAngle, double endAngle, libmaix_image_color_t color, int thickness)
@@ -223,6 +230,40 @@ extern "C"
                 mergeImage(input, image, cv::Point(x, y));
                 memcpy(src->data, input.data, src->width * src->height * 3);
                 return LIBMAIX_ERR_NONE;
+            }
+            return LIBMAIX_ERR_NOT_READY;
+        }
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+    
+    libmaix_err_t libmaix_cv_image_load_freetype(const char *path)
+    {
+        if (!libmaix_font::ft.empty()) libmaix_font::ft = cv::freetype::createFreeType2(); // re-load clear it
+        libmaix_font::ft->loadFontData(path, 0);
+        return LIBMAIX_ERR_NONE;
+    }
+
+    // libmaix_err_t libmaix_cv_image_font_free()
+    // {
+    //     delete libmaix_font::ft;
+    //     return LIBMAIX_ERR_NONE;
+    // }
+
+    libmaix_err_t libmaix_cv_image_draw_string(libmaix_image_t *src, int x, int y, const char *str, libmaix_image_color_t color, double scale, int thickness)
+    {
+        if (src->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::String text(str);
+            if (libmaix_font::ft.empty()) {
+                cv::putText(input, text, cv::Point(x, y), 0, scale, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+            } else {
+                int fontHeight = 32 * scale; // default 32
+                libmaix_font::ft->putText(input, text, cv::Point(x, y), fontHeight, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness, 8, true);
             }
             return LIBMAIX_ERR_NOT_READY;
         }

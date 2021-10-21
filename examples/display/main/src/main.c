@@ -24,6 +24,8 @@ int main(int argc, char **argv)
         {
             printf("w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
 
+            libmaix_cv_image_draw_image_open(rgb888, 20, 20, "/home/res/logo.png");
+
             libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, 0, 0, 360, MaixColor(255, 0, 0), 2);
             libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, 45, 0, 360, MaixColor(0, 255, 0), 2);
             libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, -45, 0, 360, MaixColor(0, 0, 255), 2);
@@ -32,6 +34,12 @@ int main(int argc, char **argv)
             libmaix_cv_image_draw_circle(rgb888, 200, 200, 10, MaixColor(255, 0, 0), 1);
             libmaix_cv_image_draw_circle(rgb888, 150, 200, 20, MaixColor(0, 255, 0), 5);
             libmaix_cv_image_draw_circle(rgb888, 200, 150, 30, MaixColor(0, 0, 255), 10);
+
+            libmaix_cv_image_draw_rectangle(rgb888, 10, 10, 130, 120, MaixColor(0, 255, 0), 2);
+            libmaix_cv_image_draw_line(rgb888, 10, 10, 130, 120, MaixColor(0, 255, 0), 2);
+            libmaix_cv_image_draw_string(rgb888, 0, 120, "test123[]-=", MaixColor(255, 0, 255), 1.0, 2);
+            // libmaix_cv_image_load_freetype("./txwzs.ttf");
+            // libmaix_cv_image_draw_string(rgb888, 0, 0, u8"123你好鸭asd測試員のにほんご", MaixColor(155, 155, 155), 1.0, 1);
 
             disp->draw_image(disp, rgb888);
 

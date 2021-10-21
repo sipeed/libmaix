@@ -113,14 +113,16 @@ bool mergeImage(cv::Mat &srcImage, cv::Mat mixImage, cv::Point startPoint)
 class libmaix_font {
 public:
     static cv::Ptr<cv::freetype::FreeType2> ft;
+    static bool is_load;
 };
 
 cv::Ptr<cv::freetype::FreeType2> libmaix_font::ft = cv::freetype::createFreeType2();
+bool libmaix_font::is_load = false;
 
 extern "C"
 {
     #include "libmaix_debug.h"
-    
+
     libmaix_err_t libmaix_cv_image_draw_ellipse(libmaix_image_t *src, int x, int y, int w, int h, double angle, double startAngle, double endAngle, libmaix_image_color_t color, int thickness)
     {
         if (src->data == NULL)
@@ -185,7 +187,7 @@ extern "C"
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
 
-    libmaix_err_t libmaix_cv_image_draw_image(libmaix_image_t *src, int x, int y, libmaix_image_t *dst, libmaix_image_color_t color)
+    libmaix_err_t libmaix_cv_image_draw_image(libmaix_image_t *src, int x, int y, libmaix_image_t *dst)
     {
         if (src->data == NULL || dst->data == NULL)
         {
@@ -202,7 +204,7 @@ extern "C"
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
 
-    libmaix_err_t libmaix_cv_image_draw_image_open(libmaix_image_t *src, int x, int y, const char *path, libmaix_image_color_t color)
+    libmaix_err_t libmaix_cv_image_draw_image_open(libmaix_image_t *src, int x, int y, const char *path)
     {
         if (src->data == NULL)
         {
@@ -222,11 +224,12 @@ extern "C"
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
-    
+
     libmaix_err_t libmaix_cv_image_load_freetype(const char *path)
     {
-        if (!libmaix_font::ft.empty()) libmaix_font::ft = cv::freetype::createFreeType2(); // re-load clear it
+        if (libmaix_font::is_load) libmaix_font::ft = cv::freetype::createFreeType2(); // re-load clear it
         libmaix_font::ft->loadFontData(path, 0);
+        libmaix_font::is_load = true;
         return LIBMAIX_ERR_NONE;
     }
 
@@ -244,20 +247,20 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
+            int fontHeight = 32 * scale; // default 32
             cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
             cv::String text(str);
-            if (libmaix_font::ft.empty()) {
-                cv::putText(input, text, cv::Point(x, y), 0, scale, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+            if (!libmaix_font::is_load) {
+                cv::putText(input, text, cv::Point(x, y + fontHeight), 0, scale, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
             } else {
-                int fontHeight = 32 * scale; // default 32
-                libmaix_font::ft->putText(input, text, cv::Point(x, y), fontHeight, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness, 8, true);
+                libmaix_font::ft->putText(input, text, cv::Point(x, y + fontHeight), fontHeight, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), -1, 8, true);
             }
             return LIBMAIX_ERR_NOT_READY;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
 
-    static inline int libmaix_cv_image_load(struct libmaix_image *src, struct libmaix_image **dst) 
+    static inline int libmaix_cv_image_load(struct libmaix_image *src, struct libmaix_image **dst)
     {
         int new_mem = 0;
         if((*dst) == NULL)
@@ -271,7 +274,7 @@ extern "C"
         }
         else
         {
-            if( (*dst)->data == NULL)	
+            if( (*dst)->data == NULL)
             {
             (*dst)->data = malloc(src->width * src->height * 3);
             if(!(*dst)->data)
@@ -287,7 +290,7 @@ extern "C"
         }
         return new_mem;
     }
-    
+
     static inline void libmaix_cv_image_free(int err, int new_mem, struct libmaix_image **dst)
     {
         if(err != LIBMAIX_ERR_NONE)

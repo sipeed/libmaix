@@ -1,6 +1,6 @@
 /**
  * maix neural network lib
- * 
+ *
  * @copyright © 2020-2021 Sipeed Ltd, All rights reserved
  * @author neucrack
  * @update --2021.1.7--neucrack: create lib
@@ -22,10 +22,12 @@ typedef enum
     LIBMAIX_IMAGE_MODE_INVALID = 0,
     LIBMAIX_IMAGE_MODE_BINARY,
     LIBMAIX_IMAGE_MODE_GRAY  ,
-    LIBMAIX_IMAGE_MODE_RGB888,          // supported
+    LIBMAIX_IMAGE_MODE_RGB888,
     LIBMAIX_IMAGE_MODE_RGB565,
     LIBMAIX_IMAGE_MODE_RGBA8888,
-    LIBMAIX_IMAGE_MODE_YUV420SP_NV21,   // supported
+    LIBMAIX_IMAGE_MODE_YUV420SP_NV21,
+    LIBMAIX_IMAGE_MODE_YUV422_YUYV,
+    LIBMAIX_IMAGE_MODE_BGR888,
 }libmaix_image_mode_t;
 
 typedef union
@@ -35,10 +37,11 @@ typedef union
         uint8_t r;
         uint8_t g;
         uint8_t b;
-        uint8_t reserved;
+        uint8_t a;
     }rgb888;
 }libmaix_image_color_t;
 
+#define MaixColor(r, g, b) (libmaix_image_color_t){ .rgb888 = { r, g, b } }
 
 typedef enum
 {
@@ -63,7 +66,7 @@ typedef struct libmaix_image
      */
     libmaix_err_t (*convert)(struct libmaix_image* obj, libmaix_image_mode_t mode, struct libmaix_image** new_img);
     libmaix_err_t (*draw_rectangle)(struct libmaix_image* obj, int x, int y, int w, int h, libmaix_image_color_t color, bool fill, int thickness);
-	libmaix_err_t (*draw_string)(struct libmaix_image* obj, char *str, int x, int y, int size, libmaix_image_color_t color, libmaix_image_color_t* bg);
+    libmaix_err_t (*draw_string)(struct libmaix_image* obj, char *str, int x, int y, int size, libmaix_image_color_t color, libmaix_image_color_t* bg);
     /**
      * @param [in/out] new_img: if arg is address of libmaix_image_t pointer, and value is NULL,
      *                          new image object and data memory will automatically created;
@@ -87,11 +90,11 @@ typedef struct libmaix_image
 libmaix_err_t libmaix_image_module_init();
 libmaix_err_t libmaix_image_module_deinit();
 /**
- * 
+ *
  * @param [in] data: data pointer, can be NULL,
  *                   it will automaticlly allocc memory according to the w,h,mode,
  *                   if one of them is `0`, nothing will do
- * @param [in] is_data_alloc: 
+ * @param [in] is_data_alloc:
  *                   if arg data is not `NULL`,
  *                   this arg indicate the data if need to automatically free in libmaix_image_destroy
  */
@@ -104,4 +107,3 @@ void libmaix_image_destroy(libmaix_image_t** obj);
 
 
 #endif
-

@@ -13,7 +13,7 @@ append_srcs_dir(ADD_SRCS "src")
 ###############################################
 
 ###### Add required/dependent components ######
-list(APPEND ADD_REQUIREMENTS libmaix)
+list(APPEND ADD_REQUIREMENTS maix_cv_image libmaix)
 ###############################################
 
 ############ Add static libs ##################
@@ -21,8 +21,8 @@ list(APPEND ADD_REQUIREMENTS libmaix)
 ###############################################
 
 #### Add compile option for this component ####
-#### Just for this component, won't affect other 
-#### modules, including component that depend 
+#### Just for this component, won't affect other
+#### modules, including component that depend
 #### on this component
 # list(APPEND ADD_DEFINITIONS_PRIVATE -DAAAAA=1)
 

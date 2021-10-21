@@ -1,0 +1,5 @@
+config COMPONENT_IMAGE_ENABLE
+    bool "Enable maix_cv_image component"
+    default y
+    help
+        Select this option to enable use maix_cv_image base on opencv4.

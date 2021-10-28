@@ -40,7 +40,7 @@ libmaix_err_t libmaix_image_soft_convert(struct libmaix_image *obj, libmaix_imag
   }
   else
   {
-    if( (*new_img)->data == NULL)	
+    if( (*new_img)->data == NULL)
     {
       (*new_img)->data = malloc(obj->width * obj->height * 3);
       if(!(*new_img)->data)
@@ -92,7 +92,7 @@ libmaix_err_t libmaix_image_soft_convert(struct libmaix_image *obj, libmaix_imag
       break;
   }
   // -------------------------------
-  
+
   if(err != LIBMAIX_ERR_NONE)
   {
     if(new_mem == 2)
@@ -141,17 +141,17 @@ extern "C"
   {
     uint64_t img_size = 0;
 
-    if( !(mode==LIBMAIX_IMAGE_MODE_RGB565 || 
-          mode==LIBMAIX_IMAGE_MODE_RGB888 || 
-          mode==LIBMAIX_IMAGE_MODE_BGR888 || 
-          mode==LIBMAIX_IMAGE_MODE_RGBA8888 || 
-          mode==LIBMAIX_IMAGE_MODE_YUV420SP_NV21 || 
+    if( !(mode==LIBMAIX_IMAGE_MODE_RGB565 ||
+          mode==LIBMAIX_IMAGE_MODE_RGB888 ||
+          mode==LIBMAIX_IMAGE_MODE_BGR888 ||
+          mode==LIBMAIX_IMAGE_MODE_RGBA8888 ||
+          mode==LIBMAIX_IMAGE_MODE_YUV420SP_NV21 ||
           mode==LIBMAIX_IMAGE_MODE_YUV422_YUYV) )
     {
       LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_PARAM);
       return NULL;
     }
-    if (!(w == 0 || h == 0 || mode == LIBMAIX_IMAGE_MODE_INVALID))
+    if (!(w == 0 || h == 0 || mode == LIBMAIX_IMAGE_MODE_INVALID || !is_data_alloc))
     {
       if (!data)
       {

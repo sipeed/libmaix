@@ -17,9 +17,9 @@ target_link_libraries(
         libmaix_image.so
 )
 
-set_target_properties(
-        maix_disp
-        PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${export_dir}/lib/arch/r329")
+set_target_properties(maix_disp PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${export_dir}/lib/arch/r329")
+
+set_target_properties(maix_disp PROPERTIES LINK_FLAGS "-Wl,-rpath,/usr/local/lib/python3.9/dist-packages/maix/")
 
 add_custom_command(
         # POST_BUILD 处 有三个值可选

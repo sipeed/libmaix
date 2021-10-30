@@ -41,9 +41,9 @@ int main(int argc, char **argv)
 
             libmaix_cv_image_draw_rectangle(rgb888, 10, 10, 130, 120, MaixColor(255, 0, 0), 2);
             libmaix_cv_image_draw_line(rgb888, 10, 10, 130, 120, MaixColor(255, 0, 0), 2);
-            libmaix_cv_image_draw_string(rgb888, 0, 120, "test123[]-=", MaixColor(255, 0, 255), 1.0, 2);
+            libmaix_cv_image_draw_string(rgb888, 0, 120, "test123[]-=", 1.0, MaixColor(255, 0, 255), 2);
             // libmaix_cv_image_load_freetype("./txwzs.ttf");
-            // libmaix_cv_image_draw_string(rgb888, 0, 0, u8"123你好鸭asdにほんご", MaixColor(55, 55, 55), 0.8, 1);
+            // libmaix_cv_image_draw_string(rgb888, 0, 0, u8"123你好鸭asdにほんご", 0.8, MaixColor(55, 55, 55), 1);
 
             disp->draw_image(disp, rgb888);
 

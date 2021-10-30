@@ -239,7 +239,7 @@ extern "C"
     //     return LIBMAIX_ERR_NONE;
     // }
 
-    libmaix_err_t libmaix_cv_image_draw_string(libmaix_image_t *src, int x, int y, const char *str, libmaix_image_color_t color, double scale, int thickness)
+    libmaix_err_t libmaix_cv_image_draw_string(libmaix_image_t *src, int x, int y, const char *str, double scale, libmaix_image_color_t color, int thickness)
     {
         if (src->data == NULL)
         {

@@ -133,7 +133,7 @@ extern "C"
         {
             cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
             cv::ellipse(input, cv::Point(x, y), cv::Size(w, h), angle, startAngle, endAngle, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
-            memcpy(src->data, input.data, src->width * src->height * 3);
+            // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -147,9 +147,9 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
             cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
-            memcpy(src->data, input.data, src->width * src->height * 3);
+            // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -163,9 +163,9 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
             cv::rectangle(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
-            memcpy(src->data, input.data, src->width * src->height * 3);
+            // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -179,9 +179,9 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
             cv::line(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
-            memcpy(src->data, input.data, src->width * src->height * 3);
+            // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -195,10 +195,10 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888 && src->mode == dst->mode)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
-            cv::Mat temp(dst->width, dst->height, CV_8UC3, const_cast<char *>((char *)dst->data));
+            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
+            cv::Mat temp(dst->width, dst->height, CV_8UC3, dst->data);
             mergeImage(input, temp, cv::Point(x, y));
-            memcpy(src->data, input.data, src->width * src->height * 3);
+            // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -212,12 +212,12 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
             cv::Mat image = cv::imread(path, CV_LOAD_IMAGE_UNCHANGED); // maybe need export
             if (!image.empty())
             {
                 mergeImage(input, image, cv::Point(x, y));
-                memcpy(src->data, input.data, src->width * src->height * 3);
+                // memcpy(src->data, input.data, src->width * src->height * 3);
                 return LIBMAIX_ERR_NONE;
             }
             return LIBMAIX_ERR_NOT_READY;
@@ -248,7 +248,7 @@ extern "C"
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
             int fontHeight = 32 * scale; // default 32
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
             cv::String text(str);
             if (!libmaix_font::is_load) {
                 cv::putText(input, text, cv::Point(x, y + fontHeight), 0, scale, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
@@ -438,18 +438,26 @@ extern "C"
             return LIBMAIX_ERR_NOT_IMPLEMENT;
         }
 
-        cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+        // cv::Mat s(src->width, src->height, CV_8UC3, src->data);
 
-        cv::Mat image = cv::imread("/home/res/logo.png", CV_LOAD_IMAGE_UNCHANGED);
+        // cv::imwrite("/tmp/src.jpg", s);
 
-        if (!image.empty())
-        {
-            mergeImage(input, image, cv::Point(5, 3));
-        }
+        // cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
 
-        cv::rectangle(input, cv::Rect(170, 50, 50, 50), cv::Scalar(0, 255, 0), 4);
+        // cv::Mat image = cv::imread("/home/res/logo.png", CV_LOAD_IMAGE_UNCHANGED);
 
-        cv::putText(input, "abcdefg", cv::Point(50, 30), 2, 1.0f, CV_RGB(255, 0, 0));
+        // if (!image.empty())
+        // {
+        //     mergeImage(input, image, cv::Point(5, 3));
+        // }
+
+        // cv::rectangle(input, cv::Rect(170, 50, 50, 50), cv::Scalar(0, 255, 0), 4);
+
+        // cv::Mat tmp(src->width, src->height, CV_8UC3, src->data);
+
+        // cv::imwrite("/tmp/tmp.jpg", tmp);
+
+        // cv::putText(input, "abcdefg", cv::Point(50, 30), 2, 1.0f, CV_RGB(255, 0, 0));
 
         // cv::String text = u8"123测试asd的テスター";
 
@@ -481,21 +489,21 @@ extern "C"
         // ft2->putText(input, text, textOrg, fontHeight,
         //              cv::Scalar(0, 255, 0), thickness, linestyle, true);
 
-        int w = 240, h = 240, r = 40, a = 10, b = 20;
-        cv::Point center(w / 2, h / 2);
+        // int w = 240, h = 240, r = 40, a = 10, b = 20;
+        // cv::Point center(w / 2, h / 2);
 
-        cv::circle(input, center, r, cv::Scalar(0, 0, 255), cv::FILLED);
-        cv::ellipse(input, center, cv::Size(a, b), 0, 0, 360, cv::Scalar(255, 0, 0));
-        cv::ellipse(input, center, cv::Size(a, b), 45, 0, 360, cv::Scalar(255, 0, 0));
-        cv::ellipse(input, center, cv::Size(a, b), -45, 0, 360, cv::Scalar(255, 0, 0));
-        cv::ellipse(input, center, cv::Size(a, b), 90, 0, 360, cv::Scalar(255, 0, 0));
+        // cv::circle(input, center, r, cv::Scalar(0, 0, 255), cv::FILLED);
+        // cv::ellipse(input, center, cv::Size(a, b), 0, 0, 360, cv::Scalar(255, 0, 0));
+        // cv::ellipse(input, center, cv::Size(a, b), 45, 0, 360, cv::Scalar(255, 0, 0));
+        // cv::ellipse(input, center, cv::Size(a, b), -45, 0, 360, cv::Scalar(255, 0, 0));
+        // cv::ellipse(input, center, cv::Size(a, b), 90, 0, 360, cv::Scalar(255, 0, 0));
 
-        const int numPts = 4;
-        cv::Point pts[numPts] = {cv::Point(10, 10), cv::Point(5, 30), cv::Point(35, 30), cv::Point(30, 10)};
-        const cv::Point *ppt[1] = {pts};
-        cv::fillPoly(input, ppt, &numPts, 1, cv::Scalar(0, 255, 0));
+        // const int numPts = 4;
+        // cv::Point pts[numPts] = {cv::Point(10, 10), cv::Point(5, 30), cv::Point(35, 30), cv::Point(30, 10)};
+        // const cv::Point *ppt[1] = {pts};
+        // cv::fillPoly(input, ppt, &numPts, 1, cv::Scalar(0, 255, 0));
 
-        memcpy(dst->data, input.data, src->width * src->height * 3);
+        // memcpy(dst->data, input.data, src->width * src->height * 3);
 
         return LIBMAIX_ERR_NONE;
     }

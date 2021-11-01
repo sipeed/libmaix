@@ -82,7 +82,7 @@ python3 project.py menuconfig
 
 ## R329
 
-python project.py --toolchain /usr/bin --toolchain-prefix aarch64-linux-gnu- config
+python project.py --toolchain /opt/r329_linux_x86_python3.9_toolchain/bin --toolchain-prefix aarch64-linux-gnu- config
 
 python3 project.py menuconfig
 

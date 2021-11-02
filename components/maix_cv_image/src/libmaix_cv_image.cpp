@@ -224,6 +224,20 @@ extern "C"
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
+    libmaix_err_t libmaix_cv_image_draw_image_save(libmaix_image_t *src, const char *path)
+    {
+        if (src->data == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::imwrite(path,input);
+            return LIBMAIX_ERR_NONE;
+        }
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
 
     libmaix_err_t libmaix_cv_image_load_freetype(const char *path)
     {
@@ -406,7 +420,7 @@ extern "C"
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
 
-    libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, int rotate, libmaix_image_t **dst)
+    libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, libmaix_image_t **dst)
     {
         libmaix_err_t err = LIBMAIX_ERR_NONE;
         if(dst == NULL)

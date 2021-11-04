@@ -8,91 +8,49 @@
 
 #include "libmaix_disp.h"
 #include "libmaix_image.h"
-#include "image.h"
+#include "libmaix_cv_image.h"
+
 #include <sys/time.h>
 #include <unistd.h>
 
-
-void draw_test(struct libmaix_disp* disp, void* buff, int w, int h)
+int main(int argc, char **argv)
 {
-    int count = 5;
-
-    printf("--image module init\n");
     libmaix_image_module_init();
-
-    libmaix_image_t* img = libmaix_image_create(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, buff, false);
-    if(!img)
+    struct libmaix_disp *disp = libmaix_disp_create(0);
+    if (disp)
     {
-        printf("create yuv image fail\n");
-        goto end;
-    }
+        libmaix_image_t *rgb888 = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+        if (rgb888)
+        {
+            printf("w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
 
-    libmaix_image_color_t color = {
-        .rgb888.r = 255,
-        .rgb888.g = 255,
-        .rgb888.b = 255
-    };
-    libmaix_image_color_t bg = {
-        .rgb888.r = 241,
-        .rgb888.g = 102,
-        .rgb888.b = 102
-    };
-    while(count--)
-    {
-        img->draw_string(img, "hello", 20, 146, 16, color, NULL);
-        img->draw_string(img, "libmaix", 20 + 50, 146, 16, color, &bg);
-        img->draw_rectangle(img, 16, 142, 120, 24, color, false, 4);
-        img->draw_rectangle(img, 0, 240 - 24, 240, 24, color, true, 0);
-        img->draw_rectangle(img, 200, 142, 120, 24, color, false, 4);
-        disp->draw(disp, img->data, (disp->width - img->width) / 2,(disp->height - img->height) / 2, img->width, img->height, 0);
-        disp->flush(disp);
-        sleep(2);
+            // libmaix_cv_image_test(rgb888, rgb888);
+
+            // libmaix_cv_image_draw_image_open(rgb888, 20, 20, "/home/res/logo.png");
+
+            libmaix_cv_image_draw_rectangle(rgb888, 0, 0, 240, 240, MaixColor(255, 255, 255), -1);
+
+            libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, 0, 0, 360, MaixColor(255, 0, 0), 2);
+            libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, 45, 0, 360, MaixColor(0, 255, 0), 2);
+            libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, -45, 0, 360, MaixColor(0, 0, 255), 2);
+            libmaix_cv_image_draw_ellipse(rgb888, 120, 120, 100, 25, 90, 0, 360, MaixColor(55, 55, 55), 2);
+
+            libmaix_cv_image_draw_circle(rgb888, 200, 200, 10, MaixColor(255, 0, 0), 1);
+            libmaix_cv_image_draw_circle(rgb888, 150, 200, 20, MaixColor(0, 255, 0), 5);
+            libmaix_cv_image_draw_circle(rgb888, 200, 150, 30, MaixColor(0, 0, 255), 10);
+
+            libmaix_cv_image_draw_rectangle(rgb888, 10, 10, 130, 120, MaixColor(255, 0, 0), 2);
+            libmaix_cv_image_draw_line(rgb888, 10, 10, 130, 120, MaixColor(255, 0, 0), 2);
+            libmaix_cv_image_draw_string(rgb888, 0, 120, "test123[]-=", 1.0, MaixColor(255, 0, 255), 2);
+            // libmaix_cv_image_load_freetype("./txwzs.ttf");
+            // libmaix_cv_image_draw_string(rgb888, 0, 0, u8"123你好鸭asdにほんご", 0.8, MaixColor(55, 55, 55), 1);
+
+            disp->draw_image(disp, rgb888);
+
+            libmaix_image_destroy(&rgb888);
+        }
+        libmaix_disp_destroy(&disp);
     }
-end:
-    printf("--image module deinit\n");
     libmaix_image_module_deinit();
-}
-
-int main(int argc, char* argv[])
-{
-    struct libmaix_disp* disp = libmaix_disp_creat();
-    if(disp == NULL) {
-        printf("creat disp object fail\n");
-        return -1;
-    }
-
-    int w = 240, h = 240;
-    struct timeval start, end;
-    int64_t interval_s;
-    int count = 10;
-
-    disp->swap_rb = 1;
-
-    while(count --)
-    {
-        printf("display now\n");
-        gettimeofday( &start, NULL );
-        disp->draw(disp, image_logo.pixel_data, (disp->width - w) / 2,(disp->height - h) / 2, w, h, 0);
-        gettimeofday( &end, NULL );
-        interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll;
-        printf("use time: %lld us\n", interval_s + end.tv_usec - start.tv_usec);
-
-        printf("flush\n");
-        gettimeofday( &start, NULL );
-        disp->flush(disp);
-        gettimeofday( &end, NULL );
-        interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll;
-        printf("use time: %lld us\n", interval_s + end.tv_usec - start.tv_usec);
-        printf("flush end\n");
-    }
-
-    sleep(1);
-
-    printf("draw test\n");
-    draw_test(disp, image_logo.pixel_data, image_logo.width, image_logo.height);
-    printf("display end\n");
-
-    libmaix_disp_destroy(&disp);
     return 0;
 }
-

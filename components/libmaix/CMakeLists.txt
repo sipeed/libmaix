@@ -60,7 +60,8 @@ if(CONFIG_LIBMAIX_ENABLED)
             "lib/arch/v831/libmpp_component.so"
             "lib/arch/v831/libvencoder.so"
         )
-    else()
+        set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -lmaix_nn -Wl,--end-group" PARENT_SCOPE)
+    elseif(CONFIG_ARCH_V833)
         list(APPEND ADD_DYNAMIC_LIB "lib/arch/v833/libmaix_nn.so"
             "lib/arch/v833/libz.so"
             "lib/arch/v833/libISP.so"
@@ -98,6 +99,18 @@ if(CONFIG_LIBMAIX_ENABLED)
             "lib/arch/v833/libmpp_component.so"
             "lib/arch/v833/libvencoder.so"
         )
+      set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -lmaix_nn -Wl,--end-group" PARENT_SCOPE)
+    elseif(CONFIG_ARCH_R329)
+      list(APPEND ADD_DYNAMIC_LIB
+          "lib/arch/r329/libmaix_utils.so"
+          "lib/arch/r329/libmaix_image.so"
+          "lib/arch/r329/libmaix_disp.so"
+          "lib/arch/r329/libmaix_cam.so"
+      )
+      set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -fuse-ld=gold -Wl,--start-group libmaix/liblibmaix.a -Wl,--end-group" PARENT_SCOPE)
+
+    else()
+      
     endif()
     ###############################################
 
@@ -112,8 +125,6 @@ if(CONFIG_LIBMAIX_ENABLED)
     # list(APPEND ADD_DEFINITIONS -DAAAAA222=1
     #                             -DAAAAA333=1)
     ###############################################
-
-    set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -lmaix_nn -Wl,--end-group" PARENT_SCOPE)
 
     register_component()
 endif()

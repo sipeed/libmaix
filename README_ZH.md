@@ -78,7 +78,19 @@ python3 project.py menuconfig
 ![menuconfig](assets/image/menuconfig_1.jpg)
 ![menuconfig](assets/image/menuconfig_2.jpg)
 
-第一次编译，可以只使用默认配置即可
+第一次编译，可以只使用默认配置即可，也可以使用下属配置选择自己系统的编译链（）。
+
+## R329
+
+python project.py --toolchain /opt/r329_linux_x86_python3.9_toolchain/bin --toolchain-prefix aarch64-linux-gnu- config
+
+python3 project.py menuconfig
+
+然后在 menuconfig 勾选 R329 平台的动态链接库 (Target chip configuration  ---> Chip architecture (compile for arch R329)  ---> (X) compile for arch R329)
+
+## V83x
+
+python project.py --toolchain /opt/toolchain-sunxi-musl/toolchain/bin/ --toolchain-prefix arm-openwrt-linux-muslgnueabi- config
 
 然后按`q` 按键退出配置， 选择 `yes` 来保存配置
 

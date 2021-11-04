@@ -204,7 +204,7 @@ void nn_test(struct libmaix_disp* disp)
             printf("class id: %d, distance: %f\n", class_id, distance);
         }
 
-        disp->draw(disp, rgb_img->data, (disp->width - rgb_img->width) / 2,(disp->height - rgb_img->height) / 2, rgb_img->width, rgb_img->height, 1);
+        disp->draw(disp, rgb_img->data);
 #if TEST_IMAGE
         break;
 #endif
@@ -242,13 +242,11 @@ end:
 
 int main(int argc, char* argv[])
 {
-    struct libmaix_disp* disp = libmaix_disp_creat();
+    struct libmaix_disp* disp = libmaix_disp_create(0);
     if(disp == NULL) {
         printf("creat disp object fail\n");
         return -1;
     }
-
-    disp->swap_rb = 1;
 
     printf("draw test\n");
     nn_test(disp);

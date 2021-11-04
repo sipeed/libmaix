@@ -30,13 +30,39 @@ function(register_component)
     get_filename_component(component_name ${component_dir} NAME)
     message(STATUS "[register component: ${component_name} ], path:${component_dir}")
 
+    # Get params: DYNAMIC/SHARED
+    foreach(name ${ARGN})
+        string(TOUPPER ${name} name)
+        if(${name} STREQUAL "DYNAMIC" OR ${name} STREQUAL "SHARED")
+            set(to_dynamic_lib true)
+        endif()
+    endforeach()
+    if(to_dynamic_lib)
+        message("-- component ${component_name} will compiled to dynamic lib")
+        # Add dynamic file path to g_dynamic_libs variable
+        set(dynamic_libs ${g_dynamic_libs})
+        list(APPEND dynamic_libs "${PROJECT_BINARY_DIR}/${component_name}/lib${component_name}${DL_EXT}")
+        set(g_dynamic_libs ${dynamic_libs}  CACHE INTERNAL "g_dynamic_libs")
+    else()
+        message("-- component ${component_name} will compiled to static lib")
+    endif()
+
     # Add src to lib
     if(ADD_SRCS)
-        add_library(${component_name} STATIC ${ADD_SRCS})
+        if(to_dynamic_lib)
+            add_library(${component_name} SHARED ${ADD_SRCS})
+        else()
+            add_library(${component_name} STATIC ${ADD_SRCS})
+        endif()
         set(include_type PUBLIC)
     else()
-        add_library(${component_name} INTERFACE)
-        set(include_type INTERFACE)
+        if(to_dynamic_lib)
+            add_library(${component_name} SHARED)
+            set(include_type PUBLIC)
+        else()
+            add_library(${component_name} INTERFACE)
+            set(include_type INTERFACE)
+        endif()
     endif()
 
     # Add include
@@ -61,10 +87,14 @@ function(register_component)
     endforeach()
 
     # Add blobal config include
-    target_include_directories(${component_name} PUBLIC ${global_config_dir})
+    if(${include_type} STREQUAL INTERFACE)
+        target_include_directories(${component_name} INTERFACE ${global_config_dir})
+    else()
+        target_include_directories(${component_name} PUBLIC ${global_config_dir})
+    endif()
 
     # Add requirements
-    target_link_libraries(${component_name} ${ADD_REQUIREMENTS})
+    target_link_libraries(${component_name} ${include_type} ${ADD_REQUIREMENTS})
 
     # Add definitions public
     foreach(difinition ${ADD_DEFINITIONS})
@@ -86,7 +116,7 @@ function(register_component)
                 endif()
                 set(lib ${lib_full})
             endif()
-            target_link_libraries(${component_name} ${lib})
+            target_link_libraries(${component_name} ${include_type} ${lib})
         endforeach()
     endif()
     # Add dynamic lib
@@ -103,7 +133,7 @@ function(register_component)
             list(APPEND dynamic_libs ${lib})
             get_filename_component(lib_dir ${lib} DIRECTORY)
             get_filename_component(lib_name ${lib} NAME)
-            target_link_libraries(${component_name} -L${lib_dir} ${lib_name})
+            target_link_libraries(${component_name} ${include_type} -L${lib_dir} ${lib_name})
         endforeach()
         set(g_dynamic_libs ${dynamic_libs}  CACHE INTERNAL "g_dynamic_libs")
     endif()
@@ -256,8 +286,10 @@ macro(project name)
     include(${global_config_dir}/global_config.cmake)
     if(WIN32)
         set(EXT ".exe")
+        set(DL_EXT ".dll")
     else()
         set(EXT "")
+        set(DL_EXT ".so")
     endif()
 
     # Config toolchain
@@ -285,7 +317,7 @@ macro(project name)
     set(CMAKE_CXX_COMPILER_WORKS 1)
 
     
-    set(CMAKE_SYSTEM_NAME Generic) 
+    # set(CMAKE_SYSTEM_NAME Generic) # set this flag may leads to dymamic(/shared) lib compile fail
 
     # Declare project # This function will cler flags!
     _project(${name} ASM C CXX)
@@ -333,6 +365,14 @@ macro(project name)
         endif()
     endforeach()
     
+    # Remove duplicate dynamic libs from var g_dynamic_libs
+    set(dynamic_libs_abs "")
+    foreach(item ${g_dynamic_libs})
+    get_filename_component(item ${item} ABSOLUTE)
+    list(APPEND dynamic_libs_abs ${item})
+    endforeach()
+    set(g_dynamic_libs ${dynamic_libs_abs})
+    list(REMOVE_DUPLICATES g_dynamic_libs)
 
     # Add menuconfig target for makefile
     add_custom_target(menuconfig COMMAND ${generate_config_cmd2})

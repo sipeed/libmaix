@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 static float overlap(float x1, float w1, float x2, float w2)
 {
     float l1 = x1 - w1 / 2;
@@ -112,7 +111,7 @@ int retinaface_get_channel_num(libmaix_nn_decoder_retinaface_config_t* config)
     }
     return channel_num;
 }
-
+  
 retinaface_box_t* retinaface_get_priorboxes(libmaix_nn_decoder_retinaface_config_t* config, int* boxes_num)
 {
     int anchors_size[ANCHOR_SIZE_NUM * 2];
@@ -315,8 +314,8 @@ libmaix_err_t libmaix_nn_decoder_retinaface_init(struct libmaix_nn_decoder* obj,
         params->priors = NULL;
         return LIBMAIX_ERR_NO_MEM;
     }
-    ((libmaix_nn_decoder_retinaface_config_t*)config)->channel_num = retinaface_get_channel_num(config);
-    params->config = config;
+    ((libmaix_nn_decoder_retinaface_config_t*)config)->channel_num = retinaface_get_channel_num((libmaix_nn_decoder_retinaface_config_t*)config);
+    params->config = (libmaix_nn_decoder_retinaface_config_t*)config;
     return LIBMAIX_ERR_NONE;
 }
 
@@ -345,7 +344,7 @@ libmaix_err_t libmaix_nn_decoder_retinaface_decode(struct libmaix_nn_decoder* ob
     }
     result_obj->faces = params->faces;
     int valid_boxes = params->boxes_num;
-    libmaix_err_t err = retinaface_decode(feature_map[0].data, feature_map[1].data, feature_map[2].data,
+    libmaix_err_t err = retinaface_decode((float*)feature_map[0].data, (float*)feature_map[1].data, (float*)feature_map[2].data,
                         params->priors,
                         result_obj->faces, &valid_boxes, feature_map[0].layout == LIBMAIX_NN_LAYOUT_CHW, params->config);
     result_obj->num = valid_boxes;

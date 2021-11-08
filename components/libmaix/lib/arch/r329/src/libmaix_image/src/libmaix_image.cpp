@@ -146,12 +146,13 @@ extern "C"
           mode==LIBMAIX_IMAGE_MODE_BGR888 || 
           mode==LIBMAIX_IMAGE_MODE_RGBA8888 || 
           mode==LIBMAIX_IMAGE_MODE_YUV420SP_NV21 || 
-          mode==LIBMAIX_IMAGE_MODE_YUV422_YUYV) )
+          mode==LIBMAIX_IMAGE_MODE_YUV422_YUYV ||
+          mode==LIBMAIX_IMAGE_MODE_GRAY) )
     {
       LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_PARAM);
       return NULL;
     }
-    if (!(w == 0 || h == 0 || mode == LIBMAIX_IMAGE_MODE_INVALID))
+    if( !(w==0 || h==0 || mode==LIBMAIX_IMAGE_MODE_INVALID || !is_data_alloc))
     {
       if (!data)
       {
@@ -170,6 +171,9 @@ extern "C"
                 break;
             case LIBMAIX_IMAGE_MODE_YUV420SP_NV21:
                 img_size = w * h * 3 / 2;
+                break;
+            case LIBMAIX_IMAGE_MODE_GRAY:
+                img_size = w * h;
                 break;
             default:
                 LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_PARAM);

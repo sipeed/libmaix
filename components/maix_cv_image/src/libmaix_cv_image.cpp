@@ -139,10 +139,9 @@ extern "C"
         cv::cvtColor(image, image, cv::ColorConversionCodes::COLOR_BGR2RGB);
         *src = libmaix_image_create(image.rows, image.cols, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
         memcpy((*src)->data, image.data, (*src)->width * (*src)->height * 3);
-        printf("libmaix_cv_image_open_file success\r\n");
-        // return LIBMAIX_ERR_NONE;
+        // printf("libmaix_cv_image_open_file success\r\n");
 
-        return LIBMAIX_ERR_NOT_EXEC;
+        return LIBMAIX_ERR_NONE;
     }
 
     libmaix_err_t libmaix_cv_image_draw_ellipse(libmaix_image_t *src, int x, int y, int w, int h, double angle, double startAngle, double endAngle, libmaix_image_color_t color, int thickness)
@@ -255,6 +254,7 @@ extern "C"
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
             cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::cvtColor(input,input,cv::ColorConversionCodes::COLOR_RGB2BGR);
             cv::imwrite(path, input);
             return LIBMAIX_ERR_NONE;
         }

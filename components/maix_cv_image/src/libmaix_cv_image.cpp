@@ -152,7 +152,7 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->height, src->width, CV_8UC3, const_cast<char *>((char *)src->data));
             cv::ellipse(input, cv::Point(x, y), cv::Size(w, h), angle, startAngle, endAngle, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
             // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
@@ -168,7 +168,7 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
+            cv::Mat input(src->height, src->width, CV_8UC3, src->data);
             cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
             // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
@@ -184,7 +184,7 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
+            cv::Mat input(src->height, src->width, CV_8UC3, src->data);
             cv::rectangle(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
             // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
@@ -200,7 +200,7 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
+            cv::Mat input(src->height, src->width, CV_8UC3, src->data);
             cv::line(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
             // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
@@ -216,8 +216,8 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888 && src->mode == dst->mode)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
-            cv::Mat temp(dst->width, dst->height, CV_8UC3, dst->data);
+            cv::Mat input(src->height, src->width, CV_8UC3, src->data);
+            cv::Mat temp(dst->height, dst->width, CV_8UC3, dst->data);
             mergeImage(input, temp, cv::Point(x, y));
             // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
@@ -233,7 +233,7 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
+            cv::Mat input(src->height, src->width, CV_8UC3, src->data);
             cv::Mat image = cv::imread(path, CV_LOAD_IMAGE_UNCHANGED); // maybe need export
             if (!image.empty())
             {
@@ -253,7 +253,7 @@ extern "C"
         }
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->height, src->width, CV_8UC3, const_cast<char *>((char *)src->data));
             cv::cvtColor(input,input,cv::ColorConversionCodes::COLOR_RGB2BGR);
             cv::imwrite(path, input);
             return LIBMAIX_ERR_NONE;
@@ -285,7 +285,7 @@ extern "C"
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
             int fontHeight = 32 * scale; // default 32
-            cv::Mat input(src->width, src->height, CV_8UC3, src->data);
+            cv::Mat input(src->height, src->width, CV_8UC3, src->data);
             cv::String text(str);
             if (!libmaix_font::is_load)
             {
@@ -347,86 +347,86 @@ extern "C"
         }
     }
 /*
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_INVALID   :    0 
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_BINARY   :     1 
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_GRAY   :       2 
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_RGB888   :     3 
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_RGB565   :     4 
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_RGBA8888   :   5 
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :      6 
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :        7 
-LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_BGR888   :     8 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_INVALID   :     256 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_BINARY   :      257 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_GRAY   :        258 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_RGB888   :      259 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_RGB565   :      260 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_RGBA8888   :    261 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :       262 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :         263 
-LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_BGR888   :      264 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_INVALID   :       512 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_BINARY   :        513 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_GRAY   :  514 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_RGB888   :        515 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_RGB565   :        516 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_RGBA8888   :      517 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :         518 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :   519 
-LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_BGR888   :        520 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_INVALID   :     768 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_BINARY   :      769 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_GRAY   :        770 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_RGB888   :      771 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_RGB565   :      772 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_RGBA8888   :    773 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :       774 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :         775 
-LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_BGR888   :      776 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_INVALID   :     1024 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_BINARY   :      1025 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_GRAY   :        1026 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_RGB888   :      1027 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_RGB565   :      1028 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_RGBA8888   :    1029 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :       1030 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :         1031 
-LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_BGR888   :      1032 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_INVALID   :   1280 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_BINARY   :    1281 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_GRAY   :      1282 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_RGB888   :    1283 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_RGB565   :    1284 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_RGBA8888   :  1285 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :     1286 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :       1287 
-LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_BGR888   :    1288 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_INVALID   :      1536 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_BINARY   :       1537 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_GRAY   :         1538 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_RGB888   :       1539 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_RGB565   :       1540 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_RGBA8888   :     1541 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :        1542 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :  1543 
-LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_BGR888   :       1544 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_INVALID   :        1792 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_BINARY   :         1793 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_GRAY   :   1794 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_RGB888   :         1795 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_RGB565   :         1796 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_RGBA8888   :       1797 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :  1798 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :    1799 
-LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_BGR888   :         1800 
-LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_INVALID   :     2048 
-LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BINARY   :      2049 
-LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_GRAY   :        2050 
-LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_RGB888   :      2051 
-LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_RGB565   :      2052 
-LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_RGBA8888   :    2053 
-LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :       2054 
-LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :         2055 
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_INVALID   :    0
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_BINARY   :     1
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_GRAY   :       2
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_RGB888   :     3
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_RGB565   :     4
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_RGBA8888   :   5
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :      6
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :        7
+LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_BGR888   :     8
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_INVALID   :     256
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_BINARY   :      257
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_GRAY   :        258
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_RGB888   :      259
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_RGB565   :      260
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_RGBA8888   :    261
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :       262
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :         263
+LIBMAIX_IMAGE_MODE_BINARY -> LIBMAIX_IMAGE_MODE_BGR888   :      264
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_INVALID   :       512
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_BINARY   :        513
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_GRAY   :  514
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_RGB888   :        515
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_RGB565   :        516
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_RGBA8888   :      517
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :         518
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :   519
+LIBMAIX_IMAGE_MODE_GRAY -> LIBMAIX_IMAGE_MODE_BGR888   :        520
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_INVALID   :     768
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_BINARY   :      769
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_GRAY   :        770
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_RGB888   :      771
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_RGB565   :      772
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_RGBA8888   :    773
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :       774
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :         775
+LIBMAIX_IMAGE_MODE_RGB888 -> LIBMAIX_IMAGE_MODE_BGR888   :      776
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_INVALID   :     1024
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_BINARY   :      1025
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_GRAY   :        1026
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_RGB888   :      1027
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_RGB565   :      1028
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_RGBA8888   :    1029
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :       1030
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :         1031
+LIBMAIX_IMAGE_MODE_RGB565 -> LIBMAIX_IMAGE_MODE_BGR888   :      1032
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_INVALID   :   1280
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_BINARY   :    1281
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_GRAY   :      1282
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_RGB888   :    1283
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_RGB565   :    1284
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_RGBA8888   :  1285
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :     1286
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :       1287
+LIBMAIX_IMAGE_MODE_RGBA8888 -> LIBMAIX_IMAGE_MODE_BGR888   :    1288
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_INVALID   :      1536
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_BINARY   :       1537
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_GRAY   :         1538
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_RGB888   :       1539
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_RGB565   :       1540
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_RGBA8888   :     1541
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :        1542
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :  1543
+LIBMAIX_IMAGE_MODE_YUV420SP_NV21 -> LIBMAIX_IMAGE_MODE_BGR888   :       1544
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_INVALID   :        1792
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_BINARY   :         1793
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_GRAY   :   1794
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_RGB888   :         1795
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_RGB565   :         1796
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_RGBA8888   :       1797
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :  1798
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :    1799
+LIBMAIX_IMAGE_MODE_YUV422_YUYV -> LIBMAIX_IMAGE_MODE_BGR888   :         1800
+LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_INVALID   :     2048
+LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BINARY   :      2049
+LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_GRAY   :        2050
+LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_RGB888   :      2051
+LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_RGB565   :      2052
+LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_RGBA8888   :    2053
+LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_YUV420SP_NV21   :       2054
+LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_YUV422_YUYV   :         2055
 LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 */
     libmaix_err_t libmaix_cv_image_convert(struct libmaix_image *src, libmaix_image_mode_t mode, struct libmaix_image **dst)
@@ -495,7 +495,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             }
             break;
         }
-        case (515):             //GRAY -> RGB888  
+        case (515):             //GRAY -> RGB888
         {
             if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
                 return LIBMAIX_ERR_PARAM;
@@ -509,7 +509,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             }
             break;
         }
-        case (516):             //GRAY -> RGB565  
+        case (516):             //GRAY -> RGB565
         {
             if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
                 return LIBMAIX_ERR_PARAM;
@@ -587,7 +587,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         //     break;
         // }
         // -------------------------------
-        
+
         libmaix_cv_image_free(err, new_mem, dst);
 
         return err;
@@ -669,7 +669,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 
         // cv::imwrite("/tmp/src.jpg", s);
 
-        // cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+        // cv::Mat input(src->height, src->width, CV_8UC3, const_cast<char *>((char *)src->data));
 
         // cv::Mat image = cv::imread("/home/res/logo.png", CV_LOAD_IMAGE_UNCHANGED);
 
@@ -749,7 +749,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         {
         case LIBMAIX_IMAGE_MODE_RGB888:
         {
-            cv::Mat input(src->width, src->height, CV_8UC3, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->height, src->width, CV_8UC3, const_cast<char *>((char *)src->data));
             val.rgb888.r = input.at<cv::Vec3b>(x, y)[0];
             val.rgb888.g = input.at<cv::Vec3b>(x, y)[1];
             val.rgb888.b = input.at<cv::Vec3b>(x, y)[2];
@@ -758,7 +758,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         break;
         case LIBMAIX_IMAGE_MODE_RGBA8888:
         {
-            cv::Mat input(src->width, src->height, CV_8UC4, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->height, src->width, CV_8UC4, const_cast<char *>((char *)src->data));
             val.rgb888.r = input.at<cv::Vec4b>(x, y)[0];
             val.rgb888.g = input.at<cv::Vec4b>(x, y)[1];
             val.rgb888.b = input.at<cv::Vec4b>(x, y)[2];
@@ -768,7 +768,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         break;
         case LIBMAIX_IMAGE_MODE_GRAY:
         {
-            cv::Mat input(src->width, src->height, CV_8UC1, const_cast<char *>((char *)src->data));
+            cv::Mat input(src->height, src->width, CV_8UC1, const_cast<char *>((char *)src->data));
             val.rgb888.r = input.at<uchar>(x, y);
             return val;
         }

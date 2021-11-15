@@ -4,11 +4,11 @@ mainmenu "C/CPP CMake project framework Kconfig configuration"
 menu "Toolchain configuration"
 	config TOOLCHAIN_PATH
 		string "toolchain path"
-		default "/opt/toolchain-sunxi-musl/toolchain/bin"
+		default ""
 	
 	config TOOLCHAIN_PREFIX
 		string "toolchain prefix"
-		default "arm-openwrt-linux-muslgnueabi-"
+		default ""
 endmenu
 
 menu "Target chip configuration"

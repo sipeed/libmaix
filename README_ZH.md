@@ -32,7 +32,10 @@ cmake --version
 
 * 下载并设置工具链（toolchain）
 
-先下载工具链: [toolchain-sunxi-musl-pack-2021-01-09.tar.xz](https://dl.sipeed.com/shareURL/MaixII/SDK/Toolchain) ([备用下载链接](https://github.com/sipeed/libmaix/releases/download/v0.1.0/toolchain-sunxi-musl-pack-2021-01-09.tar.xz))
+| 架构(Arch) | 工具链(toolchain) | 前缀(prefix) |
+| ---- | --------- | ------ |
+| v83x | [toolchain-sunxi-musl-pack-2021-01-09.tar.xz](https://dl.sipeed.com/shareURL/MaixII/SDK/Toolchain) 或者 </br> [github](https://github.com/sipeed/libmaix/releases/download/v0.1.0/toolchain-sunxi-musl-pack-2021-01-09.tar.xz) | arm-openwrt-linux-muslgnueabi- |
+| r329 | [linaro aarch64-linux-gnu](https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz) | aarch64-linux-gnu- |
 
 解压到 `/opt/` 目录
 
@@ -67,9 +70,25 @@ git submodule update --init --recursive
 
 * 设置工程
 
+
 ```
 cd libmaix
 cd examples/hello-world
+```
+
+每次更改工具链， 必须 先清一次临时文件;
+```
+python3 project.py distclean
+```
+
+根据 CPU 架构选择工具链和前缀
+```
+python3 project.py --toolchain /opt//opt/toolchain-sunxi-musl/toolchain/bin --toolchain-prefix arm-openwrt-linux-muslgnueabi- config
+```
+> 或者只配置后缀 `python3 project.py --toolchain-prefix aarch64-linux-gnu- config`
+
+最后配置组件配置项
+```
 python3 project.py menuconfig
 ```
 

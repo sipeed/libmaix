@@ -8,8 +8,12 @@ set(CMAKE_C_FLAGS -Wall)
 set(CMAKE_CXX_FLAGS -Wall)
 ################################
 
-set(LINK_FLAGS -Wl,-EL -L${CONFIG_TOOLCHAIN_PATH}/../lib
-            )
+if(CONFIG_TOOLCHAIN_PATH)
+    set(LINK_FLAGS -Wl,-EL -L${CONFIG_TOOLCHAIN_PATH}/../lib
+                )
+else()
+    set(LINK_FLAGS -Wl,-EL)
+endif()
 set(CMAKE_C_LINK_FLAGS ${CMAKE_C_LINK_FLAGS}
                         ${LINK_FLAGS}
                         )

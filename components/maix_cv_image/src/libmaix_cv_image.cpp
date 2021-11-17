@@ -832,7 +832,6 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 
         return LIBMAIX_ERR_NONE;
     }
-
     libmaix_image_color_t libmaix_cv_image_get_pixe(libmaix_image_t *src, int x, int y)
     {
         libmaix_image_color_t val;

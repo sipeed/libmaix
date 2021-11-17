@@ -31,10 +31,11 @@ libmaix_err_t libmaix_cv_image_draw_string(libmaix_image_t *src, int x, int y, c
 
 libmaix_err_t libmaix_cv_image_crop(libmaix_image_t *src, int x, int y, int w, int h, libmaix_image_t **dst);
 libmaix_err_t libmaix_cv_image_resize(libmaix_image_t *src, int w, int h, libmaix_image_t **dst);
-libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, libmaix_image_t **dst);
+libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, int adjust, libmaix_image_t **dst);
 libmaix_err_t libmaix_cv_image_convert(libmaix_image_t *src, libmaix_image_mode_t type, libmaix_image_t **dst);
 
 libmaix_image_color_t libmaix_cv_image_get_pixe(libmaix_image_t *src, int x, int y);
+libmaix_err_t libmaix_cv_image_set_pixe(libmaix_image_t *src, int x, int y, libmaix_image_color_t color);
 #ifdef __cplusplus
 }
 #endif

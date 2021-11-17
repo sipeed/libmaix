@@ -76,7 +76,6 @@ bool mergeImage(cv::Mat &srcImage, cv::Mat mixImage, cv::Point startPoint)
     //图片类型一致
     if (srcImage.type() == mixImage.type())
     {
-        puts("copyTo");
         mixImage.copyTo(roiImage, mixImage);
         return LIBMAIX_ERR_NONE;
     }
@@ -218,6 +217,7 @@ extern "C"
         {
             cv::Mat input(src->height, src->width, CV_8UC3, src->data);
             cv::Mat temp(dst->height, dst->width, CV_8UC3, dst->data);
+            cv::rectangle(input, cv::Point(x, y), cv::Point(x + dst->width - 1, y + dst->height - 1), cv::Scalar(0, 0, 0), -1);
             mergeImage(input, temp, cv::Point(x, y));
             // memcpy(src->data, input.data, src->width * src->height * 3);
             return LIBMAIX_ERR_NONE;
@@ -254,7 +254,7 @@ extern "C"
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
             cv::Mat input(src->height, src->width, CV_8UC3, const_cast<char *>((char *)src->data));
-            cv::cvtColor(input,input,cv::ColorConversionCodes::COLOR_RGB2BGR);
+            cv::cvtColor(input, input, cv::ColorConversionCodes::COLOR_RGB2BGR);
             cv::imwrite(path, input);
             return LIBMAIX_ERR_NONE;
         }
@@ -346,7 +346,7 @@ extern "C"
             }
         }
     }
-/*
+    /*
 LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_INVALID   :    0
 LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_BINARY   :     1
 LIBMAIX_IMAGE_MODE_INVALID -> LIBMAIX_IMAGE_MODE_GRAY   :       2
@@ -436,28 +436,47 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         {
             return LIBMAIX_ERR_PARAM;
         }
-        if (mode == src->mode)
-        {
-            return LIBMAIX_ERR_NONE;
-        }
         if (src->width == 0 || src->height == 0 || src->data == NULL)
         {
             return LIBMAIX_ERR_PARAM;
         }
-
-        int new_mem = libmaix_cv_image_load(src, dst);
+        if (mode == src->mode)
+        {
+            switch (src->mode)
+            {
+            case LIBMAIX_IMAGE_MODE_GRAY:
+                memcpy((*dst)->data, src->data, src->width * src->height);
+                break;
+            case LIBMAIX_IMAGE_MODE_RGB888:
+                memcpy((*dst)->data, src->data, src->width * src->height * 3);
+                break;
+            case LIBMAIX_IMAGE_MODE_RGB565:
+                memcpy((*dst)->data, src->data, src->width * src->height * 2);
+                break;
+            case LIBMAIX_IMAGE_MODE_RGBA8888:
+                memcpy((*dst)->data, src->data, src->width * src->height * 4);
+                break;
+            case LIBMAIX_IMAGE_MODE_BGR888:
+                memcpy((*dst)->data, src->data, src->width * src->height * 3);
+                break;
+            default:
+                return LIBMAIX_ERR_PARAM;
+                break;
+            }
+            return LIBMAIX_ERR_NONE;
+        }
+        // int new_mem = libmaix_cv_image_load(src, dst);
         // -------------------------------
         uint16_t mode_conver = 0;
         mode_conver = (uint8_t)src->mode << 8;
         mode_conver |= (uint8_t)mode;
-
         switch (mode_conver)
         {
         // case (403):             //RGB565 -> RGB888
         // {
         //     break;
         // }
-        case (772):             //RGB888 -> RGB565
+        case (772): //RGB888 -> RGB565
         {
             if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
                 return LIBMAIX_ERR_PARAM;
@@ -471,7 +490,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             (*dst)->mode = mode;
             break;
         }
-        case (776):             //RGB888 -> BGR888
+        case (776): //RGB888 -> BGR888
         {
             // printf("libmaix_image_hal_convert src->mode %d mode %d \r\n", src->mode, mode);
             uint8_t *rgb = (uint8_t *)(src->data), *bgr = (uint8_t *)(*dst)->data;
@@ -482,7 +501,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             (*dst)->mode = mode;
             break;
         }
-        case (770):             //RGB888 -> GRAY
+        case (770): //RGB888 -> GRAY
         {
             if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
                 return LIBMAIX_ERR_PARAM;
@@ -495,13 +514,13 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             }
             break;
         }
-        case (515):             //GRAY -> RGB888
+        case (515): //GRAY -> RGB888
         {
             if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
                 return LIBMAIX_ERR_PARAM;
             uint8_t *GARY = (uint8_t *)src->data;
             uint8_t *rgb888 = (uint8_t *)(*dst)->data;
-            for (uint8_t *end = GARY + src->width * src->height ; GARY < end; GARY += 1, rgb888 += 3)
+            for (uint8_t *end = GARY + src->width * src->height; GARY < end; GARY += 1, rgb888 += 3)
             {
                 rgb888[0] = *GARY;
                 rgb888[1] = *GARY;
@@ -509,7 +528,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             }
             break;
         }
-        case (516):             //GRAY -> RGB565
+        case (516): //GRAY -> RGB565
         {
             if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
                 return LIBMAIX_ERR_PARAM;
@@ -517,7 +536,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             uint16_t *rgb565 = (uint16_t *)(*dst)->data;
             for (uint8_t *end = GARY + src->width * src->height; GARY < end; rgb565 += 1, GARY += 1)
             {
-                *rgb565  = ((*GARY & 0xf8) << 11) | ((*GARY & 0xfC) << 5) | (*GARY & 0xf8);
+                *rgb565 = ((*GARY & 0xf8) << 11) | ((*GARY & 0xfC) << 5) | (*GARY & 0xf8);
             }
             break;
         }
@@ -525,70 +544,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
             break;
         }
-        // switch (src->mode)
-        // {
-        // case LIBMAIX_IMAGE_MODE_RGB888:
-        // {
-        //     switch (mode)
-        //     {
-        //     case LIBMAIX_IMAGE_MODE_RGB565:
-        //     {
-        //         if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
-        //             return LIBMAIX_ERR_PARAM;
-        //         uint8_t *rgb888 = (uint8_t *)src->data;
-        //         uint16_t *rgb565 = (uint16_t *)(*dst)->data;
-        //         for (uint16_t *end = rgb565 + src->width * src->height; rgb565 < end; rgb565 += 1, rgb888 += 3)
-        //         {
-        //             // *rgb565 = make16color(rgb888[0], rgb888[1], rgb888[2]);
-        //             *rgb565 = ((((rgb888[0] >> 3) & 31) << 11) | (((rgb888[1] >> 2) & 63) << 5) | ((rgb888[2] >> 3) & 31));
-        //         }
-        //         (*dst)->mode = mode;
-        //         break;
-        //     }
-        //     case LIBMAIX_IMAGE_MODE_BGR888:
-        //     {
-        //         // printf("libmaix_image_hal_convert src->mode %d mode %d \r\n", src->mode, mode);
-        //         uint8_t *rgb = (uint8_t *)(src->data), *bgr = (uint8_t *)(*dst)->data;
-        //         for (uint8_t *end = rgb + src->width * src->height * 3; rgb < end; rgb += 3, bgr += 3)
-        //         {
-        //             bgr[2] = rgb[0], bgr[1] = rgb[1], bgr[0] = rgb[2];
-        //         }
-        //         (*dst)->mode = mode;
-        //         break;
-        //     }
-        //     case LIBMAIX_IMAGE_MODE_BGRA8888:
-        //     {
-        //         break;
-        //     }
-        //     case LIBMAIX_IMAGE_MODE_GRAY:
-        //     {
-        //         break;
-        //     }
-        //     default:
-        //         err = LIBMAIX_ERR_PARAM;
-        //         break;
-        //     }
-        //     break;
-        // }
-        // case LIBMAIX_IMAGE_MODE_RGBA8888:
-        // {
-        //     break;
-        // }
-        // case LIBMAIX_IMAGE_MODE_GRAY:
-        // {
-        //     break;
-        // }
-        // case LIBMAIX_IMAGE_MODE_RGB565:
-        // {
-        //     break;
-        // }
-        // default:
-        //     err = LIBMAIX_ERR_NOT_IMPLEMENT;
-        //     break;
-        // }
-        // -------------------------------
-
-        libmaix_cv_image_free(err, new_mem, dst);
+        // libmaix_cv_image_free(err, new_mem, dst);
 
         return err;
     }
@@ -604,13 +560,72 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         {
             return LIBMAIX_ERR_PARAM;
         }
-
-        int new_mem = libmaix_cv_image_load(src, dst);
+        // int new_mem = libmaix_cv_image_load(src, dst);
         // -------------------------------
-        LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+        switch (src->mode)
+        {
+        case LIBMAIX_IMAGE_MODE_RGB888:
+        {
+            if ((src->width == (*dst)->width) && (src->height == (*dst)->height))
+            {
+                memcpy((*dst)->data, src->data, src->width * src->height * 3);
+                return LIBMAIX_ERR_NONE;
+            }
+            cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
+            cv::Mat dist;
+            cv::resize(cv_src, dist, cv::Size(w, h));
+            memcpy((*dst)->data, dist.data, w * h * 3);
+            // (*dst)->width = w;
+            // (*dst)->height = h;
+            // (*dst)->mode = src->mode;
+            return LIBMAIX_ERR_NONE;
+        }
+        break;
+        case LIBMAIX_IMAGE_MODE_RGBA8888:
+        {
+            if ((src->width == (*dst)->width) && (src->height == (*dst)->height))
+            {
+                memcpy((*dst)->data, src->data, src->width * src->height * 4);
+                return LIBMAIX_ERR_NONE;
+            }
+            cv::Mat cv_src(src->height, src->width, CV_8UC4, src->data);
+            cv::Mat dist;
+            cv::resize(cv_src, dist, cv::Size(w, h));
+            memcpy((*dst)->data, dist.data, w * h * 3);
+            // (*dst)->width = w;
+            // (*dst)->height = h;
+            // (*dst)->mode = src->mode;
+            return LIBMAIX_ERR_NONE;
+        }
+        break;
+        case LIBMAIX_IMAGE_MODE_GRAY:
+        {
+            if ((src->width == (*dst)->width) && (src->height == (*dst)->height))
+            {
+                memcpy((*dst)->data, src->data, src->width * src->height);
+                return LIBMAIX_ERR_NONE;
+            }
+            cv::Mat cv_src(src->height, src->width, CV_8UC1, src->data);
+            cv::Mat dist;
+            cv::resize(cv_src, dist, cv::Size(w, h));
+            memcpy((*dst)->data, dist.data, w * h);
+            // (*dst)->width = w;
+            // (*dst)->height = h;
+            // (*dst)->mode = src->mode;
+            return LIBMAIX_ERR_NONE;
+        }
+        break;
+        default:
+        {
+            LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+            // libmaix_cv_image_free(err, new_mem, dst);
+            return LIBMAIX_ERR_NOT_EXEC;
+        }
+        break;
+        }
         // -------------------------------
-        libmaix_cv_image_free(err, new_mem, dst);
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+        // libmaix_cv_image_free(err, new_mem, dst);
+        return LIBMAIX_ERR_NONE;
     }
 
     libmaix_err_t libmaix_cv_image_crop(struct libmaix_image *src, int x, int y, int w, int h, struct libmaix_image **dst)
@@ -624,16 +639,33 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         {
             return LIBMAIX_ERR_PARAM;
         }
-
-        int new_mem = libmaix_cv_image_load(src, dst);
+        // int new_mem = libmaix_cv_image_load(src, dst);
         // -------------------------------
-        LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
+            cv::Mat dist;
+            cv::Rect roi;
+            roi.x = x;
+            roi.y = y;
+            roi.width = w;
+            roi.height = h;
+            cv_src(roi).copyTo(dist);
+            memcpy((*dst)->data, dist.data, w * h * 3);
+        }
+        else
+        {
+            LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+            // -------------------------------
+            // libmaix_cv_image_free(err, new_mem, dst);
+            return LIBMAIX_ERR_NOT_IMPLEMENT;
+        }
         // -------------------------------
-        libmaix_cv_image_free(err, new_mem, dst);
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+        // libmaix_cv_image_free(err, new_mem, dst);
+        return LIBMAIX_ERR_NONE;
     }
 
-    libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, libmaix_image_t **dst)
+    libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, int adjust, libmaix_image_t **dst)
     {
         libmaix_err_t err = LIBMAIX_ERR_NONE;
         if (dst == NULL)
@@ -644,13 +676,79 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         {
             return LIBMAIX_ERR_PARAM;
         }
-
-        int new_mem = libmaix_cv_image_load(src, dst);
         // -------------------------------
-        LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+        if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+        {
+            cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
+            cv::Mat cv_dist;
+            if (adjust == 0)
+            {
+                cv::Point2f center((cv_src.cols - 1) / 2.0, (cv_src.rows - 1) / 2.0);
+                cv::Mat rot = cv::getRotationMatrix2D(center, rotate, 1.0);
+                cv::warpAffine(cv_src, cv_dist, rot, cv_src.size()); //the original size
+                if (*dst == NULL)
+                {
+                    *dst = libmaix_image_create(cv_dist.cols, cv_dist.rows, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+                }
+                if (*dst)
+                {
+                    memcpy((*dst)->data, cv_dist.data, (*dst)->width * (*dst)->height * 3);
+                    return LIBMAIX_ERR_NONE;
+                }
+                else
+                {
+                    return LIBMAIX_ERR_PARAM;
+                }
+            }
+            else
+            {
+                double alpha = -rotate * CV_PI / 180.0; //convert angle to radian format
+                cv::Point2f srcP[3];
+                cv::Point2f dstP[3];
+                srcP[0] = cv::Point2f(0, cv_src.rows);
+                srcP[1] = cv::Point2f(cv_src.cols, 0);
+                srcP[2] = cv::Point2f(cv_src.cols, cv_src.rows);
+                //rotate the pixels
+                for (int i = 0; i < 3; i++)
+                    dstP[i] = cv::Point2f(srcP[i].x * cos(alpha) - srcP[i].y * sin(alpha), srcP[i].y * cos(alpha) + srcP[i].x * sin(alpha));
+                double minx, miny, maxx, maxy;
+                minx = std::min(std::min(std::min(dstP[0].x, dstP[1].x), dstP[2].x), float(0.0));
+                miny = std::min(std::min(std::min(dstP[0].y, dstP[1].y), dstP[2].y), float(0.0));
+                maxx = std::max(std::max(std::max(dstP[0].x, dstP[1].x), dstP[2].x), float(0.0));
+                maxy = std::max(std::max(std::max(dstP[0].y, dstP[1].y), dstP[2].y), float(0.0));
+                int w = maxx - minx;
+                int h = maxy - miny;
+                //translation
+                for (int i = 0; i < 3; i++)
+                {
+                    if (minx < 0)
+                        dstP[i].x -= minx;
+                    if (miny < 0)
+                        dstP[i].y -= miny;
+                }
+                cv::Mat warpMat = cv::getAffineTransform(srcP, dstP);
+                cv::warpAffine(cv_src, cv_dist, warpMat, cv::Size(w, h)); //extend size
+                if (*dst != NULL)
+                    libmaix_image_destroy(dst);
+                *dst = libmaix_image_create(cv_dist.cols, cv_dist.rows, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+                if (*dst)
+                {
+                    memcpy((*dst)->data, cv_dist.data, (*dst)->width * (*dst)->height * 3);
+                    return LIBMAIX_ERR_NONE;
+                }
+                else
+                {
+                    return LIBMAIX_ERR_PARAM;
+                }
+            } //end else
+        }
+        else
+        {
+            LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+            return LIBMAIX_ERR_NOT_IMPLEMENT;
+        }
         // -------------------------------
-        libmaix_cv_image_free(err, new_mem, dst);
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+        return LIBMAIX_ERR_NONE;
     }
 
     libmaix_err_t libmaix_cv_image_test(libmaix_image_t *src, libmaix_image_t *dst)
@@ -734,6 +832,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 
         return LIBMAIX_ERR_NONE;
     }
+
     libmaix_image_color_t libmaix_cv_image_get_pixe(libmaix_image_t *src, int x, int y)
     {
         libmaix_image_color_t val;
@@ -778,5 +877,43 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         }
 
         return val;
+    }
+    libmaix_err_t libmaix_cv_image_set_pixe(libmaix_image_t *src, int x, int y, libmaix_image_color_t color)
+    {
+        if (src == NULL)
+        {
+            return LIBMAIX_ERR_PARAM;
+        }
+        switch (src->mode)
+        {
+        case LIBMAIX_IMAGE_MODE_RGB888:
+        {
+            cv::Mat input(src->height, src->width, CV_8UC3, const_cast<char *>((char *)src->data));
+            input.at<cv::Vec3b>(y, x)[0] = color.rgb888.r;
+            input.at<cv::Vec3b>(y, x)[1] = color.rgb888.g;
+            input.at<cv::Vec3b>(y, x)[2] = color.rgb888.b;
+        }
+        break;
+        case LIBMAIX_IMAGE_MODE_RGBA8888:
+        {
+            cv::Mat input(src->height, src->width, CV_8UC4, const_cast<char *>((char *)src->data));
+            input.at<cv::Vec4b>(y, x)[0] = color.rgb888.r;
+            input.at<cv::Vec4b>(y, x)[1] = color.rgb888.g;
+            input.at<cv::Vec4b>(y, x)[2] = color.rgb888.b;
+            input.at<cv::Vec4b>(y, x)[3] = color.rgb888.a;
+        }
+        break;
+        case LIBMAIX_IMAGE_MODE_GRAY:
+        {
+            cv::Mat input(src->height, src->width, CV_8UC1, const_cast<char *>((char *)src->data));
+            input.at<uchar>(y, x) = color.rgb888.r;
+        }
+        break;
+        default:
+            LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+            return LIBMAIX_ERR_NOT_IMPLEMENT;
+            break;
+        }
+        return LIBMAIX_ERR_NONE;
     }
 }

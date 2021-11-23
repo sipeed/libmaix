@@ -102,8 +102,8 @@ void nn_test(struct libmaix_disp* disp)
 
     printf("--resnet init\n");
     libmaix_nn_model_path_t model_path = {
-        .awnn.param_path = "/root/models/resnet_awnn.param",
-        .awnn.bin_path = "/root/models/resnet_awnn.bin",
+        .awnn.param_path = "~/root/models/resnet_awnn.param",
+        .awnn.bin_path = "~/root/models/resnet_awnn.bin",
     };
     libmaix_nn_layer_t input = {
         .w = 224,
@@ -159,6 +159,8 @@ void nn_test(struct libmaix_disp* disp)
         printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
         goto end;
     }
+
+    
     printf("-- nn object load model\n");
     err = nn->load(nn, &model_path, &opt_param);
     if(err != LIBMAIX_ERR_NONE)

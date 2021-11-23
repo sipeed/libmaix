@@ -240,6 +240,7 @@ end:
     }
     if(nn)
     {
+        nn->deinit(nn);
         libmaix_nn_destroy(&nn);
     }
     if(cam)

@@ -17,169 +17,119 @@
 
 using namespace std;
 
-aipu_ctx_handle_t *ctx = nullptr; //  a struct AIPU could use it straightly
-const char *status_msg = nullptr;
+aipu_ctx_handle_t *ctx = NULL; //  a struct AIPU could use it straightly
+const char *status_msg = NULL;
 
-// need to transform
+aipu_buffer_alloc_info_t buffer;
+libmaix_err_t status = LIBMAIX_ERR_NONE;
+aipu_graph_desc_t gdesc;
+uint32_t job_id = 0;
+int32_t time_out = -1;
+
+int in_fsize = 0;
+
+
 
 typedef struct obj_config
 {
     aipu_buffer_alloc_info_t buffer;
-    libmaix_err_t status = LIBMAIX_ERR_NONE;
+    libmaix_err_t status;
     aipu_graph_desc_t gdesc;
-    uint32_t job_id = 0;
-    int32_t time_out = -1;
+    uint32_t job_id  ;
+    int32_t time_out ;
     // char data_file_name[FNAME_MAX_LEN] = {0};
-    int in_fsize = 0;
+    int in_fsize ;
 } obj_config_t;
 
 int c = 0;
 
-// static void *load_data_from_file(const char *fname, int *size)
-// {
-//     int fd = 0;
-//     struct stat finfo;
-//     void *start = nullptr;
-
-//     if ((nullptr == fname) || (nullptr == size))
-//     {
-//         goto finish;
-//     }
-
-//     if (stat(fname, &finfo) != 0)
-//     {
-//         goto finish;
-//     }
-
-//     fd = open(fname, O_RDONLY);
-//     if (fd <= 0)
-//     {
-//         fprintf(stderr, "open file failed: %s! (errno = %d)\n", fname, errno);
-//         goto finish;
-//     }
-
-//     start = mmap(nullptr, finfo.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-//     if (MAP_FAILED == start)
-//     {
-//         fprintf(stderr, "failed in mapping graph file: %s! (errno = %d)\n", fname, errno);
-//         goto finish;
-//     }
-
-//     /* success */
-//     *size = finfo.st_size;
-
-// finish:
-//     if (fd > 0)
-//     {
-//         close(fd);
-//     }
-//     return start;
-// }
-
-/* not Comple*/
 libmaix_err_t libmaix_nn_obj_init(struct libmaix_nn *obj)
 {
-    libmaix_err_t *status = &(((obj_config_t *)obj->_config)->status);
-    aipu_status_t ret;
-    *status = LIBMAIX_ERR_NONE;
     if (obj == NULL)
     {
-        *status = LIBMAIX_ERR_NO_MEM;
-        printf("allocation memory to an nn object is faild\n");
-        return *status;
+        status = LIBMAIX_ERR_NO_MEM;
+        printf("initing a nn object is faild\n");
+        return status;
     }
-    return *status;
-    //alloc tensor buffers
+    ((obj_config_t *)(obj->_config))->status = status;
+    ((obj_config_t *)(obj->_config))->buffer = buffer;
+    ((obj_config_t *)(obj->_config))->gdesc = gdesc;
+    ((obj_config_t *)(obj->_config))->in_fsize = in_fsize;
+    ((obj_config_t *)(obj->_config))->job_id = job_id;
+    ((obj_config_t *)(obj->_config))->time_out = time_out;
 
-    // add model graph first
-    // ret = AIPU_alloc_tensor_buffers(ctx, &(((obj_config_t *)(obj->_config))->gdesc), &(((obj_config_t *)(obj->_config))->buffer));
-    // if (ret != AIPU_STATUS_SUCCESS)
-    // {
-    //     // alloc tensor faild
-    //     *status = LIBMAIX_ERR_NOT_READY;
-    //     AIPU_get_status_msg(ret, &status_msg);
-    //     fprintf(stderr, "[TEST ERROR] AIPU_alloc_tensor_buffers: %s\n", status_msg);
-    //     printf("allocateing tensor buffers  is faild!\n");
+    libmaix_err_t status = ((obj_config_t *)(obj->_config))->status;
+    aipu_status_t ret;
 
-    //     //
-    //     printf("start to unload graph\n");
-    //     ret = AIPU_unload_graph(ctx, &(((obj_config_t *)(obj->_config))->gdesc));
-    //     if (ret != AIPU_STATUS_SUCCESS)
-    //     {
-    //         *status = LIBMAIX_ERR_NOT_READY;
-    //         AIPU_get_status_msg(ret, &status_msg);
-    //         fprintf(stderr, "[TEST ERROR] AIPU_unload_graph; %s\n", status_msg);
-    //         printf(" Unload graph is faild\n");
-    //         return *status;
-    //     }
-
-    //     // deinit nn module
-    //     ret = AIPU_deinit_ctx(ctx);
-    //     if (ret != AIPU_STATUS_SUCCESS)
-    //     {
-    //         *status = LIBMAIX_ERR_NOT_READY;
-    //         AIPU_get_status_msg(ret, &status_msg);
-    //         fprintf(stderr, "[TEST ERROR] AIPU_deinit_ctx: %s\n", status_msg);
-    //         printf("deinit nn module is faild\n");
-    //         return *status;
-    //     }
-    // }
-    // return *status;
+    return status;
 }
 
 libmaix_err_t libmaix_nn_obj_deinit(struct libmaix_nn *obj)
 {
+    free(obj->_config);
     free(obj);
+    if (obj->_config== NULL ||  obj == NULL)
+    {
+        return LIBMAIX_ERR_NONE;
+    }
+    return LIBMAIX_ERR_NOT_IMPLEMENT;
 }
 
 libmaix_err_t libmaix_nn_obj_load(struct libmaix_nn *obj, const libmaix_nn_model_path_t *path, libmaix_nn_opt_param_t *opt_param)
 {
-    libmaix_err_t *status = &(((obj_config_t *)(obj->_config))->status) ;
+    libmaix_err_t *status = &(((obj_config_t *)(obj->_config))->status);
+    aipu_graph_desc_t *gdesc_ptr = &(((obj_config_t *)(obj->_config))->gdesc);
+    aipu_buffer_alloc_info_t * buffer_ptr =  &(((obj_config_t *)(obj->_config))->buffer);
     aipu_status_t ret;
-    // if (path->normal.model_path != NULL)
-    // {
-    //     *status = LIBMAIX_ERR_NOT_IMPLEMENT;
-    //     printf("normal model is not implement\n");
-    // }
 
-    // load graph (aipu.bin)
-    ret = AIPU_load_graph_helper(ctx, path->awnn.bin_path, &(((obj_config_t *)(obj->_config))->gdesc));
+    if (path->normal.model_path == NULL)
+    {
+        *status = LIBMAIX_ERR_NOT_IMPLEMENT;
+        printf("[libmaix_nn]--  normal model is not implement\n");
+    }
 
+    printf("[libmaix_nn ]--  the model path is: %s \n", path->normal.model_path);
+    printf("[libmaix_nn] -- start load graph\n");
+    ret = AIPU_load_graph_helper(ctx, path->normal.model_path, gdesc_ptr);
     if (ret != AIPU_STATUS_SUCCESS)
     {
         *status = LIBMAIX_ERR_NOT_READY;
         AIPU_get_status_msg(ret, &status_msg);
-        printf("load_graph_error\n");
+        printf("[libmaix_nn ]  -- load_graph_error\n");
         fprintf(stderr, "[TEST ERROR] AIPU_load_graph_helper: %s\n", status_msg);
+        
+        ret = AIPU_deinit_ctx(ctx);
+        if (ret != AIPU_STATUS_SUCCESS)
+         {
+             AIPU_get_status_msg(ret, &status_msg);
+            printf("[DEMO ERROR] AIPU_deinit_ctx: %s\n", status_msg);
+        }
         return *status;
     }
+    printf("[libmaix_nn] -- start load graph has done\n");
     fprintf(stdout, "[TEST INFO] AIPU load graph successfully.\n");
 
 
 
-    //add model graph first
-    ret = AIPU_alloc_tensor_buffers(ctx, &(((obj_config_t *)(obj->_config))->gdesc), &(((obj_config_t *)(obj->_config))->buffer));
+    printf("[libmaix_nn] -- start alloction tensor buffers\n");
+    ret = AIPU_alloc_tensor_buffers(ctx,gdesc_ptr,buffer_ptr);
     if (ret != AIPU_STATUS_SUCCESS)
     {
-        // alloc tensor faild
         *status = LIBMAIX_ERR_NOT_READY;
         AIPU_get_status_msg(ret, &status_msg);
-        fprintf(stderr, "[TEST ERROR] AIPU_alloc_tensor_buffers: %s\n", status_msg);
-        printf("allocateing tensor buffers  is faild!\n");
+        fprintf(stdout, "[TEST ERROR] AIPU_alloc_tensor_buffers: %s\n", status_msg);
 
-        //
         printf("start to unload graph\n");
-        ret = AIPU_unload_graph(ctx, &(((obj_config_t *)(obj->_config))->gdesc));
+        ret = AIPU_unload_graph(ctx,gdesc_ptr);
         if (ret != AIPU_STATUS_SUCCESS)
         {
             *status = LIBMAIX_ERR_NOT_READY;
             AIPU_get_status_msg(ret, &status_msg);
-            fprintf(stderr, "[TEST ERROR] AIPU_unload_graph; %s\n", status_msg);
+            fprintf(stdout, "[TEST ERROR] AIPU_unload_graph; %s\n", status_msg);
             printf(" Unload graph is faild\n");
             return *status;
         }
 
-        // deinit nn module
         ret = AIPU_deinit_ctx(ctx);
         if (ret != AIPU_STATUS_SUCCESS)
         {
@@ -193,25 +143,32 @@ libmaix_err_t libmaix_nn_obj_load(struct libmaix_nn *obj, const libmaix_nn_model
     return *status;
 }
 
-
 libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t *inputs, libmaix_nn_layer_t *outputs)
 {
-    libmaix_err_t *status = &(((obj_config_t *)(obj->_config))->status) ;
+    libmaix_err_t *status = &(((obj_config_t *)(obj->_config))->status);
     aipu_status_t ret;
-    // void * in_data = load_data_from_file(          ((obj_config_t *) (obj->_config))->data_file_name    ,  &(((obj_config_t *) (obj->_config))->in_fsize ));
-    // if (!in_data)
-    // {
-    //     *status = LIBMAIX_ERR_PARAM;
-    //     fprintf(stdout, "[TEST ERROR] Load input from file failed!\n");
-    //     printf("load input data faild\n");
-    //     return *status;
-    // }
 
-    memcpy((*(aipu_buffer_alloc_info_t *)obj->_config).inputs.tensors[0].va, inputs->data, (*(aipu_buffer_alloc_info_t *)obj->_config).inputs.tensors[0].size);
+    aipu_graph_desc_t *gdesc_ptr = &(((obj_config_t *)(obj->_config))->gdesc);
+    aipu_buffer_alloc_info_t *buffer_ptr = &(((obj_config_t *)(obj->_config))->buffer);
 
-    *status = LIBMAIX_ERR_NONE;
-    // ceate  process job
-    ret = AIPU_create_job(ctx, &(((obj_config_t *)(obj->_config))->gdesc), (((obj_config_t *)(obj->_config))->buffer.handle), &(((obj_config_t *)(obj->_config))->job_id));
+    int model_inw = gdesc_ptr->inputs.desc[0].fmt.shape.W;
+    int model_inh = gdesc_ptr->inputs.desc[0].fmt.shape.H;
+    int model_inch = gdesc_ptr->inputs.desc[0].fmt.shape.C;
+    printf("[libmaix_nn]--   Model input:  W=%3d, H=%3d, C =%d, size=%d\r\n", model_inw, model_inh, model_inch, (*buffer_ptr).inputs.tensors[0].size);
+    int img_size = model_inw * model_inh * model_inch;
+    ((obj_config_t *)(obj->_config))->in_fsize = img_size;
+
+    
+    printf("[libmaix_nn]--  Input img size should  be %d \n", img_size);
+    printf("[libmaix_nn]--  input tensor size is : %d\n", (*buffer_ptr).inputs.tensors[0].size);
+
+    printf("[libmaix-nn]--  forward memcpy\n");
+    memcpy((*buffer_ptr).inputs.tensors[0].va,  inputs->data, (*buffer_ptr).inputs.tensors[0].size);
+    printf("[libmaix-nn]--  forward memcpy has done\n");
+
+    printf("[libmaix_nn]--  create  job\n");
+    ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(((obj_config_t *)(obj->_config))->job_id));
+
     if (ret != AIPU_STATUS_SUCCESS)
     {
         *status = LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -220,7 +177,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         printf("Create process jdb faild\n");
 
         printf("Start seting tensor buffers free\n");
-        ret = AIPU_free_tensor_buffers(ctx, (*(aipu_buffer_alloc_info_t *)obj->_config).handle);
+        ret = AIPU_free_tensor_buffers(ctx,buffer_ptr->handle);
         if (ret != AIPU_STATUS_SUCCESS)
         {
             *status = LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -228,16 +185,36 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             fprintf(stderr, "[TEST ERROR] AIPU_free_tensor_buffers: %s\n", status_msg);
             printf("free tensor buffers is faild\n");
             // free input data memory
-            if (inputs->data)
-            {
-                munmap(inputs->data, (*(aipu_buffer_alloc_info_t *)obj->_config).inputs.tensors[0].size);
-            }
+        }
+
+        ret = AIPU_unload_graph(ctx,gdesc_ptr);
+        if (ret != AIPU_STATUS_SUCCESS)
+        {
+            *status = LIBMAIX_ERR_NOT_READY;
+            AIPU_get_status_msg(ret, &status_msg);
+            fprintf(stdout, "[TEST ERROR] AIPU_unload_graph; %s\n", status_msg);
+            printf(" Unload graph is faild\n");
+            return *status;
+        }
+
+        ret = AIPU_deinit_ctx(ctx);
+        if (ret != AIPU_STATUS_SUCCESS)
+        {
+            *status = LIBMAIX_ERR_NOT_READY;
+            AIPU_get_status_msg(ret, &status_msg);
+            fprintf(stderr, "[TEST ERROR] AIPU_deinit_ctx: %s\n", status_msg);
+            printf("deinit nn module is faild\n");
             return *status;
         }
     }
-    // pass  the input data  comput
+    printf("[libmaix_nn]--  create  job has done\n");
 
+
+    printf("[libmaix_nn]--  finish  job\n");
     ret = AIPU_finish_job(ctx, ((obj_config_t *)(obj->_config))->job_id, ((obj_config_t *)(obj->_config))->time_out);
+    printf("[libmaix_nn]--  %d\n", ret);
+    printf("[libmaix_nn]--  finish job has done\n");
+    printf("[libmaix_nn]--  outputs tensor size is : %d\n", (*buffer_ptr).outputs.tensors[0].size);
     if (ret != AIPU_STATUS_SUCCESS)
     {
         *status = LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -245,8 +222,37 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         fprintf(stderr, "[TEST ERROR] AIPU_finish_job: %s\n", status_msg);
         printf("finish job is faild\n");
 
-        // 手动清除 job
-        printf("Start cleaning job\n");
+         ret = AIPU_free_tensor_buffers(ctx,buffer_ptr->handle);
+        if (ret != AIPU_STATUS_SUCCESS)
+        {
+            *status = LIBMAIX_ERR_NOT_IMPLEMENT;
+            AIPU_get_status_msg(ret, &status_msg);
+            fprintf(stderr, "[TEST ERROR] AIPU_free_tensor_buffers: %s\n", status_msg);
+            printf("free tensor buffers is faild\n");
+            // free input data memory
+        }
+
+        ret = AIPU_unload_graph(ctx,gdesc_ptr);
+        if (ret != AIPU_STATUS_SUCCESS)
+        {
+            *status = LIBMAIX_ERR_NOT_READY;
+            AIPU_get_status_msg(ret, &status_msg);
+            fprintf(stdout, "[TEST ERROR] AIPU_unload_graph; %s\n", status_msg);
+            printf(" Unload graph is faild\n");
+            return *status;
+        }
+
+        ret = AIPU_deinit_ctx(ctx);
+        if (ret != AIPU_STATUS_SUCCESS)
+        {
+            *status = LIBMAIX_ERR_NOT_READY;
+            AIPU_get_status_msg(ret, &status_msg);
+            fprintf(stderr, "[TEST ERROR] AIPU_deinit_ctx: %s\n", status_msg);
+            printf("deinit nn module is faild\n");
+            return *status;
+        }
+
+        printf("Start cleaning  job\n");
         ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->_config))->job_id);
         if (ret != AIPU_STATUS_SUCCESS)
         {
@@ -256,10 +262,15 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             printf("clean job is faild\n");
             return *status;
         }
+
     }
 
-    memcpy(outputs->data, (*(aipu_buffer_alloc_info_t *)obj->_config).inputs.tensors[0].va, (*(aipu_buffer_alloc_info_t *)obj->_config).outputs.tensors[0].size);
+    memcpy(outputs->data, (int8_t *)((*buffer_ptr).outputs.tensors[0].va), (*buffer_ptr).outputs.tensors[0].size);
+    
+    printf("[libmaix_nn]--  copy ouput has done\n");
+    printf("[libmaix_nn]-- output size is : %d\n", (*buffer_ptr).outputs.tensors[0].size);
 
+    printf("[libmaix_nn]--  clean  job\n");
     ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->_config))->job_id);
     if (ret != AIPU_STATUS_SUCCESS)
     {
@@ -269,6 +280,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         printf("clean job is faild\n");
         return *status;
     }
+    printf("[libmaix_nn]--  clean  job has done \n");
 
     return *status;
 }
@@ -283,10 +295,9 @@ libmaix_nn_t *libmaix_nn_create()
     nn_obj_ptr->load = libmaix_nn_obj_load;
     nn_obj_ptr->forward = libmaix_nn_obj_forward;
     // made a struct to add
-    obj_config_t *obj_config_ptr = (obj_config_t *)malloc(1*sizeof(obj_config_t));
+    obj_config_t *obj_config_ptr = (obj_config_t *)malloc(1 * sizeof(obj_config_t));
     nn_obj_ptr->_config = obj_config_ptr;
     return nn_obj_ptr;
-
 }
 
 void libmaix_nn_destroy(libmaix_nn_t **obj)
@@ -305,16 +316,6 @@ libmaix_err_t libmaix_nn_module_init()
         AIPU_get_status_msg(ret, &status_msg);
         fprintf(stderr, "[TEST ERROR] AIPU_init_ctx: %s\n", status_msg);
         printf("nn module init is faild\n");
-        return status;
-    }
-    aipu_runtime_config_t config; //struct
-    ret = AIPU_set_runtime_config(ctx, &config);
-    if (ret != AIPU_STATUS_SUCCESS)
-    {
-        status = LIBMAIX_ERR_NOT_INIT;
-        AIPU_get_status_msg(ret, &status_msg);
-        fprintf(stderr, "[TEST ERROR] AIPU_init_ctx: %s\n", status_msg);
-        printf("set runtime config is faild!\n");
         return status;
     }
     return status;

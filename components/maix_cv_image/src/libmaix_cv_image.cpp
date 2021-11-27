@@ -254,8 +254,9 @@ extern "C"
         if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
         {
             cv::Mat input(src->height, src->width, CV_8UC3, const_cast<char *>((char *)src->data));
-            cv::cvtColor(input, input, cv::ColorConversionCodes::COLOR_RGB2BGR);
-            cv::imwrite(path, input);
+            cv::Mat save_img ;
+            cv::cvtColor(input, save_img, cv::ColorConversionCodes::COLOR_RGB2BGR);
+            cv::imwrite(path, save_img);
             return LIBMAIX_ERR_NONE;
         }
         return LIBMAIX_ERR_NOT_IMPLEMENT;

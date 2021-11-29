@@ -79,8 +79,9 @@ void nn_test(struct libmaix_disp* disp)
 
     printf("--image module init\n");
     libmaix_image_module_init();
-    libmaix_nn_module_init();
     libmaix_camera_module_init();
+    libmaix_nn_module_init();
+    
 
     printf("--create image\n");
     img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_YUV420SP_NV21, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
@@ -89,12 +90,12 @@ void nn_test(struct libmaix_disp* disp)
         printf("create yuv image fail\n");
         goto end;
     }
-    libmaix_image_t* rgb_img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    if(!rgb_img)
-    {
-        printf("create rgb image fail\n");
-        goto end;
-    }
+    // libmaix_image_t* rgb_img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    // if(!rgb_img)
+    // {
+    //     printf("create rgb image fail\n");
+    //     goto end;
+    // }
     printf("--create cam\n");
     cam = libmaix_cam_create(0, res_w, res_h, 1, 0);
     if(!cam)
@@ -131,6 +132,8 @@ void nn_test(struct libmaix_disp* disp)
         .dtype = LIBMAIX_NN_DTYPE_FLOAT,
         .data = NULL
     };
+
+
     char* inputs_names[] = {"input0"};
     char* outputs_names[] = {"output0"};
     libmaix_nn_opt_param_t opt_param = {
@@ -181,13 +184,16 @@ void nn_test(struct libmaix_disp* disp)
         goto end;
     }
 
+    int n = 0; 
     while(1)
     {
-        printf("--cam capture\n");
-        printf("-- now, we are in tht loop\n" );
+        
         CALC_TIME_START();
-        img->mode = LIBMAIX_IMAGE_MODE_YUV420SP_NV21;
-        err = cam->capture_image(cam, (unsigned char*)img->data);
+        err = cam->capture_image(cam, &img);
+        printf("w %d h %d p %d \r\n", img->width, img->height, img->mode);
+        disp->draw_image(disp,img);
+
+
         if(err != LIBMAIX_ERR_NONE)
         {
             // not ready， sleep to release CPU
@@ -203,40 +209,33 @@ void nn_test(struct libmaix_disp* disp)
             }
         
         }
-
-
-
-
-
         CALC_TIME_END("capture");
         CALC_TIME_START();
         
 
-        printf("--conver YUV to RGB\n");
-        libmaix_err_t err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
-        if(err0 != LIBMAIX_ERR_NONE)
-        {
-            printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
-            continue;
-        }
-        CALC_TIME_END("convert to RGB888");
+        // printf("--conver YUV to RGB\n");
+        // libmaix_err_t err0 = tmp->convert(tmp, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
+        // if(err0 != LIBMAIX_ERR_NONE)
+        // {
+        //     printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
+        //     continue;
+        // }
+        // CALC_TIME_END("convert to RGB888");
 
 
         //image resize 
 
 
 
-        CALC_TIME_START();
-        printf("--maix nn forward\n");
-        char * img_path =  "./input.bin";
-        //  try to use a sample img to test this funcuiton 
+        // CALC_TIME_START();
+        // printf("--maix nn forward\n");
+        // char * img_path =  "./input.bin";
+        // //  try to use a sample img to test this funcuiton 
         int c = input.c;
         int h = input.h;
         int w = input.w;
         int size = c *h*w;
-
-        printf("alloc mem to img :%d",rgb_img->is_data_alloc);
-        quantize_buffer = (int8_t*) (rgb_img->data);
+        quantize_buffer = (int8_t*) (img->data);
         // printf("-- size : %d \n" ,size);
         // FILE * fp  = fopen(img_path,"rb");
         // if (fp == NULL)
@@ -263,7 +262,7 @@ void nn_test(struct libmaix_disp* disp)
         CALC_TIME_END("end forward");
 
         
-        printf("--forward has done\n");
+        // printf("--forward has done\n");
         if(err != LIBMAIX_ERR_NONE)
         {
             printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(err));
@@ -287,21 +286,23 @@ void nn_test(struct libmaix_disp* disp)
         printf("--out of  seck the max one\n");
         printf("%f: %s\n", max_p, labels[max_idx]);
         CALC_TIME_END("maix nn forward");
-        break;
-
 
         CALC_TIME_START();
         // printf("--convert test end\n");
-        libmaix_image_color_t color ={
-            .rgb888.r = 255,
-            .rgb888.g = 0,
-            .rgb888.b = 0
-        };
-        char temp_str[100];
-        snprintf(temp_str, 100, "%f, %s", max_p, labels[max_idx]);
-        rgb_img->draw_string(rgb_img, temp_str, 4, 4, 16, color, NULL);
-        disp->draw(disp, rgb_img->data);
-        CALC_TIME_END("display");
+        // libmaix_image_color_t color ={
+        //     .rgb888.r = 255,
+        //     .rgb888.g = 0,
+        //     .rgb888.b = 0
+        // };
+        // char temp_str[100];
+        // snprintf(temp_str, 100, "%f, %s", max_p, labels[max_idx]);
+        // rgb_img->draw_string(rgb_img, temp_str, 4, 4, 16, color, NULL);
+        // disp->draw(disp, rgb_img->data);
+        // CALC_TIME_END("display");
+        
+        if(n == 3)
+            break;
+        n++;
     }
 end:
     if(output_buffer)
@@ -311,17 +312,13 @@ end:
     if(nn)
     {
         nn->deinit(nn);
+        printf("--nn destory\n");
         libmaix_nn_destroy(&nn);
     }
     if(cam)
     {
         printf("--cam destory\n");
         libmaix_cam_destroy(&cam);
-    }
-    if(rgb_img)
-    {
-        printf("--image destory\n");
-        libmaix_image_destroy(&rgb_img);
     }
     if(img)
     {

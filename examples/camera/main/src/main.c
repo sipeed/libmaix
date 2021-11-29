@@ -190,51 +190,51 @@ void test_work() {
 
     continue; // new code 
     
-    if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
-    {
-        // printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
-        libmaix_image_t *rgb565 = libmaix_image_create(tmp->width, tmp->height, LIBMAIX_IMAGE_MODE_RGB565, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-        if (LIBMAIX_ERR_NONE == tmp->convert(tmp, LIBMAIX_IMAGE_MODE_RGB565, &rgb565))
-        {
-            printf("w %d h %d p %d \r\n", rgb565->width, rgb565->height, rgb565->mode);
-            test.disp->draw(test.disp, rgb565->data);
-        }
-        libmaix_image_destroy(&rgb565);
-        CALC_FPS("maix_cam");
-    }
+    // if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
+    // {
+    //     // printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
+    //     libmaix_image_t *rgb565 = libmaix_image_create(tmp->width, tmp->height, LIBMAIX_IMAGE_MODE_RGB565, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    //     if (LIBMAIX_ERR_NONE == tmp->convert(tmp, LIBMAIX_IMAGE_MODE_RGB565, &rgb565))
+    //     {
+    //         printf("w %d h %d p %d \r\n", rgb565->width, rgb565->height, rgb565->mode);
+    //         test.disp->draw(test.disp, rgb565->data);
+    //     }
+    //     libmaix_image_destroy(&rgb565);
+    //     CALC_FPS("maix_cam");
+    // }
 
-    continue; // old code 
+    // continue; // old code 
 
-    if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb888))// 
-    {
+    // if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.rgb888))// 
+    // {
 
-      #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-      if (LIBMAIX_ERR_NONE == test.cam1->capture(test.cam1, test.rgb888))
-      {
-        CALC_FPS("/dev/video1");
-      }
-      #endif
+    //   #ifndef CONFIG_ARCH_R329 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
+    //   if (LIBMAIX_ERR_NONE == test.cam1->capture(test.cam1, test.rgb888))
+    //   {
+    //     CALC_FPS("/dev/video1");
+    //   }
+    //   #endif
 
-      // test.disp->draw(test.disp, test.rgb888);
-      // cap_set();
-      if (test.disp->bpp == 2 || test.disp->bpp == 1) {
-        uint8_t tmp[test.disp->width * test.disp->height * 2];
-        uint8_t *rgb888 = test.rgb888;
-        uint16_t *rgb565 = (uint16_t *)tmp;
-        // cap_set();
-        for (uint16_t * end = rgb565 + test.disp->width * test.disp->height; rgb565 < end; rgb565 += 1, rgb888 += 3) {
-          // *rgb565 = make16color(rgb888[0], rgb888[1], rgb888[2]);
-          *rgb565 = ((((rgb888[0] >> 3) & 31) << 11) | (((rgb888[1] >> 2) & 63) << 5) | ((rgb888[2] >> 3) & 31));
-        }
-        // cap_get("565 2 888");
-        test.disp->draw(test.disp, tmp);
-      }
+    //   // test.disp->draw(test.disp, test.rgb888);
+    //   // cap_set();
+    //   if (test.disp->bpp == 2 || test.disp->bpp == 1) {
+    //     uint8_t tmp[test.disp->width * test.disp->height * 2];
+    //     uint8_t *rgb888 = test.rgb888;
+    //     uint16_t *rgb565 = (uint16_t *)tmp;
+    //     // cap_set();
+    //     for (uint16_t * end = rgb565 + test.disp->width * test.disp->height; rgb565 < end; rgb565 += 1, rgb888 += 3) {
+    //       // *rgb565 = make16color(rgb888[0], rgb888[1], rgb888[2]);
+    //       *rgb565 = ((((rgb888[0] >> 3) & 31) << 11) | (((rgb888[1] >> 2) & 63) << 5) | ((rgb888[2] >> 3) & 31));
+    //     }
+    //     // cap_get("565 2 888");
+    //     test.disp->draw(test.disp, tmp);
+    //   }
 
-      if (test.disp->bpp == 3) {
+    //   if (test.disp->bpp == 3) {
       
-      }
-      CALC_FPS("maix_cam");
-    }
+    //   }
+    //   CALC_FPS("maix_cam");
+    // }
     // usleep(20 * 1000);
   }
 

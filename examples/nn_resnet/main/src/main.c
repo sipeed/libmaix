@@ -62,7 +62,7 @@ void nn_test(struct libmaix_disp* disp)
     // float* result = NULL;
     libmaix_err_t err = LIBMAIX_ERR_NONE;
 
-#define DISPLAY_TIME 0
+#define DISPLAY_TIME 1
 
 #if DISPLAY_TIME
     struct timeval start, end;
@@ -183,38 +183,47 @@ void nn_test(struct libmaix_disp* disp)
 
     while(1)
     {
-        // printf("--cam capture\n");
+        printf("--cam capture\n");
         printf("-- now, we are in tht loop\n" );
-        // CALC_TIME_START();
-        // img->mode = LIBMAIX_IMAGE_MODE_YUV420SP_NV21;
-        // err = cam->capture(cam, (unsigned char*)img->data);
-        // if(err != LIBMAIX_ERR_NONE)
-        // {
-        //     // not ready， sleep to release CPU
-        //     if(err == LIBMAIX_ERR_NOT_READY)
-        //     {
-        //         usleep(20 * 1000);
-        //         continue;
-        //     }
-        //     else
-        //     {
-        //         printf("capture fail, error code: %s\n", libmaix_get_err_msg(err));
-        //         break;
-        //     }
-        // }
-        // CALC_TIME_END("capture");
-        // CALC_TIME_START();
-        // // printf("--conver YUV to RGB\n");
-
-
-        // libmaix_err_t err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
-        // if(err0 != LIBMAIX_ERR_NONE)
-        // {
-        //     printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
-        //     continue;
-        // }
-        // CALC_TIME_END("convert to RGB888");
+        CALC_TIME_START();
+        img->mode = LIBMAIX_IMAGE_MODE_YUV420SP_NV21;
+        err = cam->capture_image(cam, (unsigned char*)img->data);
+        if(err != LIBMAIX_ERR_NONE)
+        {
+            // not ready， sleep to release CPU
+            if(err == LIBMAIX_ERR_NOT_READY)
+            {
+                usleep(20 * 1000);
+                continue;
+            }
+            else
+            {
+                printf("capture fail, error code: %s\n", libmaix_get_err_msg(err));
+                break;
+            }
         
+        }
+
+
+
+
+
+        CALC_TIME_END("capture");
+        CALC_TIME_START();
+        
+
+        printf("--conver YUV to RGB\n");
+        libmaix_err_t err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
+        if(err0 != LIBMAIX_ERR_NONE)
+        {
+            printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
+            continue;
+        }
+        CALC_TIME_END("convert to RGB888");
+
+
+        //image resize 
+
 
 
         CALC_TIME_START();
@@ -225,30 +234,35 @@ void nn_test(struct libmaix_disp* disp)
         int h = input.h;
         int w = input.w;
         int size = c *h*w;
-        printf("-- size : %d \n" ,size);
 
+        printf("alloc mem to img :%d",rgb_img->is_data_alloc);
+        quantize_buffer = (int8_t*) (rgb_img->data);
+        // printf("-- size : %d \n" ,size);
+        // FILE * fp  = fopen(img_path,"rb");
+        // if (fp == NULL)
+        // {
+        //     printf("--open input file faild \n");
+        // }
 
-        FILE * fp  = fopen(img_path,"rb");
-        if (fp == NULL)
-        {
-            printf("--open input file faild \n");
-        }
+        // fseek(fp,0L,SEEK_SET);
+        // int nread = fread(quantize_buffer , 1 , size ,fp);
+        // if (nread !=  size)
+        // {
+        //     printf("read input file faild\n");
+        //     free(quantize_buffer);
+        //     break;
+        // }
+        // fclose (fp);
 
-        fseek(fp,0L,SEEK_SET);
-        int nread = fread(quantize_buffer , 1 , size ,fp);
-        if (nread !=  size)
-        {
-            printf("read input file faild\n");
-            free(quantize_buffer);
-            break;
-        }
-        fclose (fp);
-
-        printf("--start forward\n");
         
+        printf("--start forward\n");
+        CALC_TIME_START(); 
         input.data = quantize_buffer;
-        out_fmap.data =  output_buffer;
+        out_fmap.data =  output_buffer; 
         err = nn->forward(nn, &input, &out_fmap);
+        CALC_TIME_END("end forward");
+
+        
         printf("--forward has done\n");
         if(err != LIBMAIX_ERR_NONE)
         {
@@ -259,12 +273,7 @@ void nn_test(struct libmaix_disp* disp)
         float max_p = 0;
         int max_idx = 0;
         
-        printf("--start softmax\n");
         softmax(output_buffer, 1000);
-        printf("--softmax has done\n");
-
-
-
 
         for(int i=0; i<1000; ++i)
         {
@@ -281,18 +290,18 @@ void nn_test(struct libmaix_disp* disp)
         break;
 
 
-        // CALC_TIME_START();
-        // // printf("--convert test end\n");
-        // libmaix_image_color_t color ={
-        //     .rgb888.r = 255,
-        //     .rgb888.g = 0,
-        //     .rgb888.b = 0
-        // };
-        // char temp_str[100];
-        // snprintf(temp_str, 100, "%f, %s", max_p, labels[max_idx]);
-        // rgb_img->draw_string(rgb_img, temp_str, 4, 4, 16, color, NULL);
-        // disp->draw(disp, rgb_img->data);
-        // CALC_TIME_END("display");
+        CALC_TIME_START();
+        // printf("--convert test end\n");
+        libmaix_image_color_t color ={
+            .rgb888.r = 255,
+            .rgb888.g = 0,
+            .rgb888.b = 0
+        };
+        char temp_str[100];
+        snprintf(temp_str, 100, "%f, %s", max_p, labels[max_idx]);
+        rgb_img->draw_string(rgb_img, temp_str, 4, 4, 16, color, NULL);
+        disp->draw(disp, rgb_img->data);
+        CALC_TIME_END("display");
     }
 end:
     if(output_buffer)

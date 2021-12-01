@@ -136,7 +136,7 @@ extern "C"
         }
         cv::Mat image = cv::imread(path); // maybe need export
         cv::cvtColor(image, image, cv::ColorConversionCodes::COLOR_BGR2RGB);
-        *src = libmaix_image_create(image.rows, image.cols, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+        *src = libmaix_image_create(image.cols, image.rows, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
         memcpy((*src)->data, image.data, (*src)->width * (*src)->height * 3);
         // printf("libmaix_cv_image_open_file success\r\n");
 

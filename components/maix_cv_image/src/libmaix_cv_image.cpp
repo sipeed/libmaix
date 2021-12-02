@@ -593,7 +593,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         return err;
     }
 
-    libmaix_err_t libmaix_cv_image_resize(struct libmaix_image *src, int w, int h, struct libmaix_image **dst)
+ libmaix_err_t libmaix_cv_image_resize(struct libmaix_image *src, int w, int h, struct libmaix_image **dst)
     {
         libmaix_err_t err = LIBMAIX_ERR_NONE;
         if (dst == NULL)
@@ -604,14 +604,83 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         {
             return LIBMAIX_ERR_PARAM;
         }
-
-        int new_mem = libmaix_cv_image_load(src, dst);
+        // int new_mem = libmaix_cv_image_load(src, dst);
         // -------------------------------
-        LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+        switch (src->mode)
+        {
+        case LIBMAIX_IMAGE_MODE_RGB888:
+        {
+            if ((src->width == (*dst)->width) && (src->height == (*dst)->height))
+            {
+                memcpy((*dst)->data, src->data, src->width * src->height * 3);
+                return LIBMAIX_ERR_NONE;
+            }
+            cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
+            cv::Mat dist;
+            cv::resize(cv_src, dist, cv::Size(w, h));
+            memcpy((*dst)->data, dist.data, w * h * 3);
+            // (*dst)->width = w;
+            // (*dst)->height = h;
+            // (*dst)->mode = src->mode;
+            return LIBMAIX_ERR_NONE;
+        }
+        break;
+        case LIBMAIX_IMAGE_MODE_RGBA8888:
+        {
+            if ((src->width == (*dst)->width) && (src->height == (*dst)->height))
+            {
+                memcpy((*dst)->data, src->data, src->width * src->height * 4);
+                return LIBMAIX_ERR_NONE;
+            }
+            cv::Mat cv_src(src->height, src->width, CV_8UC4, src->data);
+            cv::Mat dist;
+            cv::resize(cv_src, dist, cv::Size(w, h));
+            memcpy((*dst)->data, dist.data, w * h * 3);
+            // (*dst)->width = w;
+            // (*dst)->height = h;
+            // (*dst)->mode = src->mode;
+            return LIBMAIX_ERR_NONE;
+        }
+        break;
+        case LIBMAIX_IMAGE_MODE_GRAY:
+        {
+            if ((src->width == (*dst)->width) && (src->height == (*dst)->height))
+            {
+                memcpy((*dst)->data, src->data, src->width * src->height);
+                return LIBMAIX_ERR_NONE;
+            }
+            cv::Mat cv_src(src->height, src->width, CV_8UC1, src->data);
+            cv::Mat dist;
+            cv::resize(cv_src, dist, cv::Size(w, h));
+            memcpy((*dst)->data, dist.data, w * h);
+            // (*dst)->width = w;
+            // (*dst)->height = h;
+            // (*dst)->mode = src->mode;
+            return LIBMAIX_ERR_NONE;
+        }
+        break;
+        default:
+        {
+            LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+            // libmaix_cv_image_free(err, new_mem, dst);
+            return LIBMAIX_ERR_NOT_EXEC;
+        }
+        break;
+        }
         // -------------------------------
-        libmaix_cv_image_free(err, new_mem, dst);
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+        // libmaix_cv_image_free(err, new_mem, dst);
+        return LIBMAIX_ERR_NONE;
     }
+
+libmaix_err_t libmaix_cv_image_BGR2RGB(libmaix_image_t *src,libmaix_image_t**dst)
+{
+    cv::Mat cv_src(src->height, src->width, CV_8UC4, src->data);
+    cv::Mat dist;
+    
+    cv::cvtColor(cv_src,dist,cv::COLOR_BGR2RGB);
+    memcpy((*dst)->data, dist.data, src->height * src->width *3);
+    return LIBMAIX_ERR_NONE;
+}
 
     libmaix_err_t libmaix_cv_image_crop(struct libmaix_image *src, int x, int y, int w, int h, struct libmaix_image **dst)
     {

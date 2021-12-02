@@ -10,11 +10,11 @@ cmake_minimum_required(VERSION 3.5)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../r329/src/libmaix_nn/lib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix/include/)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../r329/src/libmaix_nn/lib/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../r329/src)
 
-link_directories("./lib")
+link_directories("./lib/")
 link_directories("../../../r329/")
 
 add_library(maix_nn SHARED # STATIC
@@ -25,12 +25,7 @@ set(export_dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix)
 
 target_link_libraries(
     maix_nn
-    libaipudrv.so
-    libm.so
-    libpthread.so
-    libstdc++.so.6
-    libstdc++.so.6.0.22
-    libmaix_utils.so
+    aipudrv
 )
 
 

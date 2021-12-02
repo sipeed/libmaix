@@ -34,6 +34,10 @@ libmaix_err_t libmaix_cv_image_resize(libmaix_image_t *src, int w, int h, libmai
 libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, libmaix_image_t **dst);
 libmaix_err_t libmaix_cv_image_convert(libmaix_image_t *src, libmaix_image_mode_t type, libmaix_image_t **dst);
 
+libmaix_err_t libmaix_cv_image_BGR2RGB(libmaix_image_t *src,libmaix_image_t**det);
+
+
+
 libmaix_image_color_t libmaix_cv_image_get_pixe(libmaix_image_t *src, int x, int y);
 #ifdef __cplusplus
 }

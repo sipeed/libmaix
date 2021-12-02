@@ -88,8 +88,8 @@ libmaix_err_t libmaix_nn_obj_load(struct libmaix_nn *obj, const libmaix_nn_model
         printf("[libmaix_nn]--  normal model is not implement\n");
     }
 
-    printf("[libmaix_nn ]--  the model path is: %s \n", path->normal.model_path);
-    printf("[libmaix_nn] -- start load graph\n");
+    // printf("[libmaix_nn ]--  the model path is: %s \n", path->normal.model_path);
+    // printf("[libmaix_nn] -- start load graph\n");
     ret = AIPU_load_graph_helper(ctx, path->normal.model_path, gdesc_ptr);
     if (ret != AIPU_STATUS_SUCCESS)
     {
@@ -106,7 +106,7 @@ libmaix_err_t libmaix_nn_obj_load(struct libmaix_nn *obj, const libmaix_nn_model
         }
         return *status;
     }
-    printf("[libmaix_nn] -- start load graph has done\n");
+    // printf("[libmaix_nn] -- start load graph has done\n");
     fprintf(stdout, "[TEST INFO] AIPU load graph successfully.\n");
 
 
@@ -154,19 +154,12 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     int model_inw = gdesc_ptr->inputs.desc[0].fmt.shape.W;
     int model_inh = gdesc_ptr->inputs.desc[0].fmt.shape.H;
     int model_inch = gdesc_ptr->inputs.desc[0].fmt.shape.C;
-    printf("[libmaix_nn]--   Model input:  W=%3d, H=%3d, C =%d, size=%d\r\n", model_inw, model_inh, model_inch, (*buffer_ptr).inputs.tensors[0].size);
+    // printf("[libmaix_nn]--   Model input:  W=%3d, H=%3d, C =%d, size=%d\r\n", model_inw, model_inh, model_inch, (*buffer_ptr).inputs.tensors[0].size);
     int img_size = model_inw * model_inh * model_inch;
     ((obj_config_t *)(obj->_config))->in_fsize = img_size;
 
-    
-    printf("[libmaix_nn]--  Input img size should  be %d \n", img_size);
-    printf("[libmaix_nn]--  input tensor size is : %d\n", (*buffer_ptr).inputs.tensors[0].size);
-
-    printf("[libmaix-nn]--  forward memcpy\n");
     memcpy((*buffer_ptr).inputs.tensors[0].va,  inputs->data, (*buffer_ptr).inputs.tensors[0].size);
-    printf("[libmaix-nn]--  forward memcpy has done\n");
 
-    printf("[libmaix_nn]--  create  job\n");
     ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(((obj_config_t *)(obj->_config))->job_id));
 
     if (ret != AIPU_STATUS_SUCCESS)
@@ -207,20 +200,15 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             return *status;
         }
     }
-    printf("[libmaix_nn]--  create  job has done\n");
 
 
-    printf("[libmaix_nn]--  finish  job\n");
     ret = AIPU_finish_job(ctx, ((obj_config_t *)(obj->_config))->job_id, ((obj_config_t *)(obj->_config))->time_out);
-    printf("[libmaix_nn]--  %d\n", ret);
-    printf("[libmaix_nn]--  finish job has done\n");
-    printf("[libmaix_nn]--  outputs tensor size is : %d\n", (*buffer_ptr).outputs.tensors[0].size);
+
     if (ret != AIPU_STATUS_SUCCESS)
     {
         *status = LIBMAIX_ERR_NOT_IMPLEMENT;
         AIPU_get_status_msg(ret, &status_msg);
         fprintf(stderr, "[TEST ERROR] AIPU_finish_job: %s\n", status_msg);
-        printf("finish job is faild\n");
 
          ret = AIPU_free_tensor_buffers(ctx,buffer_ptr->handle);
         if (ret != AIPU_STATUS_SUCCESS)
@@ -252,7 +240,6 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             return *status;
         }
 
-        printf("Start cleaning  job\n");
         ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->_config))->job_id);
         if (ret != AIPU_STATUS_SUCCESS)
         {
@@ -266,11 +253,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     }
 
     memcpy(outputs->data, (int8_t *)((*buffer_ptr).outputs.tensors[0].va), (*buffer_ptr).outputs.tensors[0].size);
-    
-    printf("[libmaix_nn]--  copy ouput has done\n");
-    printf("[libmaix_nn]-- output size is : %d\n", (*buffer_ptr).outputs.tensors[0].size);
 
-    printf("[libmaix_nn]--  clean  job\n");
     ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->_config))->job_id);
     if (ret != AIPU_STATUS_SUCCESS)
     {
@@ -280,7 +263,6 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         printf("clean job is faild\n");
         return *status;
     }
-    printf("[libmaix_nn]--  clean  job has done \n");
 
     return *status;
 }

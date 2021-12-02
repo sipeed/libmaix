@@ -25,7 +25,7 @@
 #include <errno.h>
 
 
-static void softmax(int8_t *data, int n )
+static void softmax(int8_t *data, int n , float scale,float* out)
 {
     int stride = 1;
     int i;
@@ -33,22 +33,26 @@ static void softmax(int8_t *data, int n )
     // float e;
     float sum = 0;
     float largest_i = data[0];
+    for(i = 0; i < n; ++i)
+    {
+        out[i] = data[i] / scale;
+
+        if (out[i * stride] > largest_i)
+            largest_i = out[i * stride];
+
+    }
 
     for (i = 0; i < n; ++i)
     {
-        if (data[i * stride] > largest_i)
-            largest_i = data[i * stride];
-    }
-    for (i = 0; i < n; ++i)
-    {
-        float value = expf(data[i * stride] - largest_i);
+        float value = expf(out[i * stride] - largest_i);
         sum += value;
-        data[i * stride] = value;
+        out [i * stride] = value;
     }
     for (i = 0; i < n; ++i)
 	{
-        data[i * stride] /= sum;
+        out[i * stride] /= sum;
 	}
+
 }
 
 
@@ -192,13 +196,13 @@ void nn_test(struct libmaix_disp* disp)
     {
         libmaix_image_t* img = NULL;
         // CALC_TIME_START();
-        printf("--cam capture\n");
+        // printf("--cam capture\n");
         err = cam->capture_image(cam, &img);
 
         // err = libmaix_cv_image_draw_image_save(img,"./img/before.jpg");
         
         err = libmaix_cv_image_resize(img,240,240,&show);
-        printf("w %d h %d p %d \r\n", img->width, img->height, img->mode);
+        // printf("w %d h %d p %d \r\n", img->width, img->height, img->mode);
     
         /*compare the different*/
         uint8_t * pixels =(uint8_t *) (img->data);
@@ -229,7 +233,7 @@ void nn_test(struct libmaix_disp* disp)
         }
 
         // CALC_TIME_START();
-        printf("--maix nn forward\n");
+        // printf("--maix nn forward\n");
         
         // //  try to use a sample img to test this funcuiton 
         // int c = input.c;
@@ -257,7 +261,7 @@ void nn_test(struct libmaix_disp* disp)
         // fclose (fp);
 
         
-        printf("--start forward\n");
+        // printf("--start forward\n");
         CALC_TIME_START(); 
 
         input.data = (int8_t *)(img->data);
@@ -265,8 +269,6 @@ void nn_test(struct libmaix_disp* disp)
         out_fmap.data =output_buffer;
         err = nn->forward(nn, &input, &out_fmap);
 
-
-        
 
         if(err != LIBMAIX_ERR_NONE)
         {
@@ -277,18 +279,18 @@ void nn_test(struct libmaix_disp* disp)
         int max_idx = 0;
         // uint8_t * output_buffer = (uint8_t *) out_fmap.data ;
         // printf("output first one :%d\n",output_buffer[0]);
-        softmax(output_buffer, 1000);
+        float * prediction  = (float *)malloc(1000*sizeof(float));
+        softmax(output_buffer, 1000, 7.539542, prediction);
         for(int i=0; i<1000; ++i)
         {
-            if(output_buffer[i] > max_p)
+            if(prediction[i] > max_p)
             {
-                max_p = output_buffer[i];
+                max_p = prediction[i];
                 max_idx = i;
             }
         }
-        printf("%f: %s \n", max_p, labels[max_idx]);
-        printf("%f\n",max_idx);
-        
+        printf("%f::%s \n", max_p, labels[max_idx]);
+        // printf("before quant :%d\n",output_buffer[max_idx]);
         CALC_TIME_END("maix nn forward");
 
         // CALC_TIME_START();
@@ -303,7 +305,6 @@ void nn_test(struct libmaix_disp* disp)
         // // rgb_img->draw_string(rgb_img, temp_str, 4, 4, 16, color, NULL);
         // // disp->draw(disp, rgb_img->data);
         // // CALC_TIME_END("display");
-
     }
 
 end:

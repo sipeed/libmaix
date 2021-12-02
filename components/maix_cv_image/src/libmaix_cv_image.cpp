@@ -10,7 +10,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/freetype.hpp>
 
-void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location, double opacity = 1.0)
+void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location, double opacity = -1.0)
 {
   background.copyTo(output);
 
@@ -32,10 +32,15 @@ void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat 
       if (fX >= foreground.cols)
         break;
 
-      // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
-      double opacity_level = ((double)foreground.data[fY * foreground.step + fX * foreground.channels() + 3]) / 255.;
-      if (opacity >= 0.0 && opacity < 1.0)
-        opacity_level *= opacity;
+      double opacity_level = 0.;
+      if (opacity < 0.) {
+        opacity_level = 1.0;
+      } else {
+        // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
+        opacity_level = ((double)foreground.data[fY * foreground.step + fX * foreground.channels() + 3]) / 255.;
+        if (opacity >= 0. && opacity < 1.)
+          opacity_level *= opacity;
+      }
 
       // and now combine the background and foreground pixel, using the opacity, but only if opacity > 0.
       for (int c = 0; opacity_level > 0 && c < output.channels(); ++c)
@@ -214,7 +219,7 @@ extern "C"
     return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 
-  libmaix_err_t libmaix_cv_image_draw_image(libmaix_image_t *src, int x, int y, libmaix_image_t *dst)
+  libmaix_err_t libmaix_cv_image_draw_image(libmaix_image_t *src, int x, int y, libmaix_image_t *dst, double opacity)
   {
     if (src->data == NULL || dst->data == NULL || src->data == dst->data)
     {
@@ -225,7 +230,7 @@ extern "C"
       cv::Mat back(src->height, src->width, CV_8UC3, src->data);
       cv::Mat fore(dst->height, dst->width, CV_8UC3, dst->data);
       // mergeImage(input, paste, cv::Point(x, y));
-      overlayImage(back, fore, back, cv::Point(x, y));
+      overlayImage(back, fore, back, cv::Point(x, y), opacity);
 
       // mixImage = mixImage(cv::Rect(startPoint.x, startPoint.y, addCols - startPoint.x, addRows - startPoint.y));
 
@@ -240,7 +245,7 @@ extern "C"
     return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 
-  libmaix_err_t libmaix_cv_image_draw_image_open(libmaix_image_t *src, int x, int y, const char *path)
+  libmaix_err_t libmaix_cv_image_draw_image_open(libmaix_image_t *src, int x, int y, const char *path, double opacity)
   {
     if (src->data == NULL)
     {
@@ -253,7 +258,7 @@ extern "C"
       if (!fore.empty())
       {
         cv::cvtColor(fore, fore, cv::ColorConversionCodes::COLOR_BGR2RGB);
-        overlayImage(back, fore, back, cv::Point(x, y));
+        overlayImage(back, fore, back, cv::Point(x, y), opacity);
         // mergeImage(input, image, cv::Point(x, y));
         // memcpy(src->data, input.data, src->width * src->height * 3);
         return LIBMAIX_ERR_NONE;

@@ -17,8 +17,8 @@ enum CircleLineTypes {
 };
 libmaix_err_t libmaix_cv_image_open_file(libmaix_image_t **src, const char *path);
 
-libmaix_err_t libmaix_cv_image_draw_image(libmaix_image_t *src, int x, int y, libmaix_image_t *dst);
-libmaix_err_t libmaix_cv_image_draw_image_open(libmaix_image_t *src, int x, int y, const char *path);
+libmaix_err_t libmaix_cv_image_draw_image(libmaix_image_t *src, int x, int y, libmaix_image_t *dst, double opacity);
+libmaix_err_t libmaix_cv_image_draw_image_open(libmaix_image_t *src, int x, int y, const char *path, double opacity);
 libmaix_err_t libmaix_cv_image_draw_image_save(libmaix_image_t *src, const char *path);
 
 libmaix_err_t libmaix_cv_image_draw_ellipse(libmaix_image_t *src, int x, int y, int w, int h, double angle, double startAngle, double endAngle, libmaix_image_color_t color, int thickness);

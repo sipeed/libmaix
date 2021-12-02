@@ -26,21 +26,21 @@ int main(int argc, char **argv)
 
       libmaix_cv_image_draw_rectangle(rgb888, 0, 0, 240, 240, MaixColor(0, 255, 0), -1);
 
-      libmaix_cv_image_draw_image_open(rgb888, 20, 20, "/home/res/logo.png");
+      libmaix_cv_image_draw_image_open(rgb888, 20, 20, "/home/res/logo.png", 1.0);
 
-      libmaix_cv_image_draw_image_open(rgb888, 40, 40, "/home/res/logo.png");
+      libmaix_cv_image_draw_image_open(rgb888, 40, 100, "/home/res/face.png", -1.0);
 
       libmaix_image_t *tmp = libmaix_image_create(80, 80, rgb888->mode, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
 
       libmaix_cv_image_crop(rgb888, 40, 40, 80, 80, &tmp);
 
-      libmaix_cv_image_draw_image(rgb888, 0, 0, tmp);
+      libmaix_cv_image_draw_image(rgb888, 0, 0, tmp, 1.0);
 
-      libmaix_cv_image_draw_image(rgb888, 0, 200, tmp);
+      libmaix_cv_image_draw_image(rgb888, 0, 200, tmp, 1.0);
 
-      libmaix_cv_image_draw_image(rgb888, 200, 0, tmp);
+      libmaix_cv_image_draw_image(rgb888, 200, 0, tmp, 1.0);
 
-      libmaix_cv_image_draw_image(rgb888, 200, 200, tmp);
+      libmaix_cv_image_draw_image(rgb888, 200, 200, tmp, 1.0);
 
       libmaix_image_destroy(&tmp);
 

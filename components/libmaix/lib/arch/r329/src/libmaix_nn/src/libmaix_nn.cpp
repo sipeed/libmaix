@@ -158,7 +158,24 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     int img_size = model_inw * model_inh * model_inch;
     ((obj_config_t *)(obj->_config))->in_fsize = img_size;
 
-    memcpy((*buffer_ptr).inputs.tensors[0].va,  inputs->data, (*buffer_ptr).inputs.tensors[0].size);
+    if(inputs->need_quantization == true)
+    {
+        int size = (inputs->h * inputs->w * inputs->c);
+        uint8_t * pixels = (uint8_t *) inputs->data;
+        int8_t *quant_data = (int8_t *)malloc(sizeof(int8_t) * size);
+        for(int i=0 ; i < size ;i++)
+        {
+            quant_data[i] = pixels[i] - 127;
+        }
+        inputs->data = quant_data;
+        memcpy((*buffer_ptr).inputs.tensors[0].va,  inputs->data, (*buffer_ptr).inputs.tensors[0].size);
+        free(quant_data);
+    }
+    else
+    {
+        memcpy((*buffer_ptr).inputs.tensors[0].va,  inputs->data, (*buffer_ptr).inputs.tensors[0].size);
+    }
+    
 
     ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(((obj_config_t *)(obj->_config))->job_id));
 
@@ -252,7 +269,22 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
 
     }
 
-    memcpy(outputs->data, (int8_t *)((*buffer_ptr).outputs.tensors[0].va), (*buffer_ptr).outputs.tensors[0].size);
+    if(outputs->dtype == LIBMAIX_NN_DTYPE_FLOAT)
+    {
+        float Scale = 7.539542;    // the dequantize scale is fixed .in the next step the scale should be given from AIPU API.
+        int size = (*buffer_ptr).outputs.tensors[0].size;
+        int8_t* data = (int8_t *)((*buffer_ptr).outputs.tensors[0].va);
+        float *prediction = (float *)outputs->data;
+        for(int i=0 ; i < size ; i++)
+        {
+            prediction[i] = data[i] / Scale;
+        }
+        outputs->data = prediction;
+    }
+    else{
+        
+        memcpy(outputs->data, (int8_t *)((*buffer_ptr).outputs.tensors[0].va), (*buffer_ptr).outputs.tensors[0].size);
+    }
 
     ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->_config))->job_id);
     if (ret != AIPU_STATUS_SUCCESS)
@@ -263,7 +295,6 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         printf("clean job is faild\n");
         return *status;
     }
-
     return *status;
 }
 

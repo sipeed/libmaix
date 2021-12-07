@@ -13,6 +13,7 @@ sdk_env_name = "LIBMAIX_SDK_PATH"
 
 # get SDK absolute path
 sdk_path = os.path.abspath(sys.path[0]+"/../../")
+
 try:
     sdk_path = os.environ[sdk_env_name]
 except Exception:

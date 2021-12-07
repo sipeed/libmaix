@@ -146,7 +146,7 @@ void nn_test(struct libmaix_disp* disp)
     // for camera LIBMAIX_IMAGE_MODE_YUV420SP_NV21 is enough
     if(!img)
     {
-        printf("create yuv image fail\n");
+        printf("create RGB image fail\n");
         goto end;
     }
     libmaix_image_t* rgb_img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);

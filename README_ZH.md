@@ -1,4 +1,4 @@
-libmaix
+ libmaix
 =========
 
 带硬件 AI 加速模型推理库，一起构建更美好的 AIOT ～

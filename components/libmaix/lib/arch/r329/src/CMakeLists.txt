@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.4.1)
 
 project("export r329 dll")
 
-set(CMAKE_C_COMPILER "/opt/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc")
-set(CMAKE_CXX_COMPILER "/opt/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++")
+set(CMAKE_C_COMPILER "/opt/r329_linux_x86_python3.9_toolchain/bin/aarch64-linux-gnu-gcc")
+set(CMAKE_CXX_COMPILER "/opt/r329_linux_x86_python3.9_toolchain/bin/aarch64-linux-gnu-g++")
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 

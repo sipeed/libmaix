@@ -129,12 +129,12 @@ extern "C"
 
   libmaix_err_t libmaix_image_module_init()
   {
-    // return libmaix_image_hal_module_init();
+    return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 
   libmaix_err_t libmaix_image_module_deinit()
   {
-    // return libmaix_image_hal_module_deinit();
+    return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 
   libmaix_image_t *libmaix_image_create(int w, int h, libmaix_image_mode_t mode, libmaix_image_layout_t layout, void *data, bool is_data_alloc)

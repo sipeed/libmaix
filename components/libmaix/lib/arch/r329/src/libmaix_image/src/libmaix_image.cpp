@@ -211,16 +211,17 @@ extern "C"
 
   void libmaix_image_destroy(libmaix_image_t **obj)
   {
-    if (*obj)
+    if(NULL == obj || NULL == *obj)
+        return;
+
+    if ((*obj)->is_data_alloc)
     {
-      if ((*obj)->is_data_alloc)
-      {
-        free((*obj)->data);
-        (*obj)->data = NULL;
-      }
-      free(*obj);
-      *obj = NULL;
+      free((*obj)->data);
+      (*obj)->data = NULL;
     }
+    free(*obj);
+    *obj = NULL;
+
   }
 
 #ifdef __cplusplus

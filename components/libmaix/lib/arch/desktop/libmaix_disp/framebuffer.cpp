@@ -1,6 +1,13 @@
 #include "libmaix_disp_priv.h"
 #include "libmaix_err.h"
 
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 
 #include <errno.h>
@@ -30,6 +37,13 @@ static libmaix_err_t disp_draw_image(struct libmaix_disp *disp, struct libmaix_i
     priv->disp_img = libmaix_image_create(disp->width, disp->height, mode, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     if(!priv->disp_img) return LIBMAIX_ERR_NO_MEM;
   }
+
+  if (img->mode == LIBMAIX_IMAGE_MODE_RGB888){
+      cv::Mat frame(img->height, img->width, CV_8UC3, img->data);
+      cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
+      cv::imshow("[framebuffer]", frame);
+  }
+
   if (img->mode != priv->disp_img->mode){
       if (LIBMAIX_ERR_NONE != img->convert(img, priv->disp_img->mode, &priv->disp_img))
       {
@@ -134,8 +148,12 @@ static int priv_devInit(struct libmaix_disp *disp)
     disp->width = priv->vinfo.xres;
     disp->height = priv->vinfo.yres;
     disp->bpp = priv->vinfo.bits_per_pixel / 8;
-    
+
     // printf("The framebuffer device was mapped to memory successfully.\n");
+
+    disp->width = 640, disp->height = 480; // temp code
+    cv::namedWindow( "[framebuffer]", cv::WINDOW_AUTOSIZE );
+    cv::startWindowThread(); // if( (char)cv::waitKey(33) >= 0 ) LIBMAIX_ERR_NONE;
 
     return LIBMAIX_ERR_NONE;
   }
@@ -156,3 +174,7 @@ int disp_priv_init(struct libmaix_disp *disp)
 
   return priv->devInit(disp);
 }
+
+#ifdef __cplusplus
+}
+#endif

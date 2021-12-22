@@ -150,8 +150,8 @@ static int priv_devInit(struct libmaix_disp *disp)
     disp->bpp = priv->vinfo.bits_per_pixel / 8;
 
     // printf("The framebuffer device was mapped to memory successfully.\n");
-
-    disp->width = 640, disp->height = 480; // temp code
+    if (disp->width > 640) disp->width = 640;
+    if (disp->height > 480) disp->height = 480;
     cv::namedWindow( "[framebuffer]", cv::WINDOW_AUTOSIZE );
     cv::startWindowThread(); // if( (char)cv::waitKey(33) >= 0 ) LIBMAIX_ERR_NONE;
 

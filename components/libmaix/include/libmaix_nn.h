@@ -18,6 +18,9 @@
 extern "C" {
 #endif
 
+int Debug_s;
+
+
 typedef enum
 {
     LIBMAIX_NN_DTYPE_UINT8  = 0,
@@ -75,13 +78,24 @@ typedef union
         int*     output_ids;
         bool encrypt;
     }awnn;
+        struct
+    {
+        char**   input_names;
+        char**   output_names;
+        uint8_t  input_num;               // len(input_names)
+        uint8_t  output_num;              // len(output_names)
+        float    mean[3];
+        float    norm[3];
+        int*     input_ids;
+        int*     output_ids;
+        bool encrypt;
+    }normal;
 }libmaix_nn_opt_param_t; // optional param for model
 
 
 typedef struct libmaix_nn
 {
     void* _config;
-
     libmaix_err_t (*init)(struct libmaix_nn *obj);
     libmaix_err_t (*deinit)(struct libmaix_nn *obj);
     libmaix_err_t (*load)(struct libmaix_nn *obj, const libmaix_nn_model_path_t* path, libmaix_nn_opt_param_t* opt_param);

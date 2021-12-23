@@ -110,11 +110,11 @@ void nn_test(struct libmaix_disp *disp)
         goto end;
     }
 
-    printf("--resnet init\n");
+    printf("--mobilenet2 init\n");
     libmaix_nn_model_path_t model_path = {
         // .awnn.param_path = "./resnet18_1000_awnn.param",
         // .awnn.bin_path = "./resnet18_1000_awnn.bin"
-        .normal.model_path = "./resnet.bin"
+        .normal.model_path = "./model/aipu_mobilenet2.bin"
     };
     libmaix_nn_layer_t input = {
         .w = 224,

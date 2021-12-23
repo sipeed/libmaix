@@ -114,7 +114,7 @@ void nn_test(struct libmaix_disp *disp)
     libmaix_nn_model_path_t model_path = {
         // .awnn.param_path = "./resnet18_1000_awnn.param",
         // .awnn.bin_path = "./resnet18_1000_awnn.bin"
-        .normal.model_path = "./resnet.bin"
+        .normal.model_path = "./model/aipu_shufflenet.bin"
     };
     libmaix_nn_layer_t input = {
         .w = 224,
@@ -225,7 +225,6 @@ void nn_test(struct libmaix_disp *disp)
             }
         }
         printf("%f::%s \n", max_p, labels[max_idx]);
-        printf("____________\n")
         CALC_TIME_END("maix nn forward");
 
         // CALC_TIME_START();

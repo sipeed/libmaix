@@ -9,6 +9,7 @@
 #include "libmaix_cam.h"
 #include "libmaix_disp.h"
 #include "libmaix_image.h"
+#include "libmaix_cv_image.h"
 #include "libmaix_nn.h"
 #include "libmaix_nn_decoder_yolo2.h"
 #include "main.h"
@@ -16,12 +17,15 @@
 #include <unistd.h>
 #include <math.h>
 
+/*a struct to config the carmera display and image settings*/
 typedef struct
 {
     struct libmaix_disp* disp;
     libmaix_image_t*       img;
 }callback_param_t;
 
+
+//get model from a binary file
 int loadFromBin(const char* binPath, int size, signed char* buffer)
 {
 	FILE* fp = fopen(binPath, "rb");
@@ -39,8 +43,10 @@ int loadFromBin(const char* binPath, int size, signed char* buffer)
 	fclose(fp);
 
 	return 0;
+     
+    
 }
-
+/*use opencv to draw object box */
 void on_draw_box(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t class_id, float prob, char* label, void* arg)
 {
     callback_param_t* data = (callback_param_t*)arg;
@@ -49,12 +55,11 @@ void on_draw_box(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, ui
     char* default_label = "unknown";
     char temp[50];
     // libmaix_err_t err;
-    static uint32_t last_id = 0xffffffff;
+    static uint32_t last_id = 0xffffffff;   //set a window to quit the programe
     if(id != last_id)
     {
         printf("----image:%d----\n", id);
     }
-    printf("x:%d, y:%d, w:%d, h:%d, prob:%f, id:%d", x, y, w, h, prob, class_id);
     if(label)
     {
         printf(", label:%s\n", label);
@@ -77,12 +82,28 @@ void on_draw_box(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, ui
     if(disp && img)
     {
         snprintf(temp, sizeof(temp), "%s:%.2f", label, prob);
-        img->draw_rectangle(img, x, y, w, h, color, false, 4);
-        img->draw_string(img, temp, x+4, y+4, 16, color2, NULL);
+        // img->draw_rectangle(img, x, y, w, h, color, false, 4);
+        // img->draw_string(img, temp, x+4, y+4, 16, color2, NULL);
+
+        //     libmaix_cv_image_draw_string()
+        // libmaix_cv_image_draw_rectangle(img, 10, 10, 130, 120, MaixColor(255, 0, 0), 2);
+        // libmaix_cv_image_draw_line(img, 10, 10, 130, 120, MaixColor(255, 0, 0), 2);
+        // libmaix_cv_image_draw_string(img, 0, 120, "test123[]-=", 1.0, MaixColor(255, 0, 255), 2)
+        
+        libmaix_cv_image_draw_string(img, 0, 120,label,1.0, MaixColor(255, 0, 255), 2);
+        int x1 = x ;
+        int x2 = x + w;
+        int y1 = y ;
+        int y2 = y + h;
+        libmaix_cv_image_draw_rectangle(img, x1, y1, x2, y2, MaixColor(255,0,0),2);
+
+    
     }
     last_id = id;
 }
 
+
+/*use voc dataset to predict the position and lable of it*/
 void nn_test(struct libmaix_disp* disp)
 {
 #if TEST_IMAGE
@@ -91,6 +112,7 @@ void nn_test(struct libmaix_disp* disp)
     int count = 0;
     struct libmaix_cam* cam = NULL;
     libmaix_image_t* img;
+    libmaix_image_t* show;
     callback_param_t callback_arg;
 
     libmaix_nn_t* nn = NULL;
@@ -98,15 +120,15 @@ void nn_test(struct libmaix_disp* disp)
     libmaix_err_t err0 = LIBMAIX_ERR_NONE;
 
     uint32_t res_w = 224, res_h = 224;
-    char* labels[] = {"aeroplane", "bicycle", "bird", "boat", "bottle", "bus", "car", "cat", "chair", "cow", "diningtable", "dog", "horse", "motorbike", "person", "pottedplant", "sheep", "sofa", "train", "tvmonitor"};
-    int class_num = 20;
-    float anchors[10] = {0.375, 0.5, 1.75, 3.1875, 0.9375, 1.34375, 4.625, 4.46875, 3.125, 2.0625};
-    uint8_t anchor_len = sizeof(anchors) / sizeof(float) / 2;
+    char* labels[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "mouse", "microbit", "ruler", "cat", "peer", "ship", "apple", "car", "pan", "dog", "umbrella", "airplane", "clock", "grape", "cup", "left", "right", "front", "stop", "back"};
+    int class_num = 35;
+    float anchors[10] = {0.375, 0.5, 1.75, 3.1875, 0.9375, 1.34375, 4.625, 4.46875, 3.125, 2.0625};  // (x1,y1,x2,y2........) 
+    uint8_t anchor_len = sizeof(anchors) / sizeof(float) / 2; //five anchors
 
     libmaix_nn_decoder_yolo2_config_t yolo2_config = {
         .classes_num     = class_num,
-        .threshold       = 0.5,
-        .nms_value       = 0.3,
+        .threshold       = 0.5,   //Confidence level
+        .nms_value       = 0.1,
         .anchors_num     = 5,
         .anchors         = anchors,
         .net_in_width    = 224,
@@ -140,21 +162,25 @@ void nn_test(struct libmaix_disp* disp)
     libmaix_image_module_init();
     libmaix_camera_module_init();
 
+    /*create the net process img is not display image*/
     printf("--create image\n");
     img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     // use LIBMAIX_IMAGE_MODE_RGB888 for read RGB88 image from FS test
     // for camera LIBMAIX_IMAGE_MODE_YUV420SP_NV21 is enough
     if(!img)
     {
-        printf("create yuv image fail\n");
+        printf("create RGB image fail\n");
         goto end;
     }
-    libmaix_image_t* rgb_img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    if(!rgb_img)
+    // the show image for display
+    show = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    if(!show)
     {
-        printf("create rgb image fail\n");
+        printf("create RGB image fail\n");
         goto end;
     }
+
+
     // camera init
 #if !TEST_IMAGE
     printf("--create cam\n");
@@ -172,10 +198,9 @@ void nn_test(struct libmaix_disp* disp)
         goto end;
     }
 #endif
-    printf("--resnet init\n");
+    printf("--yolo init\n");
     libmaix_nn_model_path_t model_path = {
-        .awnn.param_path = "/root/models/yolo2_20class_awnn.param",
-        .awnn.bin_path = "/root/models/yolo2_20class_awnn.bin",
+        .normal.model_path = "/root/Yolo/model/aipu_onnx_cards_224_35.bin",
     };
     libmaix_nn_layer_t input = {
         .w = yolo2_config.net_in_width,
@@ -195,20 +220,25 @@ void nn_test(struct libmaix_disp* disp)
     };
     char* inputs_names[] = {"input0"};
     char* outputs_names[] = {"output0"};
+
     libmaix_nn_opt_param_t opt_param = {
-        .awnn.input_names             = inputs_names,
-        .awnn.output_names            = outputs_names,
-        .awnn.input_num               = 1,              // len(input_names)
-        .awnn.output_num              = 1,              // len(output_names)
-        .awnn.mean                    = {127.5, 127.5, 127.5},
-        .awnn.norm                    = {0.0078125, 0.0078125, 0.0078125},
+        .normal.input_names             = inputs_names,
+        .normal.output_names            = outputs_names,
+        .normal.input_num               = 1,              // len(input_names)
+        .normal.output_num              = 1,              // len(output_names)
+        .normal.mean                    = {127.5, 127.5, 127.5},
+        .normal.norm                    = {0.0078125, 0.0078125, 0.0078125},
     };
+
+    // malloc buffer 
     float* output_buffer = (float*)malloc(out_fmap.w * out_fmap.h * out_fmap.c * sizeof(float));
     if(!output_buffer)
     {
         printf("no memory!!!\n");
         goto end;
     }
+
+    //allocate quantized data buffer
     uint8_t* quantize_buffer = (uint8_t*)malloc(input.w * input.h * input.c);
     if(!quantize_buffer)
     {
@@ -224,7 +254,7 @@ void nn_test(struct libmaix_disp* disp)
         printf("read file fail!\n");
         goto end;
     }
-    img->mode = LIBMAIX_IMAGE_MODE_RGB888;
+    img->mode = LIBMAIX_IMAGE_MODE_RGB888;`
 #endif
     // nn model init
     printf("-- nn create\n");
@@ -271,8 +301,8 @@ void nn_test(struct libmaix_disp* disp)
 #if !TEST_IMAGE
         // printf("--cam capture\n");
         CALC_TIME_START();
-        img->mode = LIBMAIX_IMAGE_MODE_YUV420SP_NV21;
-        err = cam->capture(cam, (unsigned char*)img->data);
+        err = cam->capture_image(cam,&img);
+       
         if(err != LIBMAIX_ERR_NONE)
         {
             // not ready， sleep to release CPU
@@ -287,46 +317,46 @@ void nn_test(struct libmaix_disp* disp)
                 break;
             }
         }
-        CALC_TIME_END("capture");
-        CALC_TIME_START();
-        printf("--conver YUV to RGB\n");
-        err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
-        if(err0 != LIBMAIX_ERR_NONE)
-        {
-            printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
-            continue;
-        }
-        CALC_TIME_END("convert to RGB888");
+
 #endif
-        CALC_TIME_START();
-        printf("--maix nn forward\n");
-        input.data = rgb_img->data;
+
+        input.data = (uint8_t *)img->data;
         err = nn->forward(nn, &input, &out_fmap);
         if(err != LIBMAIX_ERR_NONE)
         {
             printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(err));
             break;
         }
-        CALC_TIME_END("maix nn forward");
-        CALC_TIME_START();
+     
         err = yolo2_decoder->decode(yolo2_decoder, &out_fmap, (void*)&yolo2_result);
         if(err != LIBMAIX_ERR_NONE)
         {
             printf("yolo2 decode fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
-        CALC_TIME_END("maix nn yolo2 decode");
+      
+
+
+
         callback_arg.disp = disp;
-        callback_arg.img = rgb_img;
+        callback_arg.img = img;
+
+
         if(yolo2_result.boxes_num > 0)
         {
+            printf("yolo2_result_boxes_num is %d \n",yolo2_result.boxes_num);
+            
             libmaix_nn_decoder_yolo2_draw_result(yolo2_decoder, &yolo2_result, count++, labels, on_draw_box, (void*)&callback_arg);
         }
-        disp->draw(disp, rgb_img->data);
+        // disp->draw(disp, img->data);
+        err = libmaix_cv_image_resize(img, disp->width, disp->height, &show);  // resize the img to show on edge device 
+        disp->draw_image(disp,show);
         // disp->flush(disp); // disp->draw last arg=1, means will call flush in draw functioin
-        CALC_TIME_START();
+        
         // printf("--convert test end\n");
-        CALC_TIME_END("display");
+        CALC_TIME_END("one image");
+
+
 #if TEST_IMAGE
         break;
 #endif
@@ -350,10 +380,10 @@ end:
         printf("--cam destory\n");
         libmaix_cam_destroy(&cam);
     }
-    if(rgb_img)
+    if(show)
     {
         printf("--image destory\n");
-        libmaix_image_destroy(&rgb_img);
+        libmaix_image_destroy(&show);
     }
     if(img)
     {

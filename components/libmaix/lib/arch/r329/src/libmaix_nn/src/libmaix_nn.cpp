@@ -15,7 +15,10 @@
 
 #define FNAME_MAX_LEN 4096
 
+
+
 using namespace std;
+
 
 aipu_ctx_handle_t *ctx = NULL; //  a struct AIPU could use it straightly
 const char *status_msg = NULL;
@@ -158,6 +161,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     int img_size = model_inw * model_inh * model_inch;
     ((obj_config_t *)(obj->_config))->in_fsize = img_size;
 
+    
     if(inputs->need_quantization == true)
     {
         int size = (inputs->h * inputs->w * inputs->c);
@@ -177,7 +181,11 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     }
     
 
-    ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(((obj_config_t *)(obj->_config))->job_id));
+    uint32_t temp_job_id = 0;
+    
+
+    // ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(((obj_config_t *)(obj->_config))->job_id));
+    ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(temp_job_id));
 
     if (ret != AIPU_STATUS_SUCCESS)
     {
@@ -217,10 +225,11 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             return *status;
         }
     }
+    // printf("[libmaix_nn]-- the job id is %d \n",&(((obj_config_t *)(obj->_config))->job_id));
 
 
-    ret = AIPU_finish_job(ctx, ((obj_config_t *)(obj->_config))->job_id, ((obj_config_t *)(obj->_config))->time_out);
-
+    // ret = AIPU_finish_job(ctx, ((obj_config_t *)(obj->_config))->job_id, ((obj_config_t *)(obj->_config))->time_out);
+    ret = AIPU_finish_job(ctx, temp_job_id, ((obj_config_t *)(obj->_config))->time_out);
     if (ret != AIPU_STATUS_SUCCESS)
     {
         *status = LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -271,7 +280,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
 
     if(outputs->dtype == LIBMAIX_NN_DTYPE_FLOAT)
     {
-        float Scale = 7.539542;    // the dequantize scale is fixed .in the next step the scale should be given from AIPU API.
+        float Scale = 10.872787;    // the dequantize scale is fixed .in the next step the scale should be given from AIPU API.
         int size = (*buffer_ptr).outputs.tensors[0].size;
         int8_t* data = (int8_t *)((*buffer_ptr).outputs.tensors[0].va);
         float *prediction = (float *)outputs->data;
@@ -286,7 +295,11 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         memcpy(outputs->data, (int8_t *)((*buffer_ptr).outputs.tensors[0].va), (*buffer_ptr).outputs.tensors[0].size);
     }
 
-    ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->_config))->job_id);
+
+    // // printf("[libmaix_nn]-- the job id is %d \n",&(((obj_config_t *)(obj->_config))->job_id));
+
+    // // ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->_config))->job_id);
+    ret = AIPU_clean_job(ctx, temp_job_id);
     if (ret != AIPU_STATUS_SUCCESS)
     {
         *status = LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -295,6 +308,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         printf("clean job is faild\n");
         return *status;
     }
+
     return *status;
 }
 
@@ -315,7 +329,13 @@ libmaix_nn_t *libmaix_nn_create()
 
 void libmaix_nn_destroy(libmaix_nn_t **obj)
 {
+    if(*obj!= NULL)
+    {
+        free((*obj)->_config);
+        free(*obj);
+    }
     *obj = NULL;
+
 }
 
 libmaix_err_t libmaix_nn_module_init()

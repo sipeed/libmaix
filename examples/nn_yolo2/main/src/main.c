@@ -128,8 +128,8 @@ void nn_test(struct libmaix_disp* disp)
 
     libmaix_nn_decoder_yolo2_config_t yolo2_config = {
         .classes_num     = class_num,
-        .threshold       = 0.5,   //Confidence level
-        .nms_value       = 0.1,
+        .threshold       = 0.6,   //Confidence level
+        .nms_value       = 0.5,
         .anchors_num     = 5,
         .anchors         = anchors,
         .net_in_width    = 224,

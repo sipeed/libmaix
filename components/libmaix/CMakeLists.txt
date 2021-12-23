@@ -25,22 +25,18 @@ if(CONFIG_LIBMAIX_ENABLED)
     if(CONFIG_ARCH_Desktop)
         include_directories(/usr/include/opencv4)
         include_directories(/usr/local/include/opencv4)
-        # list(APPEND ADD_DYNAMIC_LIB
-        #     "libjpeg.so"
-        #     "libpng12.so"
-        #     "libwebp.so"
-        #     "libfreetype.so"
-        #     "libharfbuzz.so"
-        #     "libglib-2.0.so"
-        #     "libpcre.so"
-        #     "libbz2.so"
-        #     "libopencv_videoio.so"
-        #     "libopencv_highgui.so"
-        #     "libopencv_imgcodecs.so"
-        #     "libopencv_imgproc.so"
-        #     "libopencv_core.so"
-        #     "libopencv_freetype.so"
-        # )
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_utils")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_image")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_cam")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_disp")
+        list(APPEND ADD_DYNAMIC_LIB
+            "/usr/lib/x86_64-linux-gnu/libopencv_videoio.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_highgui.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_imgcodecs.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_imgproc.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_core.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_freetype.so"
+        )
     elseif(CONFIG_ARCH_V831)
         list(APPEND ADD_DYNAMIC_LIB "lib/arch/v831/libmaix_nn.so"
             "lib/arch/v831/libz.so"

@@ -32,6 +32,7 @@ list(APPEND ADD_REQUIREMENTS maix_cv_image libmaix)
 #                             -DAAAAA333=1)
 ###############################################
 
+
 set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -lm -g" PARENT_SCOPE) 
 
 register_component()

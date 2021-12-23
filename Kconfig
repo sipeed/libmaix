@@ -5,7 +5,7 @@ menu "Toolchain configuration"
 	config TOOLCHAIN_PATH
 		string "toolchain path"
 		default ""
-	
+
 	config TOOLCHAIN_PREFIX
 		string "toolchain prefix"
 		default ""
@@ -16,7 +16,8 @@ menu "Target chip configuration"
 		prompt "Chip architecture"
 		help
 			"select compile platform architecture"
-
+		config ARCH_Desktop
+			bool "compile for arch Linux Desktop"
 		config ARCH_V831
 			bool "compile for arch V831"
 		config ARCH_V833

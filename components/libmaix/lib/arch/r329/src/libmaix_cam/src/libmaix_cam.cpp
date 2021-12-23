@@ -73,24 +73,23 @@ libmaix_err_t vi_priv_capture_image(struct libmaix_cam *cam, struct libmaix_imag
         if (0 == priv->vcap->getFrame((void **)&yuv422frame, (size_t *)&readlen)) {
             cv::Mat src(priv->vcap->capH, priv->vcap->capW, CV_8UC2, (void*)yuv422frame);
             // cv::imwrite("src.jpg", src);
-            cv::Mat dst;
-            cv::cvtColor(src, dst, cv::COLOR_YUV2RGB_YUYV);
-
-            // monkey patch 2021
-            cv::Mat patch;
-            cv::flip(dst, patch, 0); // cv::rotate(dst, patch, cv::ROTATE_180);
-            dst = patch;
-            // patch end
+            const int cmp[2][2] = { {2, 1}, {0, -1}, };
+            int flip_code = cmp[priv->vi_m][priv->vi_f];
+            if (flip_code != 2) cv::flip(src, src, flip_code);
+            // printf("[vi_priv_capture] %d %d %d\r\n", priv->vi_m, priv->vi_f, flip_code);
 
             // cv::imwrite("dst.jpg", dst);
-            if (cam->fram_size != dst.total() * dst.elemSize()) {
-              cv::Mat tmp;
+            if (priv->vi_w != priv->vcap->capH || priv->vi_h != priv->vcap->capW) {
+              cv::Mat dst;
+              cv::cvtColor(src, dst, (priv->vi_f != 1) ? cv::COLOR_YUV2RGB_YUYV : cv::COLOR_YUV2BGR_YUYV); // opencv4 flip yuv bug
+              cv::Mat tmp(priv->vi_h, priv->vi_w, CV_8UC3, priv->vi_img->data);
               dst(cv::Rect(priv->vi_x, priv->vi_y, priv->vi_w, priv->vi_h)).copyTo(tmp);
               // cv::imwrite("tmp.jpg", tmp);
               // printf("[vi_priv_capture] %d %d %d %d\r\n", t.cols, t.rows, priv->vcap->capW, priv->vcap->capH);
-              memcpy(priv->vi_img->data, tmp.data, cam->fram_size);
+              // memcpy(priv->vi_img->data, tmp.data, cam->fram_size);
             } else {
-              memcpy(priv->vi_img->data, dst.data, cam->fram_size);
+              cv::Mat dst(priv->vi_h, priv->vi_w, CV_8UC3, priv->vi_img->data);
+              cv::cvtColor(src, dst, (priv->vi_f != 1) ? cv::COLOR_YUV2RGB_YUYV : cv::COLOR_YUV2BGR_YUYV); // opencv4 flip yuv bug
             }
             priv->vcap->backFrame();
             *img = priv->vi_img;

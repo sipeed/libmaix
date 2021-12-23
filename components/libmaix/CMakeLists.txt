@@ -22,7 +22,26 @@ if(CONFIG_LIBMAIX_ENABLED)
     ###############################################
 
     ############ Add dynamic libs ##################
-    if(CONFIG_ARCH_V831)
+    if(CONFIG_ARCH_Desktop)
+        include_directories(/usr/include/opencv4)
+        include_directories(/usr/local/include/opencv4)
+        # list(APPEND ADD_DYNAMIC_LIB
+        #     "libjpeg.so"
+        #     "libpng12.so"
+        #     "libwebp.so"
+        #     "libfreetype.so"
+        #     "libharfbuzz.so"
+        #     "libglib-2.0.so"
+        #     "libpcre.so"
+        #     "libbz2.so"
+        #     "libopencv_videoio.so"
+        #     "libopencv_highgui.so"
+        #     "libopencv_imgcodecs.so"
+        #     "libopencv_imgproc.so"
+        #     "libopencv_core.so"
+        #     "libopencv_freetype.so"
+        # )
+    elseif(CONFIG_ARCH_V831)
         list(APPEND ADD_DYNAMIC_LIB "lib/arch/v831/libmaix_nn.so"
             "lib/arch/v831/libz.so"
             "lib/arch/v831/libISP.so"
@@ -111,13 +130,13 @@ if(CONFIG_LIBMAIX_ENABLED)
       set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -fuse-ld=gold -Wl,--start-group libmaix/liblibmaix.a -Wl,--end-group" PARENT_SCOPE)
 
     else()
-      
+
     endif()
     ###############################################
 
     #### Add compile option for this component ####
-    #### Just for this component, won't affect other 
-    #### modules, including component that depend 
+    #### Just for this component, won't affect other
+    #### modules, including component that depend
     #### on this component
     # list(APPEND ADD_DEFINITIONS_PRIVATE -DAAAAA=1)
 

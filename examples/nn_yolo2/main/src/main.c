@@ -90,11 +90,12 @@ void on_draw_box(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, ui
         // libmaix_cv_image_draw_line(img, 10, 10, 130, 120, MaixColor(255, 0, 0), 2);
         // libmaix_cv_image_draw_string(img, 0, 120, "test123[]-=", 1.0, MaixColor(255, 0, 255), 2)
         
-        libmaix_cv_image_draw_string(img, 0, 120,label,1.0, MaixColor(255, 0, 255), 2);
+        
         int x1 = x ;
         int x2 = x + w;
         int y1 = y ;
         int y2 = y + h;
+        libmaix_cv_image_draw_string(img,x1,y2,label,1.2, MaixColor(255, 0, 255), 2);
         libmaix_cv_image_draw_rectangle(img, x1, y1, x2, y2, MaixColor(255,0,0),2);
 
     
@@ -184,7 +185,7 @@ void nn_test(struct libmaix_disp* disp)
     // camera init
 #if !TEST_IMAGE
     printf("--create cam\n");
-    cam = libmaix_cam_create(0, res_w, res_h, 1, 0);
+    cam = libmaix_cam_create(0, res_w, res_h, 1, 1);
     if(!cam)
     {
         printf("create cam fail\n");

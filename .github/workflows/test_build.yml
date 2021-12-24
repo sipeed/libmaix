@@ -24,6 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        sudo apt-get install libjpeg-dev libopencv-*-dev
         wget https://github.com/sipeed/libmaix/releases/download/v0.1.0/toolchain-sunxi-musl-pack-2021-01-09.tar.xz
         tar -Jxvf toolchain-sunxi-musl-pack-2021-01-09.tar.xz -C /opt
     - name: Test hello-world build

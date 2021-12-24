@@ -123,13 +123,14 @@ void nn_test(struct libmaix_disp* disp)
     uint32_t res_w = 224, res_h = 224;
     char* labels[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "mouse", "microbit", "ruler", "cat", "peer", "ship", "apple", "car", "pan", "dog", "umbrella", "airplane", "clock", "grape", "cup", "left", "right", "front", "stop", "back"};
     int class_num = 35;
-    float anchors[10] = {0.375, 0.5, 1.75, 3.1875, 0.9375, 1.34375, 4.625, 4.46875, 3.125, 2.0625};  // (x1,y1,x2,y2........) 
+    float anchors [10] =  {2.44, 2.25, 5.03, 4.91, 3.5, 3.53, 4.16, 3.94, 2.97, 2.84};
+
     uint8_t anchor_len = sizeof(anchors) / sizeof(float) / 2; //five anchors
 
     libmaix_nn_decoder_yolo2_config_t yolo2_config = {
         .classes_num     = class_num,
         .threshold       = 0.6,   //Confidence level
-        .nms_value       = 0.5,
+        .nms_value       = 0.3,
         .anchors_num     = 5,
         .anchors         = anchors,
         .net_in_width    = 224,

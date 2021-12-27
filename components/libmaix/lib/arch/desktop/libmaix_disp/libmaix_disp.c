@@ -20,7 +20,7 @@ struct libmaix_disp * libmaix_disp_create(u_int8_t fbiopan)
     disp->reserved = (void*)priv;
 
     if(disp_priv_init(disp) != 0) {
-        priv->fbiopan = fbiopan;
+        // priv->fbiopan = fbiopan;
         libmaix_disp_destroy(&disp);
         return NULL;
     }

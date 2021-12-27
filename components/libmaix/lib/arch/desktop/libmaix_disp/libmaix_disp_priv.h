@@ -11,11 +11,11 @@ extern "C" {
 
 struct libmaix_disp_priv_t
 {
-    char *fbp;
-    int fbfd;
-    int fbiopan;
-    struct fb_var_screeninfo vinfo;
-    struct fb_fix_screeninfo finfo;
+    // char *fbp;
+    // int fbfd;
+    // int fbiopan;
+    // struct fb_var_screeninfo vinfo;
+    // struct fb_fix_screeninfo finfo;
 
     libmaix_image_t* disp_img;
 

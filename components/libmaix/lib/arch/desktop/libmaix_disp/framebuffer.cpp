@@ -150,9 +150,9 @@ static int priv_devInit(struct libmaix_disp *disp)
     // disp->height = priv->vinfo.yres;
     // disp->bpp = priv->vinfo.bits_per_pixel / 8;
 
-    disp->width = 0;
-    disp->height = 0;
-    disp->bpp = 0;
+    disp->width = INT32_MAX;
+    disp->height = INT32_MAX;
+    disp->bpp = 3; // RGB888
 
     // printf("The framebuffer device was mapped to memory successfully.\n");
     cv::namedWindow( "[framebuffer]", cv::WINDOW_AUTOSIZE );

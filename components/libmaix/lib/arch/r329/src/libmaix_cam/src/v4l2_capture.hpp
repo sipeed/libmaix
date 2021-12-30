@@ -159,10 +159,14 @@ int V4L2Capture::initDevice()
     V4L2_PRINTF("Can't set cropcap para\n");
   }
 
+  int tmpW = capW, tmpH = capH; // dls patch 2021-12-30
+  if (tmpW > 320) tmpW = 640, tmpH = 480;
+  if (tmpW > 640) tmpW = 1280, tmpH = 720;
+
   /* 使用IOCTL命令VIDIOC_S_FMT，设置摄像头帧信息*/
   cam_format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  cam_format.fmt.pix.width = capW;// cam_cropcap.defrect.width;
-  cam_format.fmt.pix.height = capH;// cam_cropcap.defrect.height;
+  cam_format.fmt.pix.width = tmpW;// cam_cropcap.defrect.width;
+  cam_format.fmt.pix.height = tmpH;// cam_cropcap.defrect.height;
   cam_format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV; //要和摄像头支持的类型对应 V4L2_PIX_FMT_MJPEG or V4L2_PIX_FMT_YUYV
   cam_format.fmt.pix.field = V4L2_FIELD_INTERLACED;
   ret = ioctl(fd_cam, VIDIOC_S_FMT, &cam_format);
@@ -177,7 +181,7 @@ int V4L2Capture::initDevice()
   {
     V4L2_PRINTF("Can't get frame information");
   }
-  
+
   printf("[v4l2] Current data format information:\n\twidth:%d\n\theight:%d\n\tpixelformat:%X\n",
          cam_format.fmt.pix.width, cam_format.fmt.pix.height, cam_format.fmt.pix.pixelformat);
   capW = cam_format.fmt.pix.width;// cam_cropcap.defrect.width;

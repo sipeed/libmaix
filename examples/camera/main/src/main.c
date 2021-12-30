@@ -128,9 +128,9 @@ void test_init() {
 
   libmaix_camera_module_init();
 
-  test.w0 = 240, test.h0 = 240;
+  test.w0 = 416, test.h0 = 416;
 
-  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 0, 0);
+  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 0);
   if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
 
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
@@ -176,7 +176,16 @@ void test_work() {
     if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
     {
         printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
-        test.disp->draw_image(test.disp, tmp);
+        if (tmp->width == test.disp->width && test.disp->height == tmp->height) {
+            test.disp->draw_image(test.disp, tmp);
+        } else {
+            libmaix_image_t *rs = libmaix_image_create(test.disp->width, test.disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+            if (rs) {
+                libmaix_cv_image_resize(tmp, test.disp->width, test.disp->height, &rs);
+                test.disp->draw_image(test.disp, rs);
+                libmaix_image_destroy(&rs);
+            }
+        }
         CALC_FPS("maix_cam 0");
 
         #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833

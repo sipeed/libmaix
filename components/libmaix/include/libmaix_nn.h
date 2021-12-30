@@ -78,7 +78,7 @@ typedef union
         int*     output_ids;
         bool encrypt;
     }awnn;
-    struct
+        struct
     {
         char**   input_names;
         char**   output_names;

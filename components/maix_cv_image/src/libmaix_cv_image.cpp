@@ -623,9 +623,9 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         return LIBMAIX_ERR_NONE;
       }
       cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
-      cv::Mat dist;
+      cv::Mat dist(h, w, CV_8UC3, (*dst)->data);
       cv::resize(cv_src, dist, cv::Size(w, h));
-      memcpy((*dst)->data, dist.data, w * h * 3);
+      // memcpy((*dst)->data, dist.data, w * h * 3);
       // (*dst)->width = w;
       // (*dst)->height = h;
       // (*dst)->mode = src->mode;
@@ -640,9 +640,8 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         return LIBMAIX_ERR_NONE;
       }
       cv::Mat cv_src(src->height, src->width, CV_8UC4, src->data);
-      cv::Mat dist;
+      cv::Mat dist(h, w, CV_8UC4, (*dst)->data);
       cv::resize(cv_src, dist, cv::Size(w, h));
-      memcpy((*dst)->data, dist.data, w * h * 3);
       // (*dst)->width = w;
       // (*dst)->height = h;
       // (*dst)->mode = src->mode;
@@ -657,9 +656,8 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         return LIBMAIX_ERR_NONE;
       }
       cv::Mat cv_src(src->height, src->width, CV_8UC1, src->data);
-      cv::Mat dist;
+      cv::Mat dist(h, w, CV_8UC1, (*dst)->data);
       cv::resize(cv_src, dist, cv::Size(w, h));
-      memcpy((*dst)->data, dist.data, w * h);
       // (*dst)->width = w;
       // (*dst)->height = h;
       // (*dst)->mode = src->mode;
@@ -695,14 +693,15 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
     {
       cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
-      cv::Mat dist;
+      // cv::Mat dist;
+      cv::Mat dist(h, w, CV_8UC3, (*dst)->data);
       cv::Rect roi;
       roi.x = x;
       roi.y = y;
       roi.width = w;
       roi.height = h;
       cv_src(roi).copyTo(dist);
-      memcpy((*dst)->data, dist.data, w * h * 3);
+      // memcpy((*dst)->data, dist.data, w * h * 3);
     }
     else
     {

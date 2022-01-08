@@ -279,8 +279,10 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     }
 
     if(outputs->dtype == LIBMAIX_NN_DTYPE_FLOAT)
-    {
-        float Scale = 10.872787;    // the dequantize scale is fixed .in the next step the scale should be given from AIPU API.
+    {   
+        // the dequantize scale is fixed .in the next step the scale should be given from AIPU API.
+        //float Scale = 10.872787;   // cards 
+        float Scale = 8.031941; //voc
         int size = (*buffer_ptr).outputs.tensors[0].size;
         int8_t* data = (int8_t *)((*buffer_ptr).outputs.tensors[0].va);
         float *prediction = (float *)outputs->data;
@@ -366,4 +368,32 @@ libmaix_err_t libmaix_nn_module_deinit()
         printf("nn module deinit is faild;\n");
         return status;
     }
+}
+
+
+float libmaix_nn_feature_compare_int8(int8_t* a, int8_t* b, int len)
+{
+    int count = 0;
+    for(int index = 0; index < len ;index++ )
+    {
+        if(a[index] == b[index])
+        {
+            count++;
+        }
+    }
+    float score = count / len ;
+    return score ;
+}
+float libmaix_nn_feature_compare_float(float* a, float* b, int len)
+{
+    int count = 0;
+    for(int index = 0; index < len ;index++ )
+    {
+        if(a[index] == b[index])
+        {
+            count++;
+        }
+    }
+    float score = count / len ;
+    return score ;
 }

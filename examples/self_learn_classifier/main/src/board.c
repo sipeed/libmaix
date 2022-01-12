@@ -34,6 +34,7 @@ int get_io(int key, int key2, int* v1, int* v2)
 
     if (read(keys_fd, &t, sizeof(t)) == sizeof(t))
     {
+        printf("in get_io function\n");
 
         if (t.type == EV_KEY)
             if (t.value == 0 || t.value == 1)
@@ -53,6 +54,7 @@ int get_io(int key, int key2, int* v1, int* v2)
                 //     break;
             }
     }
+
     return -1;
 }
 

@@ -25,6 +25,7 @@ set(export_dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix)
 
 target_link_libraries(
     maix_nn_app
+    m
 )
 
 

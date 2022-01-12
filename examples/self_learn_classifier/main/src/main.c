@@ -1,4 +1,5 @@
-#include "stdio.h"
+#include <stdio.h>>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -18,24 +19,48 @@
 #include "board.h"
 
 #define TEST_IMAGE 0
+#include <time.h>
+
+
+void delay(int milliseconds)
+{
+    long pause;
+    clock_t now,then;
+
+    pause = milliseconds*(CLOCKS_PER_SEC/1000);
+    now = then = clock();
+    while( (now-then) < pause )
+        now = clock();
+}
+
+void take_picture(void *classifier, libmaix_image_t* img, int * i_class_num,libmaix_err_t (*callback)(void*, libmaix_image_t* , int* ))
+{
+    callback(callback,img,i_class_num);
+
+}
+
+
+
+
 
 void nn_test(struct libmaix_disp* disp)
 {
 #if TEST_IMAGE
     int ret = 0;
 #endif
+    int count = 0;
     struct libmaix_cam* cam = NULL;
-    libmaix_image_t* img;
+    libmaix_image_t* img;   // resized by show
+    libmaix_image_t* show;  //show for display
 
     libmaix_nn_t* nn = NULL;
     libmaix_err_t err = LIBMAIX_ERR_NONE;
-    libmaix_err_t err0 = LIBMAIX_ERR_NONE;
     void* classifier = NULL;
 
     uint32_t res_w = 224, res_h = 224;
     int class_num = 3;
     int sample_num = 15;
-    int feature_length = 512;
+    int feature_length = 1000;
 
     int i_class_num = 0;
     int i_sample_num = 0;
@@ -49,23 +74,15 @@ void nn_test(struct libmaix_disp* disp)
 
     printf("--create image\n");
     img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    // use LIBMAIX_IMAGE_MODE_RGB888 for read RGB88 image from FS test
-    // for camera LIBMAIX_IMAGE_MODE_YUV420SP_NV21 is enough
     if(!img)
     {
-        printf("create yuv image fail\n");
-        goto end;
-    }
-    libmaix_image_t* rgb_img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    if(!rgb_img)
-    {
-        printf("create rgb image fail\n");
+        printf("create RGB image fail\n");
         goto end;
     }
     // camera init
 #if !TEST_IMAGE
     printf("--create cam\n");
-    cam = libmaix_cam_create(0, res_w, res_h, 1, 0);
+    cam = libmaix_cam_create(0, disp->width, disp->height, 1, 1);
     if(!cam)
     {
         printf("create cam fail\n");
@@ -79,20 +96,31 @@ void nn_test(struct libmaix_disp* disp)
         goto end;
     }
 #endif
+
+
+
     printf("--resnet init\n");
     libmaix_nn_model_path_t model_path = {
-        .awnn.param_path = "/root/models/resnet18_1000_awnn.param",
-        .awnn.bin_path = "/root/models/resnet18_1000_awnn.bin",
+        // .awnn.param_path = "/home/model/resnet18_1000_awnn.param",
+        // .awnn.bin_path = "/home/model/resnet18_1000_awnn.bin",
+        .normal.model_path = "/root/models/aipu_mobilenet2.bin"
     };
     char* inputs_names[] = {"input0"};
-    char* outputs_names[] = {"190"};
+    char* outputs_names[] = {"output0"};
     libmaix_nn_opt_param_t opt_param = {
-        .awnn.input_names             = inputs_names,
-        .awnn.output_names            = outputs_names,
-        .awnn.input_num               = 1,              // len(input_names)
-        .awnn.output_num              = 1,              // len(output_names)
-        .awnn.mean                    = {127.5, 127.5, 127.5},
-        .awnn.norm                    = {0.0176, 0.0176, 0.0176},
+        .normal.input_names = inputs_names,
+        .normal.output_names = outputs_names,
+        .normal.input_num = 1,  // len(input_names)
+        .normal.output_num = 1, // len(output_names)
+        .normal.mean = {127.5, 127.5, 127.5},
+        .normal.norm = {0.00784313725490196, 0.00784313725490196, 0.00784313725490196},
+
+        // .awnn.input_names = inputs_names,
+        // .awnn.output_names = outputs_names,
+        // .awnn.input_num = 1,  // len(input_names)
+        // .awnn.output_num = 1, // len(output_names)
+        // .awnn.mean = {127.5, 127.5, 127.5},
+        // .awnn.norm = {0.00784313725490196, 0.00784313725490196, 0.00784313725490196},
     };
 #if TEST_IMAGE
     ret = loadFromBin("/root/test_input/input_data.bin", input.w * input.h * input.c, img->data);
@@ -103,108 +131,109 @@ void nn_test(struct libmaix_disp* disp)
     }
     img->mode = LIBMAIX_IMAGE_MODE_RGB888;
 #endif
-    // nn model init
-    printf("-- nn create\n");
-    nn = libmaix_nn_create();
-    if(!nn)
-    {
-        printf("libmaix_nn object create fail\n");
-        goto end;
-    }
-    printf("-- nn object init\n");
-    err = nn->init(nn);
-    if(err != LIBMAIX_ERR_NONE)
-    {
-        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
-        goto end;
-    }
-    printf("-- nn object load model\n");
-    err = nn->load(nn, &model_path, &opt_param);
-    if(err != LIBMAIX_ERR_NONE)
-    {
-        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
-        goto end;
-    }
+
+    // // nn model init
+    // printf("-- nn create\n");
+    // nn = libmaix_nn_create();
+    // if(!nn)
+    // {
+    //     printf("libmaix_nn object create fail\n");
+    //     goto end;
+    // }
+    // printf("-- nn object init\n");
+    // err = nn->init(nn);
+    // if(err != LIBMAIX_ERR_NONE)
+    // {
+    //     printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+    //     goto end;
+    // }
+    // printf("-- nn object load model\n");
+    // err = nn->load(nn, &model_path, &opt_param);
+    // if(err != LIBMAIX_ERR_NONE)
+    // {
+    //     printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+    //     goto end;
+    // }
 
     printf("-- classifier init, feature_length: %d, class_num: %d, sample_num: %d\n", feature_length, class_num, sample_num);
+
     int input_w, input_h;
     if(libmaix_classifier_load(&classifier, "m.classifier", nn, &feature_length, &input_w, &input_h, &class_num, &sample_num) != LIBMAIX_ERR_NONE)
     {
         libmaix_classifier_init(&classifier, nn, feature_length, res_w, res_h, class_num, sample_num);
     }
 
-    printf("-- key init\n");
-    board_init();
-    printf("-- start loop\n");
+    // printf("-- key init\n");
+    // int a = board_init();
+    // printf(" a : %d \n",a);
+
+
+    // printf("-- start loop\n");
+    time_t start , current;
+    start = time(NULL);
+    int flag_1 = 0;
+    int flag_2 = 0;    
     while(1)
     {
-#if !TEST_IMAGE
-        // printf("--cam capture\n");
-        img->mode = LIBMAIX_IMAGE_MODE_YUV420SP_NV21;
-        err = cam->capture(cam, (unsigned char*)img->data);
-        if(err != LIBMAIX_ERR_NONE)
+        current = time (NULL);
+        err = cam->capture_image(cam, &show);
+        err = libmaix_cv_image_resize(show, disp->width, disp->height, &img);  // resize the img to show on edge device 
+        disp->draw_image(disp,show);
+
+        if((int)difftime(current,start) %5 != 0)
         {
-            // not ready， sleep to release CPU
-            if(err == LIBMAIX_ERR_NOT_READY)
+            err = cam->capture_image(cam, &show);
+            err = libmaix_cv_image_resize(show, disp->width, disp->height, &img);  // resize the img to show on edge device 
+            disp->draw_image(disp,show);
+            flag_1 = 0;
+            flag_2 = 0;
+            
+
+        }
+        else
+        {
+
+            if(i_class_num < class_num && flag_1 !=1 )
             {
-                usleep(20 * 1000);
-                continue;
+                printf("ready to record class \n");
+                take_picture(classifier,img,&i_class_num,libmaix_classifier_add_class_img);
+                flag_1 = 1; 
+                i_class_num ++;
+            }
+            else if (i_sample_num < sample_num && flag_2 != 1 && i_class_num==class_num)
+            {
+                printf("ready to record sample \n");
+                take_picture(classifier,img,&i_sample_num,libmaix_classifier_add_sample_img);
+                flag_2 = 1;
+                i_sample_num ++;
+            }
+            else if(i_sample_num == sample_num)
+            {
+                printf("== train ...\n");
+                libmaix_classifier_train(classifier);
+                printf("== train complete\n");
+                i_sample_num ++;
             }
             else
             {
-                printf("capture fail: %s\n", libmaix_get_err_msg(err));
-                break;
-            }
-        }
-        err0 = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
-        if(err0 != LIBMAIX_ERR_NONE)
-        {
-            printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err0));
-            continue;
-        }
-#endif
-        int key_v, key_v2;
-        get_io(2, 3, &key_v, &key_v2);
-        if(key_v == 0)
-        {
-            if(i_class_num < class_num)
-            {
-                printf("== record class %d\n", i_class_num);
-                libmaix_classifier_add_class_img(classifier, rgb_img, &i_class_num);
-                ++i_class_num;
-            }
-            else if(i_sample_num < sample_num)
-            {
-                printf("== record sample %d\n", i_sample_num);
-                int idx = -1;
-                libmaix_classifier_add_sample_img(classifier, rgb_img, &idx);
-                ++i_sample_num;
-                if(i_sample_num == sample_num)
+                float distance = 0;
+                int class_id = -1;
+                err = libmaix_classifier_predict(classifier, img, &class_id, &distance);
+                if(err != LIBMAIX_ERR_NONE)
                 {
-                    printf("== train ...\n");
-                    libmaix_classifier_train(classifier);
-                    printf("== train complete\n");
+                    printf("libmaix_classifier_predict error! code: %d\n", err);
                 }
+                if(class_id >= 0)
+                {
+                    printf("class id: %d, distance: %f\n", class_id, distance);
+                }
+
+                break;
+                
             }
-        }
-        if(key_v2 == 0)
-        {
-           int ret = libmaix_classifier_save(classifier, "m.classifier");
-           printf("save ret: %d\n", ret);
-        }
-        float distance = 0;
-        int class_id = -1;
-        err = libmaix_classifier_predict(classifier, rgb_img, &class_id, &distance);
-        if(err != LIBMAIX_ERR_NONE)
-        {
-            printf("libmaix_classifier_predict error! code: %d\n", err);
-        }
-        if(class_id >= 0)
-        {
-            printf("class id: %d, distance: %f\n", class_id, distance);
         }
 
-        disp->draw(disp, rgb_img->data);
+
 #if TEST_IMAGE
         break;
 #endif
@@ -223,10 +252,10 @@ end:
         printf("--cam destory\n");
         libmaix_cam_destroy(&cam);
     }
-    if(rgb_img)
+    if(img)
     {
         printf("--image destory\n");
-        libmaix_image_destroy(&rgb_img);
+        libmaix_image_destroy(&img);
     }
     if(img)
     {

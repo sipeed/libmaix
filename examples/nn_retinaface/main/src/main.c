@@ -71,7 +71,7 @@ int save_bin(const char* path, int size, uint8_t* buffer)
 void nn_test(struct libmaix_disp* disp)
 {
     libmaix_image_t* img = NULL;
-
+    libmaix_image_t *show = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     int res_w = 224, res_h = 224;
     int input_w = res_w, input_h = res_h;
     int disp_w = 240, disp_h = 240;
@@ -99,30 +99,10 @@ void nn_test(struct libmaix_disp* disp)
         goto end;
     }
 
-    printf("--create image\n");
-    img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_YUV420SP_NV21, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    if(!img)
-    {
-        printf("create yuv image fail\n");
-        goto end;
-    }
-    libmaix_image_t* rgb_img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    if(!rgb_img)
-    {
-        printf("create rgb image fail\n");
-        goto end;
-    }
-    libmaix_image_t* img_disp = libmaix_image_create(disp_w, disp_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    if(!img_disp)
-    {
-        printf("create rgb image fail\n");
-        goto end;
-    }
-
     printf("--init\n");
     libmaix_nn_model_path_t model_path = {
-        .awnn.param_path = "/root/models/model_int8.param",
-        .awnn.bin_path = "/root/models/model_int8.bin",
+        .awnn.param_path = "/home/model/face_recognize/model_int8.param",
+        .awnn.bin_path = "/home/model/face_recognize/model_int8.bin",
     };
     libmaix_nn_decoder_retinaface_config_t config = {
         .variance = {0.1, 0.2},
@@ -246,7 +226,8 @@ void nn_test(struct libmaix_disp* disp)
         printf("-- load input bin file\n");
         loadFromBin("/root/test_input/input_256x448.bin", res_w * res_h * 3, rgb_img->data);
 #else
-        err = cam->capture(cam, (unsigned char*)img->data);
+        err = cam->capture_image(cam, &img);
+
         if(err != LIBMAIX_ERR_NONE)
         {
             // not ready， sleep to release CPU
@@ -261,17 +242,9 @@ void nn_test(struct libmaix_disp* disp)
                 break;
             }
         }
-        printf("-- got yuv image, width: %d, height:%d\n", img->width, img->height);
-        printf("-- convert YUV to RGB\n");
-        err = img->convert(img, LIBMAIX_IMAGE_MODE_RGB888, &rgb_img);
-        if(err != LIBMAIX_ERR_NONE)
-        {
-            printf("conver to RGB888 fail:%s\r\n", libmaix_get_err_msg(err));
-            continue;
-        }
 #endif
         printf("-- nn object forward model\n");
-        input.data = rgb_img->data;
+        input.data = (uint8_t *)img->data;
         // input.data = quantize_buffer;
         // for(int i=0; i < 448 * 448; ++i)
         // {
@@ -307,20 +280,20 @@ void nn_test(struct libmaix_disp* disp)
             .rgb888.b = 0
         };
         printf("-- draw\n");
-        rgb_img->resize(rgb_img, disp_w, disp_h, &img_disp);
         // memcpy(img_disp->data, rgb_img->data, rgb_img->width * rgb_img->height * 3);
         for(int i=0; i < result.num; ++i)
         {
             if(result.faces[i].score > config.score_thresh)
             {
-                img_disp->draw_rectangle(img_disp, result.faces[i].box.x * img_disp->width, result.faces[i].box.y * img_disp->height, result.faces[i].box.w * img_disp->width, result.faces[i].box.h * img_disp->height, color, false, 3);
+                show->draw_rectangle(img_disp, result.faces[i].box.x * img_disp->width, result.faces[i].box.y * img_disp->height, result.faces[i].box.w * img_disp->width, result.faces[i].box.h * img_disp->height, color, false, 3);
                 for(int j=0; j<5; ++j)
                 {
                     img_disp->draw_rectangle(img_disp, result.faces[i].points[j * 2] * img_disp->width, result.faces[i].points[j * 2 + 1] * img_disp->height, 2, 2, color, false, 2);
                 }
             }
         }
-        disp->draw(disp, img_disp->data);
+        err = libmaix_cv_image_resize(img, disp->width, disp->height, &show);
+        disp->draw(disp, show);
         printf("-- draw complete\n");
 #if LOAD_IMAGE
         break;
@@ -342,11 +315,6 @@ end:
     if(nn)
     {
         libmaix_nn_destroy(&nn);
-    }
-    if(rgb_img)
-    {
-        printf("--image destory\n");
-        libmaix_image_destroy(&rgb_img);
     }
     if(img)
     {

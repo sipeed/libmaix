@@ -5,6 +5,30 @@
 #include "libmaix_image.h"
 #include "stdint.h"
 #include "stdbool.h"
+#include "libmaix.h"
+
+
+typedef struct Classifier
+{
+    libmaix_nn_t* model;
+    int feature_length;
+    int input_w;
+    int input_h;
+    int class_num;
+    int sample_num;
+
+    //save img data
+    libmaix_nn_layer_t** class_inputs;
+    libmaix_nn_layer_t** sample_inputs;
+
+    //save output data
+    libmaix_nn_layer_t** class_outputs;
+    libmaix_nn_layer_t** sample_outputs;
+    float ** culsters_center;
+    
+
+}self_learning_classifier;
+
 
 libmaix_err_t libmaix_classifier_init(void** obj, libmaix_nn_t* model, int feature_length, int input_w, int input_h, int class_num, int sample_num);
 /**

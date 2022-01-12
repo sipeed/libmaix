@@ -163,25 +163,24 @@ void nn_test(struct libmaix_disp* disp)
     int flag_trained = 0;
     while(1)
     {
-        err = cam->capture_image(cam, &show);
-        err = libmaix_cv_image_resize(show, res_w, res_h, &img);  // resize the img to show on edge device 
-        disp->draw_image(disp,show);
-
-        
-
-        
         if(i_class_num < class_num)
         {
+            err = cam->capture_image(cam, &show);
+            err = libmaix_cv_image_resize(show, res_w, res_h, &img); 
             printf("== record class %d\n", i_class_num+1);
             libmaix_classifier_add_class_img(classifier, img, &i_class_num);
+            disp->draw_image(disp,show);
             ++i_class_num;
             
         }
         else if(i_sample_num < sample_num)
         {
+            err = cam->capture_image(cam, &show);
+            err = libmaix_cv_image_resize(show, res_w, res_h, &img); 
             printf("== record sample %d\n", i_sample_num+1);
             int idx = -1;
             libmaix_classifier_add_sample_img(classifier, img, &idx);
+            disp->draw_image(disp,show);
             ++i_sample_num;
             if(i_sample_num == sample_num)
             {
@@ -198,7 +197,10 @@ void nn_test(struct libmaix_disp* disp)
         {
             float distance = 0;
             int class_id = -1;
+            err = cam->capture_image(cam, &show);
+            err = libmaix_cv_image_resize(show, res_w, res_h, &img); 
             err = libmaix_classifier_predict(classifier, img, &class_id, &distance);
+            disp->draw_image(disp,show);
             if(err != LIBMAIX_ERR_NONE)
             {
                 printf("libmaix_classifier_predict error! code: %d\n", err);
@@ -211,64 +213,6 @@ void nn_test(struct libmaix_disp* disp)
         }
         delay(2000);
         
-        // if((int)difftime(current,start) %5 != 0)
-        // {   
-        //     err = cam->capture_image(cam, &show);
-        //     err = libmaix_cv_image_resize(show, res_w, res_h, &img);  // resize the img to show on edge device 
-        //     disp->draw_image(disp,show);
-        //     flag_1 = 0;
-        //     flag_2 = 0;
-        // }
-        
-        // else
-        // {
-
-        //     if(i_class_num < class_num && flag_1 !=1 )
-        //     {
-        //         printf("ready to record class %d  \n",i_class_num+1);
-        //         take_picture(classifier,img,&i_class_num,libmaix_classifier_add_class_img);
-        //         printf("take class picture has done\n");
-        //         flag_1 = 1; 
-        //         i_class_num ++;
-        //     }
-        //     else if (i_sample_num < sample_num && flag_2 != 1 && i_class_num==class_num)
-        //     {
-        //         printf("ready to record sample %d \n",i_sample_num+1);
-        //         take_picture(classifier,img,&i_sample_num,libmaix_classifier_add_sample_img);
-        //         printf("take picture has done\n");
-        //         flag_2 = 1;
-        //         i_sample_num ++;
-        //     }
-        //     else if(i_sample_num == sample_num)
-        //     {
-        //         printf("== train ...\n");
-        //         libmaix_classifier_train(classifier);
-        //         printf("== train complete\n");
-        //         i_sample_num ++;
-        //         flag_3 = 1;
-                
-        //     }
-
-        //     else if (flag_3 == 1)
-        //     {
-        //         printf("== start to predict\n");
-        //         float distance = 0;
-        //         int class_id = -1;
-        //         err = libmaix_classifier_predict(classifier, img, &class_id, &distance);
-        //         printf("%d\n",err);
-        //         if(err != LIBMAIX_ERR_NONE)
-        //         {
-        //             printf("libmaix_classifier_predict error! code: %d\n", err);
-        //         }
-        //         if(class_id >= 0)
-        //         {
-        //             printf("class id: %d, distance: %f\n", class_id, distance);
-        //         }
-
-        //         break;
-        //     }
-        // }
-
 
 #if TEST_IMAGE
         break;

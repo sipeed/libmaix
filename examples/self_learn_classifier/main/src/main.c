@@ -1,4 +1,4 @@
-#include <stdio.h>>
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -12,6 +12,8 @@
 #include "libmaix_image.h"
 #include "libmaix_nn.h"
 #include "libmaix_nn_classifier.h"
+#include "libmaix_cv_image.h"
+
 #include "main.h"
 #include <sys/time.h>
 #include <unistd.h>
@@ -33,22 +35,11 @@ void delay(int milliseconds)
         now = clock();
 }
 
-void take_picture(void *classifier, libmaix_image_t* img, int * i_class_num,libmaix_err_t (*callback)(void*, libmaix_image_t* , int* ))
-{
-    callback(callback,img,i_class_num);
-
-}
-
-
-
-
-
 void nn_test(struct libmaix_disp* disp)
 {
 #if TEST_IMAGE
     int ret = 0;
 #endif
-    int count = 0;
     struct libmaix_cam* cam = NULL;
     libmaix_image_t* img;   // resized by show
     libmaix_image_t* show;  //show for display
@@ -59,7 +50,7 @@ void nn_test(struct libmaix_disp* disp)
 
     uint32_t res_w = 224, res_h = 224;
     int class_num = 3;
-    int sample_num = 15;
+    int sample_num = 8;
     int feature_length = 1000;
 
     int i_class_num = 0;
@@ -132,28 +123,28 @@ void nn_test(struct libmaix_disp* disp)
     img->mode = LIBMAIX_IMAGE_MODE_RGB888;
 #endif
 
-    // // nn model init
-    // printf("-- nn create\n");
-    // nn = libmaix_nn_create();
-    // if(!nn)
-    // {
-    //     printf("libmaix_nn object create fail\n");
-    //     goto end;
-    // }
-    // printf("-- nn object init\n");
-    // err = nn->init(nn);
-    // if(err != LIBMAIX_ERR_NONE)
-    // {
-    //     printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
-    //     goto end;
-    // }
-    // printf("-- nn object load model\n");
-    // err = nn->load(nn, &model_path, &opt_param);
-    // if(err != LIBMAIX_ERR_NONE)
-    // {
-    //     printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
-    //     goto end;
-    // }
+    // nn model init
+    printf("-- nn create\n");
+    nn = libmaix_nn_create();
+    if(!nn)
+    {
+        printf("libmaix_nn object create fail\n");
+        goto end;
+    }
+    printf("-- nn object init\n");
+    err = nn->init(nn);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
+    printf("-- nn object load model\n");
+    err = nn->load(nn, &model_path, &opt_param);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
 
     printf("-- classifier init, feature_length: %d, class_num: %d, sample_num: %d\n", feature_length, class_num, sample_num);
 
@@ -168,70 +159,115 @@ void nn_test(struct libmaix_disp* disp)
     // printf(" a : %d \n",a);
 
 
-    // printf("-- start loop\n");
-    time_t start , current;
-    start = time(NULL);
-    int flag_1 = 0;
-    int flag_2 = 0;    
+    printf("-- start loop\n");
+    int flag_trained = 0;
     while(1)
     {
-        current = time (NULL);
         err = cam->capture_image(cam, &show);
-        err = libmaix_cv_image_resize(show, disp->width, disp->height, &img);  // resize the img to show on edge device 
+        err = libmaix_cv_image_resize(show, res_w, res_h, &img);  // resize the img to show on edge device 
         disp->draw_image(disp,show);
 
-        if((int)difftime(current,start) %5 != 0)
+        
+
+        
+        if(i_class_num < class_num)
         {
-            err = cam->capture_image(cam, &show);
-            err = libmaix_cv_image_resize(show, disp->width, disp->height, &img);  // resize the img to show on edge device 
-            disp->draw_image(disp,show);
-            flag_1 = 0;
-            flag_2 = 0;
+            printf("== record class %d\n", i_class_num+1);
+            libmaix_classifier_add_class_img(classifier, img, &i_class_num);
+            ++i_class_num;
             
-
         }
-        else
+        else if(i_sample_num < sample_num)
         {
-
-            if(i_class_num < class_num && flag_1 !=1 )
-            {
-                printf("ready to record class \n");
-                take_picture(classifier,img,&i_class_num,libmaix_classifier_add_class_img);
-                flag_1 = 1; 
-                i_class_num ++;
-            }
-            else if (i_sample_num < sample_num && flag_2 != 1 && i_class_num==class_num)
-            {
-                printf("ready to record sample \n");
-                take_picture(classifier,img,&i_sample_num,libmaix_classifier_add_sample_img);
-                flag_2 = 1;
-                i_sample_num ++;
-            }
-            else if(i_sample_num == sample_num)
+            printf("== record sample %d\n", i_sample_num+1);
+            int idx = -1;
+            libmaix_classifier_add_sample_img(classifier, img, &idx);
+            ++i_sample_num;
+            if(i_sample_num == sample_num)
             {
                 printf("== train ...\n");
                 libmaix_classifier_train(classifier);
                 printf("== train complete\n");
+                flag_trained = 1;
                 i_sample_num ++;
             }
-            else
-            {
-                float distance = 0;
-                int class_id = -1;
-                err = libmaix_classifier_predict(classifier, img, &class_id, &distance);
-                if(err != LIBMAIX_ERR_NONE)
-                {
-                    printf("libmaix_classifier_predict error! code: %d\n", err);
-                }
-                if(class_id >= 0)
-                {
-                    printf("class id: %d, distance: %f\n", class_id, distance);
-                }
-
-                break;
-                
-            }
         }
+
+
+        else if (flag_trained == 1 && i_sample_num == sample_num +1)
+        {
+            float distance = 0;
+            int class_id = -1;
+            err = libmaix_classifier_predict(classifier, img, &class_id, &distance);
+            if(err != LIBMAIX_ERR_NONE)
+            {
+                printf("libmaix_classifier_predict error! code: %d\n", err);
+            }
+            if(class_id >= 0)
+            {
+                printf("class id: %d, distance: %f\n", class_id, distance);
+            }
+            break;
+        }
+        delay(2000);
+        
+        // if((int)difftime(current,start) %5 != 0)
+        // {   
+        //     err = cam->capture_image(cam, &show);
+        //     err = libmaix_cv_image_resize(show, res_w, res_h, &img);  // resize the img to show on edge device 
+        //     disp->draw_image(disp,show);
+        //     flag_1 = 0;
+        //     flag_2 = 0;
+        // }
+        
+        // else
+        // {
+
+        //     if(i_class_num < class_num && flag_1 !=1 )
+        //     {
+        //         printf("ready to record class %d  \n",i_class_num+1);
+        //         take_picture(classifier,img,&i_class_num,libmaix_classifier_add_class_img);
+        //         printf("take class picture has done\n");
+        //         flag_1 = 1; 
+        //         i_class_num ++;
+        //     }
+        //     else if (i_sample_num < sample_num && flag_2 != 1 && i_class_num==class_num)
+        //     {
+        //         printf("ready to record sample %d \n",i_sample_num+1);
+        //         take_picture(classifier,img,&i_sample_num,libmaix_classifier_add_sample_img);
+        //         printf("take picture has done\n");
+        //         flag_2 = 1;
+        //         i_sample_num ++;
+        //     }
+        //     else if(i_sample_num == sample_num)
+        //     {
+        //         printf("== train ...\n");
+        //         libmaix_classifier_train(classifier);
+        //         printf("== train complete\n");
+        //         i_sample_num ++;
+        //         flag_3 = 1;
+                
+        //     }
+
+        //     else if (flag_3 == 1)
+        //     {
+        //         printf("== start to predict\n");
+        //         float distance = 0;
+        //         int class_id = -1;
+        //         err = libmaix_classifier_predict(classifier, img, &class_id, &distance);
+        //         printf("%d\n",err);
+        //         if(err != LIBMAIX_ERR_NONE)
+        //         {
+        //             printf("libmaix_classifier_predict error! code: %d\n", err);
+        //         }
+        //         if(class_id >= 0)
+        //         {
+        //             printf("class id: %d, distance: %f\n", class_id, distance);
+        //         }
+
+        //         break;
+        //     }
+        // }
 
 
 #if TEST_IMAGE

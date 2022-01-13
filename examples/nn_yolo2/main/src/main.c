@@ -122,18 +122,18 @@ void nn_test(struct libmaix_disp* disp)
 
     uint32_t res_w = 224, res_h = 224;
 
-    // char* labels[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "mouse", "microbit", "ruler", "cat", "peer", "ship", "apple", "car", "pan", "dog", "umbrella", "airplane", "clock", "grape", "cup", "left", "right", "front", "stop", "back"};
-    // int class_num = 35;
-    // float anchors [10] =  {2.44, 2.25, 5.03, 4.91, 3.5, 3.53, 4.16, 3.94, 2.97, 2.84};
+    char* labels[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "mouse", "microbit", "ruler", "cat", "peer", "ship", "apple", "car", "pan", "dog", "umbrella", "airplane", "clock", "grape", "cup", "left", "right", "front", "stop", "back"};
+    int class_num = 35;
+    float anchors [10] =  {2.44, 2.25, 5.03, 4.91, 3.5, 3.53, 4.16, 3.94, 2.97, 2.84};
 
     // char* labels[] = {"aeroplane","bicycle","bird","boat","bottle","bus","car","cat","chair","cow","diningtable","dog","horse","motorbike","person","pottedplant","sheep","sofa","train","tvmonitor"};
     // int class_num = 20;
     // float anchors[10] = {0.4165, 0.693 , 0.9765, 1.6065, 1.5855, 3.122 , 2.821 , 1.8515,3.612 , 3.7275};
 
 
-    char* labels[] = {"aeroplane","bicycle","bird","boat","bottle","bus","car","cat","chair","cow","diningtable","dog","horse","motorbike","person","pottedplant","sheep","sofa","train","tvmonitor"};
-    int class_num = 20;
-    float anchors[10] = {0.4165, 0.693 , 0.9765, 1.6065, 1.5855, 3.122 , 2.821 , 1.8515,3.612 , 3.7275};
+    // char* labels[] = {"aeroplane","bicycle","bird","boat","bottle","bus","car","cat","chair","cow","diningtable","dog","horse","motorbike","person","pottedplant","sheep","sofa","train","tvmonitor"};
+    // int class_num = 20;
+    // float anchors[10] = {0.4165, 0.693 , 0.9765, 1.6065, 1.5855, 3.122 , 2.821 , 1.8515,3.612 , 3.7275};
 
 
 
@@ -215,8 +215,8 @@ void nn_test(struct libmaix_disp* disp)
 #endif
     printf("--yolo init\n");
     libmaix_nn_model_path_t model_path = {
-        .normal.model_path = "./model/aipu_yolo_VOC2007.bin",
-        // .normal.model_path = "./model/aipu_onnx_cards_224_35.bin",
+        // .normal.model_path = "./model/aipu_yolo_VOC2007.bin",
+        .normal.model_path = "./model/aipu_onnx_cards_224_35.bin",
     };
     libmaix_nn_layer_t input = {
         .w = yolo2_config.net_in_width,
@@ -236,7 +236,7 @@ void nn_test(struct libmaix_disp* disp)
     };
     char* inputs_names[] = {"input0"};
     char* outputs_names[] = {"output0"};
-
+    float Scale[] = {10.872787};
     libmaix_nn_opt_param_t opt_param = {
         .normal.input_names             = inputs_names,
         .normal.output_names            = outputs_names,
@@ -244,6 +244,7 @@ void nn_test(struct libmaix_disp* disp)
         .normal.output_num              = 1,              // len(output_names)
         .normal.mean                    = {127.5, 127.5, 127.5},
         .normal.norm                    = {0.0078125, 0.0078125, 0.0078125},
+        .normal.Scale                   = &Scale,
     };
 
     // malloc buffer 

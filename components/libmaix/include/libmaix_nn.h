@@ -89,6 +89,7 @@ typedef union
         int*     input_ids;
         int*     output_ids;
         bool encrypt;
+        float * Scale;
     }normal;
 }libmaix_nn_opt_param_t; // optional param for model
 

@@ -884,4 +884,400 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     }
     return LIBMAIX_ERR_NONE;
   }
+
+
+
+
+  #include <sys/time.h>
+  #include <stdio.h>
+  #include <stdint.h>
+  #include <inttypes.h>
+  #include <ctype.h>
+  #include <unistd.h>
+  #include <math.h>
+
+  #include <sys/types.h>
+  #include <sys/stat.h>
+  #include <sys/ioctl.h>
+  #include <fcntl.h>
+  #include <unistd.h>
+  #include <linux/input.h>
+
+  #include <termios.h>
+  #include <linux/tty_flags.h>
+  #include <linux/serial.h>
+
+  typedef struct{
+    int baud;
+    int data_bits;
+    int stop_bits;
+    char parity;
+  }mf_brd_uart_t;
+
+  static int _get_baud(int baud)
+  {
+      switch (baud)
+      {
+      case 9600:return B9600;
+      case 19200:return B19200;
+      case 38400:return B38400;
+      case 57600:return B57600;
+      case 115200:return B115200;
+      case 230400:return B230400;
+      case 460800:return B460800;
+      case 500000:return B500000;
+      case 576000:return B576000;
+      case 921600:return B921600;
+  #ifdef B1000000
+      case 1000000:return B1000000;
+  #endif
+  #ifdef B1152000
+      case 1152000:return B1152000;
+  #endif
+  #ifdef B1500000
+      case 1500000:return B1500000;
+  #endif
+  #ifdef B2000000
+      case 2000000:return B2000000;
+  #endif
+  #ifdef B2500000
+      case 2500000:return B2500000;
+  #endif
+  #ifdef B3000000
+      case 3000000:return B3000000;
+  #endif
+  #ifdef B3500000
+      case 3500000:return B3500000;
+  #endif
+  #ifdef B4000000
+      case 4000000:return B4000000;
+  #endif
+      default:return -1;
+      }
+  }
+
+
+  static void clear_custom_speed_flag(int _fd)
+  {
+      struct serial_struct ss;
+      if (ioctl(_fd, TIOCGSERIAL, &ss) < 0) {
+          // return silently as some devices do not support TIOCGSERIAL
+          return;
+      }
+
+      if ((ss.flags & ASYNC_SPD_MASK) != ASYNC_SPD_CUST)
+          return;
+
+      ss.flags &= ~ASYNC_SPD_MASK;
+
+      if (ioctl(_fd, TIOCSSERIAL, &ss) < 0) {
+          perror("TIOCSSERIAL failed");
+          exit(1);
+      }
+  }
+
+  /**
+   * @brief 初始化uart
+   * @note
+   * @param [in] dev    设备名
+   * @param [in] param  参数
+   * @retval
+   */
+  static int _uart_init(char* dev, void* param)
+  {
+      int fd;
+
+      mf_brd_uart_t* cfg = (mf_brd_uart_t *)param;
+
+      int baud = _get_baud(cfg->baud);
+      int data_bits = cfg->data_bits, stop_bits = cfg->stop_bits;
+      char parity = cfg->parity;
+
+      fd = open(dev, O_RDWR | O_NONBLOCK);
+      if (fd < 0)
+      {
+          return NULL;
+      }
+
+      struct termios opt;
+      memset(&opt, 0, sizeof(opt));
+
+      /* 忽略modem，使能读模式 */
+      opt.c_cflag |= CLOCAL | CREAD;
+
+      /* 设置波特率 */
+      opt.c_cflag |= baud;
+
+      /* 设置数据位 */
+      switch (data_bits)
+      {
+      case 7:
+          opt.c_cflag |= CS7;
+          break;
+      case 8:
+          opt.c_cflag |= CS8;
+          break;
+      default:break;
+      }
+
+      /* 设置奇偶校验位 */
+      switch (parity)
+      {
+      case 'N':
+      case 'n':
+          opt.c_iflag &= ~INPCK;
+          opt.c_cflag &= ~PARENB;
+          break;
+      case 'O':
+      case 'o':
+          opt.c_iflag |= (INPCK | ISTRIP);
+          opt.c_cflag |= (PARODD | PARENB);
+          break;
+      case 'E':
+      case 'e':
+          opt.c_iflag |= (INPCK | ISTRIP);
+          opt.c_cflag |= PARENB;
+          opt.c_cflag &= ~PARODD;
+          break;
+      default:printf("set parity failed.");break;
+      }
+
+      /* 设置停止位 */
+      switch (stop_bits)
+      {
+      case 1:
+          opt.c_cflag &= ~CSTOPB;
+          break;
+      case 2:
+          opt.c_cflag |= CSTOPB;
+          break;
+      default:printf("set speed failed.");break;
+      }
+
+      /* 设置流控制 */
+      opt.c_cflag &= ~CRTSCTS;
+
+      /* 最小字节数与等待时间 */
+      opt.c_cc[VMIN] = 1;
+      opt.c_cc[VTIME] = 0;
+
+      /* 刷新串口，更新配置 */
+      tcflush(fd, TCIOFLUSH);
+      tcsetattr(fd, TCSANOW, &opt);
+
+      clear_custom_speed_flag(fd);
+
+      return fd;
+  }
+
+  /**
+   * @brief 取消初始化uart
+   * @note
+   * @param [in] dev    设备名
+   * @param [in] param  参数
+   * @retval
+   */
+  static void _uart_deinit(int fd)
+  {
+      if (close(fd) < 0)
+      {
+
+      }
+  }
+
+  /**
+   * @brief uart读数据
+   * @note
+   * @param [in] handle       ??
+   * @param [in] cnt          长度
+   * @param [in] buf          参数
+   * @retval
+   */
+  static int _uart_read(int fd, uint8_t* buf, int cnt)
+  {
+      return read(fd, buf, cnt);
+  }
+
+  /**
+   * @brief uart写数据
+   * @note
+   * @param [in] handle       ??
+   * @param [in] cnt          长度
+   * @param [in] buf          参数
+   * @retval
+   */
+  static int _uart_write(int fd, uint8_t* buf, int cnt)
+  {
+      return write(fd, buf, cnt);
+  }
+
+
+  #include "apriltag.h"
+  #include "tag36h11.h"
+  #include "tag25h9.h"
+  #include "tag16h5.h"
+  #include "tagCircle21h7.h"
+  #include "tagCircle49h12.h"
+  #include "tagCustom48h12.h"
+  #include "tagStandard41h12.h"
+  #include "tagStandard52h13.h"
+
+  static const char *famname = "tag36h11";
+  static apriltag_detector_t *td = NULL;
+  static apriltag_family_t *tf = NULL;
+
+  int mf_uartp_fd;
+
+  void libmaix_cv_apriltag_load()
+  {
+    // Initialize tag detector with options
+    if (!strcmp(famname, "tag36h11")) {
+        tf = tag36h11_create();
+    } else if (!strcmp(famname, "tag25h9")) {
+        tf = tag25h9_create();
+    } else if (!strcmp(famname, "tag16h5")) {
+        tf = tag16h5_create();
+    } else if (!strcmp(famname, "tagCircle21h7")) {
+        tf = tagCircle21h7_create();
+    } else if (!strcmp(famname, "tagCircle49h12")) {
+        tf = tagCircle49h12_create();
+    } else if (!strcmp(famname, "tagStandard41h12")) {
+        tf = tagStandard41h12_create();
+    } else if (!strcmp(famname, "tagStandard52h13")) {
+        tf = tagStandard52h13_create();
+    } else if (!strcmp(famname, "tagCustom48h12")) {
+        tf = tagCustom48h12_create();
+    } else {
+        printf("Unrecognized tag family name. Use e.g. \"tag36h11\".\n");
+        exit(-1);
+    }
+
+    td = apriltag_detector_create();
+    apriltag_detector_add_family(td, tf);
+    td->quad_decimate = 2.0; // "Decimate input image by this factor"
+    td->quad_sigma = 0.0; // Apply low-pass blur to input
+    td->nthreads = 1;
+    td->debug = 0;
+    td->refine_edges = 1;// Spend more time trying to align edges of tags
+
+    char *port = "/dev/ttyGS0";
+    mf_brd_uart_t uart_cfg =
+    {
+        .baud = 115200,
+        .data_bits = 8,
+        .stop_bits = 1,
+        .parity = 'N',
+    };
+
+    mf_uartp_fd = _uart_init(port, &uart_cfg);
+
+  }
+
+  void libmaix_cv_apriltag_free()
+  {
+
+    apriltag_detector_destroy(td);
+
+    if (!strcmp(famname, "tag36h11")) {
+        tag36h11_destroy(tf);
+    } else if (!strcmp(famname, "tag25h9")) {
+        tag25h9_destroy(tf);
+    } else if (!strcmp(famname, "tag16h5")) {
+        tag16h5_destroy(tf);
+    } else if (!strcmp(famname, "tagCircle21h7")) {
+        tagCircle21h7_destroy(tf);
+    } else if (!strcmp(famname, "tagCircle49h12")) {
+        tagCircle49h12_destroy(tf);
+    } else if (!strcmp(famname, "tagStandard41h12")) {
+        tagStandard41h12_destroy(tf);
+    } else if (!strcmp(famname, "tagStandard52h13")) {
+        tagStandard52h13_destroy(tf);
+    } else if (!strcmp(famname, "tagCustom48h12")) {
+        tagCustom48h12_destroy(tf);
+    }
+
+    _uart_deinit(mf_uartp_fd);
+  }
+
+  void libmaix_cv_apriltag_test(uint8_t *gray8, int width, int height)
+  {
+    // cv::Mat gray(height, width, CV_8UC1, const_cast<char *>((char *)gray8));
+
+    // cv::imwrite("tmp.jpg", gray);
+
+    // // BGRA
+
+    // cv::Mat rgb(height, width, CV_8UC4, const_cast<char *>((char *)argb8888));
+
+    // cv::Mat bgra(height, width, CV_8UC4, const_cast<char *>((char *)argb8888));
+
+    // cv::Mat argb(height, width, CV_8UC4, const_cast<char *>((char *)argb8888));
+
+    // cv::rectangle(argb, cv::Point(20, 60), cv::Point(100, 160), cv::Scalar(255, 0, 0, 255), -1);
+
+    // static struct timeval tmp;
+    // gettimeofday(&tmp, NULL);
+
+    // static char text[128] = {};
+    // sprintf(text, "%ld.%ld\r\n", tmp.tv_sec, tmp.tv_usec);
+    // // sprintf(t, "%ld\r\n", i++);
+
+    // cv::putText(argb, text, cv::Point(120, 120), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0, 0, 255, 255));
+
+    cv::Mat gray(height, width, CV_8UC1, const_cast<char *>((char *)gray8));
+
+    // Make an image_u8_t header for the Mat data
+    image_u8_t im = { .width = gray.cols,
+        .height = gray.rows,
+        .stride = gray.cols,
+        .buf = gray.data
+    };
+
+    zarray_t *detections = apriltag_detector_detect(td, &im);
+
+    // Draw detection outlines
+    for (int i = 0; i < zarray_size(detections); i++) {
+      apriltag_detection_t *det;
+      zarray_get(detections, i, &det);
+
+      cv::line(gray, cv::Point(det->p[0][0], det->p[0][1]),
+                cv::Point(det->p[1][0], det->p[1][1]),
+                cv::Scalar(0, 0xff, 0, 0xff), 2);
+      cv::line(gray, cv::Point(det->p[0][0], det->p[0][1]),
+                cv::Point(det->p[3][0], det->p[3][1]),
+                cv::Scalar(0, 0, 0xff, 0xff), 2);
+      cv::line(gray, cv::Point(det->p[1][0], det->p[1][1]),
+                cv::Point(det->p[2][0], det->p[2][1]),
+                cv::Scalar(0xff, 0, 0, 0xff), 2);
+      cv::line(gray, cv::Point(det->p[2][0], det->p[2][1]),
+                cv::Point(det->p[3][0], det->p[3][1]),
+                cv::Scalar(0xff, 0, 0, 0xff), 2);
+
+      std::stringstream ss;
+      ss << det->id;
+      cv::String text = ss.str();
+
+      int fontface = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
+      double fontscale = 0.5;
+      int baseline;
+      cv::Size textsize = cv::getTextSize(text, fontface, fontscale, 2,
+                                      &baseline);
+      cv::putText(gray, text, cv::Point(det->c[0]-textsize.width/2,
+                                  det->c[1]+textsize.height/2),
+              fontface, fontscale, cv::Scalar(0xff, 0x99, 0, 0xff), 2);
+
+      cv::String result = cv::format("\r\n[(%s,%.02f):(%d,%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]\r\n",
+          text.c_str(), det->decision_margin, (int)det->c[0], (int)det->c[1],
+          (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1],
+          (int)det->p[1][0], (int)det->p[1][1], (int)det->p[3][0], (int)det->p[3][1],
+          (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1],
+          (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1]
+      );
+
+      _uart_write(mf_uartp_fd, (uint8_t *)result.c_str(), result.length());
+
+    }
+
+    apriltag_detections_destroy(detections);
+  }
 }

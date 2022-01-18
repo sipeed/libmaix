@@ -30,6 +30,7 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
     elseif(CONFIG_ARCH_V831)
         include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/v83x/include/opencv4)
         list(APPEND ADD_DYNAMIC_LIB
+            "../libmaix/lib/arch/v83x/lib/libapriltag.so"
             "../libmaix/lib/arch/v831/libmaix_nn.so"
             "../libmaix/lib/arch/v831/libmaix_image.so"
             "../libmaix/lib/arch/v83x/lib/libjpeg.so"

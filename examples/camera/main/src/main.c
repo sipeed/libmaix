@@ -12,8 +12,6 @@
 #include "libmaix_image.h"
 #include "libmaix_disp.h"
 
-// #include "rotate.h"
-
 #define CALC_FPS(tips)                                                                                     \
   {                                                                                                        \
     static int fcnt = 0;                                                                                   \
@@ -28,73 +26,79 @@
     }                                                                                                      \
   }
 
-// static struct timeval old, now;
+#include <sys/time.h>
 
-// void cap_set()
-// {
-//   gettimeofday(&old, NULL);
-// }
+static struct timeval old, now;
 
-// void cap_get(const char *tips)
-// {
-//   gettimeofday(&now, NULL);
-//   if (now.tv_usec > old.tv_usec)
-//     printf("%20s - %5ld us\r\n", tips, (now.tv_usec - old.tv_usec));
-// }
-
-/******************************************************
- *YUV422：Y：U：V=2:1:1
- *RGB24 ：B G R
-******************************************************/
-int YUV422PToRGB24(void *RGB24, void *YUV422P, int width, int height)
+void cap_set()
 {
-  unsigned char *src_y = (unsigned char *)YUV422P;
-  unsigned char *src_u = (unsigned char *)YUV422P + width * height;
-  unsigned char *src_v = (unsigned char *)YUV422P + width * height * 3 / 2;
+  gettimeofday(&old, NULL);
+}
 
-  unsigned char *dst_RGB = (unsigned char *)RGB24;
+void cap_get(const char *tips)
+{
+  gettimeofday(&now, NULL);
+  if (now.tv_usec > old.tv_usec)
+    printf("%20s - %ld us\r\n", tips, (now.tv_usec - old.tv_usec));
+}
 
-  int temp[3];
+void draw_rectangle(uint32_t *buffer, int width, int height, int x, int y, int w, int h, int argb, int thickness)
+{
+  int rect_w = w, rect_h = h;
 
-  if (RGB24 == NULL || YUV422P == NULL || width <= 0 || height <= 0)
+  uint32_t *addr1 = NULL, *addr2 = NULL;
+
+  if (x < 0)
+    x = 0;
+  if ((x + rect_w + thickness) >= width)
   {
-    printf(" YUV422PToRGB24 incorrect input parameter!\n");
-    return -1;
+    rect_w = (width - thickness - x);
   }
 
-  for (int y = 0; y < height; y++)
+  if (y < 0)
+    y = 0;
+  rect_h += thickness;
+  if ((y + rect_h + thickness) >= height)
   {
-    for (int x = 0; x < width; x++)
+    rect_h = (height - thickness - y);
+  }
+
+  for (int i = 0; i < thickness; i++)
+  {
+    addr1 = (unsigned int *)((unsigned int *)buffer + ((y + i) * width + x));
+    addr2 = (unsigned int *)((unsigned int *)buffer + ((y + i + rect_h - thickness) * width + x));
+
+    for (int j = 0; j < rect_w; j++)
     {
-      int Y = y * width + x;
-      int U = Y >> 1;
-      int V = U;
-
-      temp[0] = src_y[Y] + ((7289 * src_u[U]) >> 12) - 228;                             //b
-      temp[1] = src_y[Y] - ((1415 * src_u[U]) >> 12) - ((2936 * src_v[V]) >> 12) + 136; //g
-      temp[2] = src_y[Y] + ((5765 * src_v[V]) >> 12) - 180;                             //r
-
-      dst_RGB[3 * Y] = (temp[0] < 0 ? 0 : temp[0] > 255 ? 255
-                                                        : temp[0]);
-      dst_RGB[3 * Y + 1] = (temp[1] < 0 ? 0 : temp[1] > 255 ? 255
-                                                            : temp[1]);
-      dst_RGB[3 * Y + 2] = (temp[2] < 0 ? 0 : temp[2] > 255 ? 255
-                                                            : temp[2]);
+      *addr1++ = argb;
+      *addr2++ = argb;
     }
   }
 
-  return 0;
+  for (int i = 0; i < rect_h; i++)
+  {
+    addr2 = (unsigned int *)((unsigned int *)buffer + ((y + i) * width + x + rect_w));
+    addr1 = (unsigned int *)((unsigned int *)buffer + ((y + i) * width + x));
+
+    for (int j = 0; j < thickness; j++)
+    {
+      *addr1++ = argb;
+      *addr2++ = argb;
+    }
+  }
 }
 
 struct {
   int w0, h0;
   struct libmaix_cam *cam0;
-  #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   struct libmaix_cam *cam1;
-  #endif
-  uint8_t *rgb888;
+  uint8_t *yuv420;
 
-  struct libmaix_disp *disp;
+  // struct libmaix_disp *disp;
+
+  int w_vo, h_vo;
+  struct libmaix_vo *vo;
+  uint32_t *argb_vo;
 
   int is_run;
 } test = { 0 };
@@ -108,38 +112,28 @@ static void test_handlesig(int signo)
   // exit(0);
 }
 
-inline static unsigned char make8color(unsigned char r, unsigned char g, unsigned char b)
-{
-	return (
-	(((r >> 5) & 7) << 5) |
-	(((g >> 5) & 7) << 2) |
-	 ((b >> 6) & 3)	   );
-}
-
-inline static unsigned short make16color(unsigned char r, unsigned char g, unsigned char b)
-{
-	return (
-	(((r >> 3) & 31) << 11) |
-	(((g >> 2) & 63) << 5)  |
-	 ((b >> 3) & 31)		);
-}
-
 void test_init() {
 
   libmaix_camera_module_init();
 
-  test.w0 = 416, test.h0 = 416;
+  test.w0 = 320, test.h0 = 240;
 
-  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 0);
-  if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 0, 0);
+  if (NULL == test.cam0) return ;
 
-  #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 0, 0);
-  if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
-  #endif
+  if (NULL == test.cam1) return ;
 
-  test.disp = libmaix_disp_create(0);
-  if(NULL == test.disp) return ;
+  test.yuv420 = (uint8_t *)malloc(test.w0 * test.h0 * 3 / 2);
+  if (NULL == test.yuv420) return ;
+
+  test.w_vo = 240, test.h_vo = 180;
+
+  test.vo = libmaix_vo_create(test.w0, test.h0, 0, 0, test.w_vo, test.h_vo);
+  if (NULL == test.vo) return ;
+
+  test.argb_vo = malloc(test.w_vo * test.h_vo * 4);
+  if (NULL == test.argb_vo) return ;
 
   test.is_run = 1;
 
@@ -150,12 +144,15 @@ void test_exit() {
 
   if (NULL != test.cam0) libmaix_cam_destroy(&test.cam0);
 
-  #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   if (NULL != test.cam1) libmaix_cam_destroy(&test.cam1);
-  #endif
 
-  if (NULL != test.rgb888) free(test.rgb888), test.rgb888 = NULL;
-  if (NULL != test.disp) libmaix_disp_destroy(&test.disp), test.disp = NULL;
+  if (NULL != test.yuv420) free(test.yuv420), test.yuv420 = NULL;
+
+  if (NULL != test.vo)
+    libmaix_vo_destroy(&test.vo), test.vo = NULL;
+
+  if (NULL != test.argb_vo)
+    free(test.argb_vo), test.argb_vo = NULL;
 
   libmaix_camera_module_deinit();
 
@@ -165,39 +162,91 @@ void test_exit() {
 void test_work() {
 
   test.cam0->start_capture(test.cam0);
-
-  #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   test.cam1->start_capture(test.cam1);
-  #endif
+
+  void * p_vir_addr = (void *)g2d_allocMem(test.w0 * test.h0 * 4);
+  void * p_phy_addr = (g2d_getPhyAddrByVirAddr(p_vir_addr));
+
+  void * n_vir_addr = (void *)g2d_allocMem(test.w0 * test.h0);
+  void * v_vir_addr = (void *)g2d_allocMem(test.w0 * test.h0 / 2);
+  void * n_phy_addr = (g2d_getPhyAddrByVirAddr(n_vir_addr));
+  void * v_phy_addr = (g2d_getPhyAddrByVirAddr(v_vir_addr));
+
+  int ret = 0, _w_h_ = test.w0 * test.h0; //ALIGN(w, 16) * ALIGN(h, 16);
+
+  libmaix_cv_apriltag_load();
+
   while (test.is_run)
   {
     // goal code
-    libmaix_image_t *tmp = NULL;
-    if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
+    // libmaix_image_t *tmp = NULL;
+    if (LIBMAIX_ERR_NONE == test.cam1->capture(test.cam1, test.yuv420))
     {
-        printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
-        if (tmp->width == test.disp->width && test.disp->height == tmp->height) {
-            test.disp->draw_image(test.disp, tmp);
-        } else {
-            libmaix_image_t *rs = libmaix_image_create(test.disp->width, test.disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-            if (rs) {
-                libmaix_cv_image_resize(tmp, test.disp->width, test.disp->height, &rs);
-                test.disp->draw_image(test.disp, rs);
-                libmaix_image_destroy(&rs);
-            }
-        }
-        CALC_FPS("maix_cam 0");
+      CALC_FPS("test_idle");
+    }
 
-        #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-        libmaix_image_t *t = NULL;
-        if (LIBMAIX_ERR_NONE == test.cam1->capture_image(test.cam1, &t))
-        {
-            printf("w %d h %d p %d \r\n", t->width, t->height, t->mode);
-            CALC_FPS("maix_cam 1");
+    if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.yuv420))
+    {
+      CALC_FPS("test_vivo");
+      {
+        void *frame = test.vo->get_frame(test.vo, 0);
+        if (frame != NULL) {
+          uint32_t *vir = NULL, *phy = NULL;
+          test.vo->frame_addr(test.vo, frame, &vir, &phy);
+
+          // memcpy((void *)test.yuv420, test.yuv420, _w_h_), memcpy((void *)v_vir_addr, test.yuv420 + _w_h_, _w_h_ / 2);
+
+          libmaix_cv_apriltag_test(test.yuv420, test.w0, test.h0);
+
+          // _g2d_nv21_rotate(n_phy_addr, v_phy_addr, (phy[0]), (phy[1]), test.w0, test.h0, 1);
+
+          // g2d_nv21_rotate(test.yuv420, test.w0, test.h0, 1);
+          memcpy((void *)vir[0], test.yuv420, test.w0 * test.h0 * 3 / 2);
+
+          test.vo->set_frame(test.vo, frame, 0);
         }
-        #endif
+      }
+      // {
+      //   void *frame = test.vo->get_frame(test.vo, 9);
+      //   if (frame) {
+      //     uint32_t *vir = NULL, *phy = NULL;
+      //     test.vo->frame_addr(test.vo, frame, &vir, &phy);
+
+      //     // draw_rectangle(p_vir_addr, test.h_vo, test.w_vo, 10, 20, 30, 40, 0xef00ff00, 5);
+
+      //     // draw_rectangle(p_vir_addr, test.h_vo, test.w_vo, 20, 10, 40, 30, 0xef0000ff, 5);
+
+      //     // static struct timeval tmp;
+      //     // gettimeofday(&tmp, NULL);
+
+      //     // static char t[128] = {};
+      //     // sprintf(t, "%ld.%ld\r\n", tmp.tv_sec, tmp.tv_usec);
+      //     // // sprintf(t, "%ld\r\n", i++);
+      //     // draw_string(p_vir_addr, test.h_vo, test.w_vo, (uint8_t *)t, 20, 20, 32, 0xefff0000, 0x00ffffff);
+
+      //     memset(p_vir_addr, 0, test.h_vo * test.w_vo * 4);
+
+      //     libmaix_cv_image_test(p_vir_addr, n_vir_addr, test.h_vo, test.w_vo);
+
+      //     // cap_set();
+      //     _g2d_argb_rotate((void *)p_phy_addr, (void *)phy[0], test.h_vo, test.w_vo, 3);
+      //     // cap_get("g2d");
+
+      //     // memcpy(vir[0], test.argb_vo, test.h_vo * test.w_vo);
+      //     // printf("p_phy_addr %p\r\n", p_phy_addr);
+
+      //     test.vo->set_frame(test.vo, frame, 9);
+
+      //   }
+      // }
     }
   }
+
+  libmaix_cv_apriltag_free();
+
+  g2d_freeMem(p_vir_addr);
+  g2d_freeMem(n_vir_addr);
+  g2d_freeMem(v_vir_addr);
 }
 
 int main(int argc, char **argv)

@@ -89,7 +89,7 @@ python3 project.py distclean
 
 Then config toolchain info according to your CPU architecture
 ```
-python3 project.py --toolchain /opt//opt/toolchain-sunxi-musl/toolchain/bin --toolchain-prefix arm-openwrt-linux-muslgnueabi- config
+python3 project.py --toolchain /opt/toolchain-sunxi-musl/toolchain/bin --toolchain-prefix arm-openwrt-linux-muslgnueabi- config
 ```
 > or only set prefix `python3 project.py --toolchain-prefix aarch64-linux-gnu- config`
 

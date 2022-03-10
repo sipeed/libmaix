@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [2.7, 3.6, 3.7, 3.8, 3.9]
+        python-version: [2.7, 3.8, 3.9]
         cmake-version: [3.12.4]
 
     steps:
@@ -40,6 +40,13 @@ jobs:
         python project.py clean
         python project.py distclean
         cd ../..
+    - name: Test display build
+      run: |
+        cd examples/display
+        python project.py build
+        python project.py clean
+        python project.py distclean
+        cd ../..
     - name: Test nn_resnet build
       run: |
         cd examples/nn_resnet
@@ -47,3 +54,25 @@ jobs:
         python project.py clean
         python project.py distclean
         cd ../..
+    - name: Test nn_retinaface build
+      run: |
+        cd examples/nn_retinaface
+        python project.py build
+        python project.py clean
+        python project.py distclean
+        cd ../..
+    - name: Test nn_yolo2 build
+      run: |
+        cd examples/nn_yolo2
+        python project.py build
+        python project.py clean
+        python project.py distclean
+        cd ../..
+    - name: Test self_learn_classifier build
+      run: |
+        cd examples/self_learn_classifier
+        python project.py build
+        python project.py clean
+        python project.py distclean
+        cd ../..
+

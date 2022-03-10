@@ -10,7 +10,8 @@ A library for embeded AI model inference with hardware acceleration，let's buil
 Now support platform:
 
 * V831
-
+* R329
+* linux desktop
 
 ## Build
 
@@ -24,7 +25,7 @@ apt install build-essential cmake python3 sshpass git
 ```
 
 * Check `cmake` version, **should >= `v3.9`**
-Check `CMake` version by 
+Check `CMake` version by
 
 ```
 cmake --version
@@ -34,7 +35,13 @@ The `cmake` version should be at least `v3.9`, if not, please install latest `cm
 
 * Setup toolchain
 
-Download toolchain first: [toolchain-sunxi-musl-pack-2021-01-09.tar.xz](https://dl.sipeed.com/shareURL/MaixII/SDK/Toolchain) (or download from [github](https://github.com/sipeed/libmaix/releases/download/v0.1.0/toolchain-sunxi-musl-pack-2021-01-09.tar.xz))
+Download toolchain first:
+
+| Arch | toolchain | prefix |
+| ---- | --------- | ------ |
+| v83x | [toolchain-sunxi-musl-pack-2021-01-09.tar.xz](https://dl.sipeed.com/shareURL/MaixII/SDK/Toolchain) or </br> [github](https://github.com/sipeed/libmaix/releases/download/v0.1.0/toolchain-sunxi-musl-pack-2021-01-09.tar.xz) | arm-openwrt-linux-muslgnueabi- |
+| r329 | [linaro aarch64-linux-gnu](https://releases.linaro.org/components/toolchain/binaries/7.5-2019.12/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz) | aarch64-linux-gnu- |
+
 
 Unzip to `/opt/` directory
 
@@ -73,6 +80,21 @@ git submodule update --init --recursive
 ```
 cd libmaix
 cd examples/hello-world
+```
+
+Every time change toolchain, you MUST call distclean to clean all temporary files:
+```
+python3 project.py distclean
+```
+
+Then config toolchain info according to your CPU architecture
+```
+python3 project.py --toolchain /opt//opt/toolchain-sunxi-musl/toolchain/bin --toolchain-prefix arm-openwrt-linux-muslgnueabi- config
+```
+> or only set prefix `python3 project.py --toolchain-prefix aarch64-linux-gnu- config`
+
+Finally config component configurations
+```
 python3 project.py menuconfig
 ```
 

@@ -22,7 +22,22 @@ if(CONFIG_LIBMAIX_ENABLED)
     ###############################################
 
     ############ Add dynamic libs ##################
-    if(CONFIG_ARCH_V831)
+    if(CONFIG_ARCH_Desktop)
+        include_directories(/usr/include/opencv4)
+        include_directories(/usr/local/include/opencv4)
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_utils")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_image")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_cam")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_disp")
+        list(APPEND ADD_DYNAMIC_LIB
+            "/usr/lib/x86_64-linux-gnu/libopencv_videoio.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_highgui.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_imgcodecs.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_imgproc.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_core.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_freetype.so"
+        )
+    elseif(CONFIG_ARCH_V831)
         list(APPEND ADD_DYNAMIC_LIB "lib/arch/v831/libmaix_nn.so"
             "lib/arch/v831/libz.so"
             "lib/arch/v831/libISP.so"
@@ -106,17 +121,23 @@ if(CONFIG_LIBMAIX_ENABLED)
           "lib/arch/r329/libmaix_image.so"
           "lib/arch/r329/libmaix_disp.so"
           "lib/arch/r329/libmaix_cam.so"
+          "lib/arch/r329/libmaix_nn.so"
+          "lib/arch/r329/libmaix_nn_decoder.so"
+          "lib/arch/r329/libmaix_nn_app.so"
+          "lib/arch/r329/libaipudrv.so.4"
+          "lib/arch/r329/libaipudrv.so"
+
       )
-      set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -fuse-ld=gold -Wl,--start-group libmaix/liblibmaix.a -Wl,--end-group" PARENT_SCOPE)
+      set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -fuse-ld=gold -Wl,--start-group libmaix/liblibmaix.a -lm -Wl,--end-group" PARENT_SCOPE)
 
     else()
-      
+
     endif()
     ###############################################
 
     #### Add compile option for this component ####
-    #### Just for this component, won't affect other 
-    #### modules, including component that depend 
+    #### Just for this component, won't affect other
+    #### modules, including component that depend
     #### on this component
     # list(APPEND ADD_DEFINITIONS_PRIVATE -DAAAAA=1)
 

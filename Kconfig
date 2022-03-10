@@ -5,7 +5,7 @@ menu "Toolchain configuration"
 	config TOOLCHAIN_PATH
 		string "toolchain path"
 		default "/opt/toolchain-sunxi-musl/toolchain/bin"
-	
+
 	config TOOLCHAIN_PREFIX
 		string "toolchain prefix"
 		default "arm-openwrt-linux-muslgnueabi-"
@@ -16,13 +16,14 @@ menu "Target chip configuration"
 		prompt "Chip architecture"
 		help
 			"select compile platform architecture"
-
 		config ARCH_V831
 			bool "compile for arch V831"
 		config ARCH_V833
 			bool "compile for arch V833"
 		config ARCH_R329
 			bool "compile for arch R329"
+		config ARCH_Desktop
+			bool "compile for arch Linux Desktop"
 	endchoice
 	menu "upload dist configuration, only need if you use python3 project.py upload command"
 		config TARGET_IP

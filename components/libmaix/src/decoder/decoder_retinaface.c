@@ -1,16 +1,17 @@
-/*
-    retinaface decoder
-    @author neucrack@sipeed
-    @date 2021-5-15
-          2021-8-18  update for libmaix
-    @license MIT
-*/
+
 
 #include <math.h>
 #include "libmaix_nn_decoder_retinaface.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#define debug_line // debug_line("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
+
+// int *steps = NULL; // config->steps;
+// int *min_sizes = NULL; // config->min_sizes;
+int min_size_len = MIN_SIZE_LEN;
+int anchor_size_len = ANCHOR_SIZE_NUM;
 
 static float overlap(float x1, float w1, float x2, float w2)
 {
@@ -104,49 +105,116 @@ static void do_nms_sort(uint32_t boxes_number, float nms_value, float score_thre
 
 int retinaface_get_channel_num(libmaix_nn_decoder_retinaface_config_t* config)
 {
-    int channel_num = 0;
-    for(unsigned int i=0; i< (sizeof(config->steps)/sizeof(int)); ++i)
+
+    int anchors_size[anchor_size_len * 2];
+    int anchor_num = 0;
+
+
+    if(anchor_size_len * 2 != min_size_len)
     {
-        channel_num += config->input_w / config->steps[i] * (config->input_h / config->steps[i]) * 2;
+        int step_of_min_sizes [] = {3,2,2,3};
+        for(int i = 0 ; i<anchor_size_len; i++)
+        {
+            anchors_size[i * 2] = ceil(config->input_h * 1.0 / config->steps[i]);
+            anchors_size[i * 2 + 1] = ceil(config->input_w * 1.0 / config->steps[i]);
+            anchor_num += anchors_size[i * 2] * anchors_size[i * 2 + 1] * step_of_min_sizes[i];
+        }
     }
-    return channel_num;
+
+    else{
+        int step_of_min_sizes [] = {2,2,2,2};
+        for(int i=0; i < anchor_size_len; ++i)
+        {
+            anchor_num += config->input_w / config->steps[i] * (config->input_h / config->steps[i]) * 2;
+        }
+    }
+    debug_line("decode channel num :%d \n",anchor_num);
+    return anchor_num;
 }
-  
+
 retinaface_box_t* retinaface_get_priorboxes(libmaix_nn_decoder_retinaface_config_t* config, int* boxes_num)
 {
-    int anchors_size[ANCHOR_SIZE_NUM * 2];
+    int anchors_size[anchor_size_len * 2];
     int anchor_num = 0;
     int count = 0;
-    for(int i=0; i < ANCHOR_SIZE_NUM; ++i)
+
+    if(anchor_size_len * 2 != min_size_len)
     {
-        anchors_size[i * 2] = ceil(config->input_h * 1.0 / config->steps[i]);
-        anchors_size[i * 2 + 1] = ceil(config->input_w * 1.0 / config->steps[i]);
-        anchor_num += anchors_size[i * 2] * anchors_size[i * 2 + 1] * 2;
+        int step_of_min_sizes [] = {3,2,2,3};
+        for(int i = 0 ; i<anchor_size_len; i++)
+        {
+            anchors_size[i * 2] = ceil(config->input_h * 1.0 / config->steps[i]);
+            anchors_size[i * 2 + 1] = ceil(config->input_w * 1.0 / config->steps[i]);
+            anchor_num += anchors_size[i * 2] * anchors_size[i * 2 + 1] * step_of_min_sizes[i];
+        }
     }
+
+    else{
+        for(int i=0; i < anchor_size_len; ++i)
+        {
+            anchors_size[i * 2] = ceil(config->input_h * 1.0 / config->steps[i]);
+            anchors_size[i * 2 + 1] = ceil(config->input_w * 1.0 / config->steps[i]);
+            anchor_num += anchors_size[i * 2] * anchors_size[i * 2 + 1] * 2;
+        }
+    }
+
     *boxes_num = anchor_num;
+    debug_line("[libmaix_decoder  ] anchor_nums : %d \n",anchor_num);
+
     retinaface_box_t* boxes = (retinaface_box_t*)malloc(sizeof(retinaface_box_t) * anchor_num);
     if(!boxes)
     {
-        printf("malloc fail\n");
+        debug_line("malloc fail\n");
         return NULL;
     }
-    for(int i=0; i < ANCHOR_SIZE_NUM; ++i)
+
+    if(anchor_size_len *2 != min_size_len)
     {
-        for(int j=0; j < anchors_size[i * 2]; ++j)
+        int start  = 0;
+        int step_of_min_sizes [] = {3,2,2,3};
+        for (int i=0 ; i < anchor_size_len;i++ )
         {
-            for(int k=0; k < anchors_size[i * 2 + 1]; ++k)
+            for (int j=0 ; j < anchors_size[i*2];j++)
             {
-                for(int m=0; m < 2; ++m)
+                for(int k=0 ; k< anchors_size[i*2+1];k++)
                 {
-                    int min_size = config->min_sizes[i * 2 + m];
-                    boxes[count].x = (k + 0.5) * config->steps[i] / config->input_w;
-                    boxes[count].y = (j + 0.5) * config->steps[i] / config->input_h;
-                    boxes[count].w = min_size * 1.0 / config->input_w; 
-                    boxes[count].h = min_size * 1.0 / config->input_h;
-                    ++count;
+                    int end = start + step_of_min_sizes[i];
+                    for(int l = start; l < end ; l++)
+                    {
+                        int min_size = config->min_sizes[l];
+                        boxes[count].x = (k + 0.5) * config->steps[i] / config->input_w;
+                        boxes[count].y = (j + 0.5) * config->steps[i] / config->input_h;
+                        boxes[count].w = min_size * 1.0 / config->input_w;
+                        boxes[count].h = min_size * 1.0 / config->input_h;
+                        count++;
+                    }
+
+                }
+            }
+            start += step_of_min_sizes[i];
+        }
+    }
+    else
+    {
+        for(int i=0; i < anchor_size_len; ++i)
+        {
+            for(int j=0; j < anchors_size[i * 2]; ++j)
+            {
+                for(int k=0; k < anchors_size[i * 2 + 1]; ++k)
+                {
+                    for(int m=0; m < 2; ++m)
+                    {
+                        int min_size = config->min_sizes[i * 2 + m];
+                        boxes[count].x = (k + 0.5) * config->steps[i] / config->input_w;
+                        boxes[count].y = (j + 0.5) * config->steps[i] / config->input_h;
+                        boxes[count].w = min_size * 1.0 / config->input_w;
+                        boxes[count].h = min_size * 1.0 / config->input_h;
+                        ++count;
+                    }
                 }
             }
         }
+
     }
     return boxes;
 }
@@ -232,14 +300,14 @@ libmaix_err_t retinaface_decode(float* net_out_loc, float* net_out_conf, float* 
     {
         /* 1 remove boxes which score < threshhold */
         // CALC_TIME_START();
-        for(int i=0; i < *boxes_num; ++i)
+        for(int i=0; i < *boxes_num; i++)
         {
             /* 1.1 softmax */
-            // printf("%f, %f ==> ", net_out_conf[i * 2 ], net_out_conf[i * 2 + 1]);
+            // debug_line("%f, %f ==> ", net_out_conf[i * 2 ], net_out_conf[i * 2 + 1]);
             softmax(net_out_conf + i * 2, 0, 2);
-            // printf("%f, %f\n", net_out_conf[i * 2 ], net_out_conf[i * 2 + 1]);
+            // debug_line("%f, %f\n", net_out_conf[i * 2 ], net_out_conf[i * 2 + 1]);
             /* 1.2. decode conf score */
-            faces[i].score = net_out_conf[i * 2 + 1];
+            faces[i].score = net_out_conf[i * 2 +1 ];
 
             /* 1.3 tag only copy valid faces info*/
             if(faces[i].score > config->score_thresh)
@@ -250,6 +318,7 @@ libmaix_err_t retinaface_decode(float* net_out_loc, float* net_out_conf, float* 
             }
         }
         *boxes_num = valid_boxes_count;
+        //  debug_line("[libmaix_nn decoder ] valid_boxes_count is %d\n",valid_boxes_count);
         // CALC_TIME_END("find valid boxes");
         // CALC_TIME_START();
 
@@ -264,7 +333,7 @@ libmaix_err_t retinaface_decode(float* net_out_loc, float* net_out_conf, float* 
             faces[i].box.h = prior_boxes[idx].h * exp(net_out_loc[idx * 4 + 3] * config->variance[1]);
             faces[i].box.x = faces[i].box.x - faces[i].box.w / 2.0;
             faces[i].box.y = faces[i].box.y - faces[i].box.h / 2.0;
-            // printf("%f %f %f %f, %f %f, %f %f\n", faces[i].box.x, faces[i].box.y, faces[i].box.w, faces[i].box.h, prior_boxes[i].w , prior_boxes[i].h, net_out_loc[i * 4 + 2], net_out_loc[i * 4 + 3]);
+            // debug_line("%f %f %f %f, %f %f, %f %f\n", faces[i].box.x, faces[i].box.y, faces[i].box.w, faces[i].box.h, prior_boxes[i].w , prior_boxes[i].h, net_out_loc[i * 4 + 2], net_out_loc[i * 4 + 3]);
 
             /* 3. decode landmarks*/
             faces[i].points[0] = prior_boxes[idx].x + net_out_landmark[idx * 10] * config->variance[0] * prior_boxes[idx].w;
@@ -282,7 +351,9 @@ libmaix_err_t retinaface_decode(float* net_out_loc, float* net_out_conf, float* 
     }
     /* 4. nms, remove boxes */
     // CALC_TIME_START();
+    // debug_line;
     do_nms_sort(*boxes_num, config->nms, config->score_thresh, faces);
+    // debug_line;
     // CALC_TIME_END("do nms");
 
     return LIBMAIX_ERR_NONE;
@@ -301,8 +372,10 @@ typedef struct
 
 libmaix_err_t libmaix_nn_decoder_retinaface_init(struct libmaix_nn_decoder* obj, void* config)
 {
+    debug_line("retinaface decoder init\n");
     obj_params_t* params = (obj_params_t*)obj->data;
-    params->priors = retinaface_get_priorboxes((libmaix_nn_decoder_retinaface_config_t*)config, &params->boxes_num);
+    params->config = (libmaix_nn_decoder_retinaface_config_t*)config;
+    params->priors = retinaface_get_priorboxes((libmaix_nn_decoder_retinaface_config_t*)config, &(params->boxes_num));
     if(!params->priors)
     {
         return LIBMAIX_ERR_NO_MEM;
@@ -310,12 +383,14 @@ libmaix_err_t libmaix_nn_decoder_retinaface_init(struct libmaix_nn_decoder* obj,
     params->faces = (retinaface_face_t*)malloc(sizeof(retinaface_face_t) * params->boxes_num);
     if(!params->faces)
     {
+        debug_line("[libmaix decoder ]  allocate faces buffer is faild \n");
         free(params->priors);
         params->priors = NULL;
         return LIBMAIX_ERR_NO_MEM;
     }
+
     ((libmaix_nn_decoder_retinaface_config_t*)config)->channel_num = retinaface_get_channel_num((libmaix_nn_decoder_retinaface_config_t*)config);
-    params->config = (libmaix_nn_decoder_retinaface_config_t*)config;
+
     return LIBMAIX_ERR_NONE;
 }
 
@@ -337,6 +412,7 @@ libmaix_err_t libmaix_nn_decoder_retinaface_decode(struct libmaix_nn_decoder* ob
         return LIBMAIX_ERR_PARAM;
     }
     libmaix_nn_decoder_retinaface_result_t* result_obj = (libmaix_nn_decoder_retinaface_result_t*)result;
+
     obj_params_t* params = (obj_params_t*)obj->data;
     if(!params->priors)
     {
@@ -344,9 +420,12 @@ libmaix_err_t libmaix_nn_decoder_retinaface_decode(struct libmaix_nn_decoder* ob
     }
     result_obj->faces = params->faces;
     int valid_boxes = params->boxes_num;
+
     libmaix_err_t err = retinaface_decode((float*)feature_map[0].data, (float*)feature_map[1].data, (float*)feature_map[2].data,
                         params->priors,
                         result_obj->faces, &valid_boxes, feature_map[0].layout == LIBMAIX_NN_LAYOUT_CHW, params->config);
+
+
     result_obj->num = valid_boxes;
     return err;
 }
@@ -367,7 +446,7 @@ libmaix_nn_decoder_t* libmaix_nn_decoder_retinaface_create()
     obj->init = libmaix_nn_decoder_retinaface_init;
     obj->deinit = libmaix_nn_decoder_retinaface_deinit;
     obj->decode = libmaix_nn_decoder_retinaface_decode;
-    obj->data = (void*)params;
+    obj->data = params;
     return obj;
 }
 
@@ -388,4 +467,3 @@ void libmaix_nn_decoder_retinaface_destroy(libmaix_nn_decoder_t** obj)
     }
     *obj = NULL;
 }
-

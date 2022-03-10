@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.4.1)
 
 project("export r329 dll")
 
-set(CMAKE_C_COMPILER "aarch64-linux-gnu-gcc")
-set(CMAKE_CXX_COMPILER "aarch64-linux-gnu-g++")
+set(CMAKE_C_COMPILER "/opt/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc")
+set(CMAKE_CXX_COMPILER "/opt/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++")
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
@@ -21,3 +21,6 @@ add_subdirectory(${lib_src_DIR}/libmaix_utils ${lib_build_DIR}/libmaix_utils)
 add_subdirectory(${lib_src_DIR}/libmaix_image ${lib_build_DIR}/libmaix_image)
 add_subdirectory(${lib_src_DIR}/libmaix_disp ${lib_build_DIR}/libmaix_disp)
 add_subdirectory(${lib_src_DIR}/libmaix_cam ${lib_build_DIR}/libmaix_cam)
+add_subdirectory(${lib_src_DIR}/libmaix_nn ${lib_build_DIR}/libmaix_nn)
+add_subdirectory(${lib_src_DIR}/libmaix_nn_decoder ${lib_build_DIR}/libmaix_nn_decoder)
+add_subdirectory(${lib_src_DIR}/libmaix_nn_app ${lib_build_DIR}/libmaix_nn_app)

@@ -19,7 +19,16 @@ extern "C"
 #include "libmaix_err.h"
 #include "libmaix_nn_decoder.h"
 
+// default V831
 #define ANCHOR_SIZE_NUM 3
+#define MIN_SIZE_LEN 6
+
+#ifdef CONFIG_ARCH_R329
+#undef ANCHOR_SIZE_NUM
+#undef MIN_SIZE_LEN
+#define ANCHOR_SIZE_NUM 4
+#define MIN_SIZE_LEN 10
+#endif
 
 typedef struct
 {
@@ -38,6 +47,26 @@ typedef struct
     /* internal use*/
     int idx;
 }retinaface_face_t;
+
+/*
+typedef struct
+{
+    float variance[2];
+    int *steps ;
+    int *min_sizes;
+
+    int steps_len ;
+    int min_sizes_len;
+
+    float nms;
+    float score_thresh;
+    int   input_w;
+    int   input_h;
+
+    // set by init func
+    int   channel_num;
+}libmaix_nn_decoder_retinaface_config_t;
+*/
 
 typedef struct
 {
@@ -69,7 +98,7 @@ extern int retinaface_get_channel_num(libmaix_nn_decoder_retinaface_config_t* co
 libmaix_err_t libmaix_nn_decoder_retinaface_init(struct libmaix_nn_decoder* obj, void* config);
 libmaix_err_t libmaix_nn_decoder_retinaface_deinit(struct libmaix_nn_decoder* obj);
 /**
- * 
+ *
  * @param[out] result: address of libmaix_nn_decoder_retinaface_result_t variable, faces just set to NULL, and after call, no need to free faces
  */
 libmaix_err_t libmaix_nn_decoder_retinaface_decode(struct libmaix_nn_decoder* obj, libmaix_nn_layer_t* feature_map, void* result);

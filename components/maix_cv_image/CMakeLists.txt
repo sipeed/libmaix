@@ -12,7 +12,22 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/include)
 
     ############ Add dynamic libs ##################
-    if(CONFIG_ARCH_V831)
+    if(CONFIG_ARCH_Desktop)
+        include_directories(/usr/include/opencv4)
+        include_directories(/usr/local/include/opencv4)
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_utils")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_image")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_cam")
+        append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_disp")
+        list(APPEND ADD_DYNAMIC_LIB
+            "/usr/lib/x86_64-linux-gnu/libopencv_videoio.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_highgui.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_imgcodecs.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_imgproc.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_core.so"
+            "/usr/lib/x86_64-linux-gnu/libopencv_freetype.so"
+        )
+    elseif(CONFIG_ARCH_V831)
         include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/v83x/include/opencv4)
         list(APPEND ADD_DYNAMIC_LIB
             "../libmaix/lib/arch/v831/libmaix_nn.so"

@@ -50,7 +50,14 @@ struct {
   #endif
   uint8_t *rgb888;
 
-  struct libmaix_disp *disp;
+  uint8_t *yuv_buf;
+
+  int w_vo, h_vo;
+  struct libmaix_vo *vo;
+  void *argb_vo;
+  libmaix_image_t *argb_img;
+
+  // struct libmaix_disp *disp;
 
   int is_run;
 } test = { 0 };
@@ -68,18 +75,36 @@ void test_init() {
 
   libmaix_camera_module_init();
 
-  test.w0 = 240, test.h0 = 240;
+  // test.w0 = 480, test.h0 = 270; // 16:9
+  // test.w0 = 320, test.h0 = 240; // 4:3
+  test.w0 = 240, test.h0 = 240; // 1:1
 
   test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 0);
   if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+
+  test.yuv_buf = malloc(test.w0 * test.h0 * 3 / 2);
+  if (NULL == test.yuv_buf)
+    return;
 
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 0, 0);
   if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
   #endif
 
-  test.disp = libmaix_disp_create(0);
-  if(NULL == test.disp) return ;
+  // test.disp = libmaix_disp_create(0);
+  // if(NULL == test.disp) return ;
+
+  test.w_vo = 240, test.h_vo = 240;
+
+  test.vo = libmaix_vo_create(test.w0, test.h0, 0, 0, test.w_vo, test.h_vo);
+  if (NULL == test.vo) return ;
+
+  // test.argb_vo = g2d_allocMem(test.w_vo * test.h_vo * 4);
+  // if (NULL == test.argb_vo) return ;
+
+  // test.argb_img = libmaix_image_create(test.w_vo, test.h_vo, LIBMAIX_IMAGE_MODE_RGBA8888, LIBMAIX_IMAGE_LAYOUT_HWC, test.argb_vo, false);
+
+  test.argb_img = libmaix_image_create(test.w_vo, test.h_vo, LIBMAIX_IMAGE_MODE_RGBA8888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, false);
 
   test.is_run = 1;
 
@@ -90,12 +115,24 @@ void test_exit() {
 
   if (NULL != test.cam0) libmaix_cam_destroy(&test.cam0);
 
+  if (NULL != test.yuv_buf)
+    free(test.yuv_buf), test.yuv_buf = NULL;
+
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   if (NULL != test.cam1) libmaix_cam_destroy(&test.cam1);
   #endif
 
   if (NULL != test.rgb888) free(test.rgb888), test.rgb888 = NULL;
-  if (NULL != test.disp) libmaix_disp_destroy(&test.disp), test.disp = NULL;
+  // if (NULL != test.disp) libmaix_disp_destroy(&test.disp), test.disp = NULL;
+
+  if (NULL != test.vo)
+    libmaix_vo_destroy(&test.vo), test.vo = NULL;
+
+  // if (NULL != test.argb_vo)
+  //   g2d_freeMem(test.argb_vo), test.argb_vo = NULL;
+
+  if (test.argb_img)
+      libmaix_image_destroy(&test.argb_img);
 
   libmaix_camera_module_deinit();
 
@@ -185,6 +222,65 @@ static void apriltag_exit()
         tf = NULL;
     }
 
+}
+
+static void apriltag_yuv_loop(uint8_t *data, uint32_t width, uint32_t height)
+{
+    if (gray) {
+
+        libmaix_err_t err = LIBMAIX_ERR_NONE;
+
+        // Make an image_u8_t header for the Mat data
+        image_u8_t im = {
+            .width = width,
+            .height = height,
+            .stride = width,
+            .buf = data
+        };
+
+        zarray_t *detections = apriltag_detector_detect(td, &im);
+
+        void *frame = test.vo->get_frame(test.vo, 9);
+
+        if (frame) {
+          uint32_t *vir = NULL, *phy = NULL;
+          test.vo->frame_addr(test.vo, frame, &vir, &phy);
+
+          test.argb_img->data = vir[0], memset(test.argb_img->data, 0, test.argb_img->width * test.argb_img->height * 4);
+
+          // Draw detection outlines
+          for (int i = 0; i < zarray_size(detections); i++) {
+
+            apriltag_detection_t *det;
+            zarray_get(detections, i, &det);
+
+              libmaix_cv_image_draw_line(test.argb_img, (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
+              libmaix_cv_image_draw_line(test.argb_img, (int)det->p[0][0], (int)det->p[0][1], (int)det->p[3][0], (int)det->p[3][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
+              libmaix_cv_image_draw_line(test.argb_img, (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
+              libmaix_cv_image_draw_line(test.argb_img, (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
+
+              char det_id[8] = {0};
+              sprintf(det_id, "%d", det->id);
+              int w, h;
+              libmaix_cv_image_get_string_size(&w, &h, det_id, 1.5, 1);
+              libmaix_cv_image_draw_string(test.argb_img, (int)(det->c[0]), (int)(det->c[1]) - (h / 2), det_id, 1.5, MaixColorBGRA(0xff, 255, 0, 0), 1);
+
+              // printf("\r\n[(%s,%.02f):(%d,%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]\r\n",
+              //     det_id, det->decision_margin, (int)det->c[0], (int)det->c[1],
+              //     (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1],
+              //     (int)det->p[1][0], (int)det->p[1][1], (int)det->p[3][0], (int)det->p[3][1],
+              //     (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1],
+              //     (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1]
+              // );
+          }
+
+          test.vo->set_frame(test.vo, frame, 9);
+        }
+
+
+        apriltag_detections_destroy(detections);
+
+    }
 }
 
 static void apriltag_loop(libmaix_image_t* img)
@@ -328,6 +424,76 @@ static void qrcode_loop(libmaix_image_t* img)
 
 }
 
+static void qrcode_yuv_loop(uint8_t *raw, uint32_t width, uint32_t height)
+{
+    if (gray) {
+        libmaix_err_t err = LIBMAIX_ERR_NONE;
+
+        /* wrap image data */
+        zbar_image_t *image = zbar_image_create();
+        zbar_image_set_format(image, zbar_fourcc('Y','8','0','0'));
+        zbar_image_set_size(image, width, height);
+        zbar_image_set_data(image, raw, width * height, NULL);
+
+        // cap_set();
+
+        /* scan the image for barcodes */
+        int n = zbar_scan_image(scanner, image);
+
+        // cap_get("zbar_scan_image");
+
+        /* extract results */
+        const zbar_symbol_t *symbol = zbar_image_first_symbol(image);
+        for(; symbol; symbol = zbar_symbol_next(symbol)) {
+            /* do something useful with results */
+            zbar_symbol_type_t typ = zbar_symbol_get_type(symbol);
+            const char *data = zbar_symbol_get_data(symbol);
+            if (typ == ZBAR_QRCODE) {
+                int datalen = strlen(data);
+                // libmaix_cv_image_draw_string(img, 0, 0, zbar_get_symbol_name(typ), 1.5, MaixColor(0, 0, 255), 1);
+                // libmaix_cv_image_draw_string(img, 0, 20, data, 1.5, MaixColor(255, 0, 0), 1);
+                printf("decoded %s symbol \"%s\"\n", zbar_get_symbol_name(typ), data);
+
+                void *frame = test.vo->get_frame(test.vo, 9);
+                // printf("get_frame %p\r\n", frame);
+                if (frame) {
+                  uint32_t *vir = NULL, *phy = NULL;
+                  test.vo->frame_addr(test.vo, frame, &vir, &phy);
+
+                  test.argb_img->data = vir[0], memset(test.argb_img->data, 0, test.argb_img->width * test.argb_img->height * 4);
+
+                  libmaix_cv_image_draw_string(test.argb_img, 0, 0, zbar_get_symbol_name(typ), 1.5, MaixColorBGRA(0xff, 0, 0, 0xff), 1);
+                  libmaix_cv_image_draw_string(test.argb_img, 0, 20, data, 1.5, MaixColorBGRA(0xff, 0, 0, 0xff), 1);
+
+                  test.vo->set_frame(test.vo, frame, 9);
+                }
+
+                // break;
+            }
+        }
+
+        /* clean up */
+        zbar_image_destroy(image); // use zbar_image_free_data
+    }
+
+}
+
+// void test_voui() {
+//     void *frame = test.vo->get_frame(test.vo, 9);
+//     // printf("get_frame %p\r\n", frame);
+//     if (frame) {
+//       uint32_t *vir = NULL, *phy = NULL;
+//       test.vo->frame_addr(test.vo, frame, &vir, &phy);
+//       void * p_vir_addr = test.argb_vo;
+//       void * p_phy_addr = (g2d_getPhyAddrByVirAddr(p_vir_addr));
+//       if (p_vir_addr) {
+//         // printf("p_vir_addr %p\r\n", p_vir_addr);
+//         // _g2d_argb_rotate((void *)p_phy_addr, (void *)phy[0], test.h_vo, test.w_vo, 1);
+//         test.vo->set_frame(test.vo, frame, 9);
+//       }
+//     }
+// }
+
 void test_work() {
 
   test.cam0->start_capture(test.cam0);
@@ -338,37 +504,29 @@ void test_work() {
 
   while (test.is_run)
   {
-    // goal code
-    libmaix_image_t *tmp = NULL;
-    if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
-    {
-        // printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
-        qrcode_loop(tmp);
-        // apriltag_loop(tmp);
+    if (LIBMAIX_ERR_NONE == test.cam0->capture(test.cam0, test.yuv_buf)) {
+      // puts("maix_test 1");
+      void *frame = test.vo->get_frame(test.vo, 0);
+      if (frame != NULL) {
+        unsigned int *addr = NULL;
+        test.vo->frame_addr(test.vo, frame, &addr, NULL);
+        // g2d_nv21_rotate(test.yuv_buf0, test.w0, test.h0, 3);
+        memcpy((void *)addr[0], test.yuv_buf, test.w0 * test.h0 * 3 / 2);
+        test.vo->set_frame(test.vo, frame, 0);
+      }
 
-        if (tmp->width == test.disp->width && test.disp->height == tmp->height) {
-            test.disp->draw_image(test.disp, tmp);
-        } else {
-            libmaix_image_t *rs = libmaix_image_create(test.disp->width, test.disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-            if (rs) {
-                libmaix_cv_image_resize(tmp, test.disp->width, test.disp->height, &rs);
-                test.disp->draw_image(test.disp, rs);
-                libmaix_image_destroy(&rs);
-            }
-        }
-        CALC_FPS("maix_cam 0");
+      qrcode_yuv_loop(test.yuv_buf, test.w0, test.h0);
 
-        #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-        libmaix_image_t *t = NULL;
-        if (LIBMAIX_ERR_NONE == test.cam1->capture_image(test.cam1, &t))
-        {
-            // printf("w %d h %d p %d \r\n", t->width, t->height, t->mode);
-            CALC_FPS("maix_cam 1");
-        }
-        #endif
+      // apriltag_yuv_loop(test.yuv_buf, test.w0, test.h0);
+
     }
-  }
 
+    if (LIBMAIX_ERR_NONE == test.cam1->capture(test.cam1, test.yuv_buf)) {
+
+    }
+
+    CALC_FPS("test_vivo");
+  }
 }
 
 int main(int argc, char **argv)
@@ -379,13 +537,18 @@ int main(int argc, char **argv)
   libmaix_image_module_init();
 
   test_init();
-  qrcode_init();
-  // apriltag_init();
-  test_work();
-  // apriltag_exit();
-  qrcode_exit();
-  test_exit();
 
+  qrcode_init();
+
+  // apriltag_init();
+
+  test_work();
+
+  // apriltag_exit();
+
+  qrcode_exit();
+
+  test_exit();
 
   libmaix_image_module_deinit();
 

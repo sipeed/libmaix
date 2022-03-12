@@ -43,6 +43,8 @@ typedef union
 
 #define MaixColor(r, g, b) (libmaix_image_color_t){ .rgb888 = { r, g, b } }
 
+#define MaixColorBGRA(a, r, g, b) (libmaix_image_color_t){ .rgb888 = { a, r, g, b } }
+
 typedef enum
 {
     LIBMAIX_IMAGE_LAYOUT_HWC    = 0,

@@ -161,14 +161,28 @@ extern "C"
     {
       return LIBMAIX_ERR_PARAM;
     }
-    if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    // if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    int type = CV_8UC3;
+    switch (src->mode)
     {
-      cv::Mat input(src->height, src->width, CV_8UC3, const_cast<char *>((char *)src->data));
-      cv::ellipse(input, cv::Point(x, y), cv::Size(w, h), angle, startAngle, endAngle, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+      case LIBMAIX_IMAGE_MODE_RGB888:
+        break;
+      case LIBMAIX_IMAGE_MODE_RGBA8888:
+        type = CV_8UC4;
+        break;
+      case LIBMAIX_IMAGE_MODE_GRAY:
+        type = CV_8UC1;
+        break;
+      default:
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+    {
+      cv::Mat input(src->height, src->width, type, const_cast<char *>((char *)src->data));
+      cv::ellipse(input, cv::Point(x, y), cv::Size(w, h), angle, startAngle, endAngle, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), thickness);
       // memcpy(src->data, input.data, src->width * src->height * 3);
       return LIBMAIX_ERR_NONE;
     }
-    return LIBMAIX_ERR_NOT_IMPLEMENT;
+    // return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 
   libmaix_err_t libmaix_cv_image_draw_circle(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness)
@@ -177,14 +191,28 @@ extern "C"
     {
       return LIBMAIX_ERR_PARAM;
     }
-    if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    // if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    int type = CV_8UC3;
+    switch (src->mode)
     {
-      cv::Mat input(src->height, src->width, CV_8UC3, src->data);
-      cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+      case LIBMAIX_IMAGE_MODE_RGB888:
+        break;
+      case LIBMAIX_IMAGE_MODE_RGBA8888:
+        type = CV_8UC4;
+        break;
+      case LIBMAIX_IMAGE_MODE_GRAY:
+        type = CV_8UC1;
+        break;
+      default:
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+    {
+      cv::Mat input(src->height, src->width, type, src->data);
+      cv::circle(input, cv::Point(x, y), r, cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), thickness);
       // memcpy(src->data, input.data, src->width * src->height * 3);
       return LIBMAIX_ERR_NONE;
     }
-    return LIBMAIX_ERR_NOT_IMPLEMENT;
+    // return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 
   libmaix_err_t libmaix_cv_image_draw_rectangle(libmaix_image_t *src, int x1, int y1, int x2, int y2, libmaix_image_color_t color, int thickness)
@@ -193,14 +221,28 @@ extern "C"
     {
       return LIBMAIX_ERR_PARAM;
     }
-    if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    // if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    int type = CV_8UC3;
+    switch (src->mode)
     {
-      cv::Mat input(src->height, src->width, CV_8UC3, src->data);
-      cv::rectangle(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+      case LIBMAIX_IMAGE_MODE_RGB888:
+        break;
+      case LIBMAIX_IMAGE_MODE_RGBA8888:
+        type = CV_8UC4;
+        break;
+      case LIBMAIX_IMAGE_MODE_GRAY:
+        type = CV_8UC1;
+        break;
+      default:
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+    {
+      cv::Mat input(src->height, src->width, type, src->data);
+      cv::rectangle(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), thickness);
       // memcpy(src->data, input.data, src->width * src->height * 3);
       return LIBMAIX_ERR_NONE;
     }
-    return LIBMAIX_ERR_NOT_IMPLEMENT;
+    // return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 
   libmaix_err_t libmaix_cv_image_draw_line(libmaix_image_t *src, int x1, int y1, int x2, int y2, libmaix_image_color_t color, int thickness)
@@ -209,14 +251,28 @@ extern "C"
     {
       return LIBMAIX_ERR_PARAM;
     }
-    if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    int type = CV_8UC3;
+    switch (src->mode)
     {
-      cv::Mat input(src->height, src->width, CV_8UC3, src->data);
-      cv::line(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
+      case LIBMAIX_IMAGE_MODE_RGB888:
+        break;
+      case LIBMAIX_IMAGE_MODE_RGBA8888:
+        type = CV_8UC4;
+        break;
+      case LIBMAIX_IMAGE_MODE_GRAY:
+        type = CV_8UC1;
+        break;
+      default:
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+    // if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    {
+      cv::Mat input(src->height, src->width, type, src->data);
+      cv::line(input, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), thickness);
       // memcpy(src->data, input.data, src->width * src->height * 3);
       return LIBMAIX_ERR_NONE;
     }
-    return LIBMAIX_ERR_NOT_IMPLEMENT;
+    // return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 
   libmaix_err_t libmaix_cv_image_draw_image(libmaix_image_t *src, int x, int y, libmaix_image_t *dst, double opacity)
@@ -325,30 +381,40 @@ extern "C"
     {
       return LIBMAIX_ERR_PARAM;
     }
-    if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    int type = CV_8UC3;
+    switch (src->mode)
     {
-      cv::Mat input(src->height, src->width, CV_8UC3, src->data);
-      cv::String text(str);
-      if (!libmaix_font::is_load)
-      {
-        int baseline = 0;
-        cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, scale, thickness, &baseline);
-        // printf("old textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
-        int tmp = baseline - (scale * thickness);
-        cv::putText(input, text, cv::Point(x, y + textSize.height + tmp), cv::FONT_HERSHEY_PLAIN, scale,
-            cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), thickness);
-      }
-      else
-      {
-        int fontHeight = 14, baseline = 0;
-        cv::Size textSize = libmaix_font::ft->getTextSize(text, fontHeight, thickness, &baseline);
-        // printf("new textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
-        libmaix_font::ft->putText(input, text, cv::Point(x, y), fontHeight * scale,
-            cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b), -1, 8, false);
-      }
-      return LIBMAIX_ERR_NOT_READY;
+      case LIBMAIX_IMAGE_MODE_RGB888:
+        break;
+      case LIBMAIX_IMAGE_MODE_RGBA8888:
+        type = CV_8UC4;
+        break;
+      case LIBMAIX_IMAGE_MODE_GRAY:
+        type = CV_8UC1;
+        break;
+      default:
+        return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
-    return LIBMAIX_ERR_NOT_IMPLEMENT;
+    cv::Mat input(src->height, src->width, type, src->data);
+    cv::String text(str);
+    if (!libmaix_font::is_load)
+    {
+      int baseline = 0;
+      cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, scale, thickness, &baseline);
+      // printf("old textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
+      int tmp = baseline - (scale * thickness);
+      cv::putText(input, text, cv::Point(x, y + textSize.height + tmp), cv::FONT_HERSHEY_PLAIN, scale,
+          cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), thickness);
+    }
+    else
+    {
+      int fontHeight = 14, baseline = 0;
+      cv::Size textSize = libmaix_font::ft->getTextSize(text, fontHeight, thickness, &baseline);
+      // printf("new textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
+      libmaix_font::ft->putText(input, text, cv::Point(x, y), fontHeight * scale,
+          cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), -1, 8, false);
+    }
+    return LIBMAIX_ERR_NONE;
   }
 
   static inline int libmaix_cv_image_load(struct libmaix_image *src, struct libmaix_image **dst)

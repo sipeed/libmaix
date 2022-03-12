@@ -91,7 +91,7 @@ Then config toolchain info according to your CPU architecture
 ```
 python3 project.py --toolchain /opt//opt/toolchain-sunxi-musl/toolchain/bin --toolchain-prefix arm-openwrt-linux-muslgnueabi- config
 ```
-> or only set prefix `python3 project.py --toolchain-prefix aarch64-linux-gnu- config`
+> or only set prefix `python3 project.py  --toolchain /usr/bin/ --toolchain-prefix x86_64-linux-gnu- config`
 
 Finally config component configurations
 ```
@@ -118,7 +118,9 @@ Then you can see the bin file `hello-world` in `dist` directory
 
 * Upload bin files to target
 
-You can manually copy `dist` folder to your target file system, e.g. use scp.
+You can manually copy `dist` folder to your target file system, e.g. use scp or adb.
+
+`adb push ./dist/ /root/ && adb shell "cd /root/dist/ && ./start_app.sh"`
 
 You can also config target info in the menuconfig, and upload by:
 ```

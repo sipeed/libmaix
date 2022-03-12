@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 
       libmaix_cv_image_draw_string(rgb888, 0, 0, "[A|B|C|D][]!H/~`_-=", 1.5, MaixColor(0, 255, 0), 1);
 
-      libmaix_cv_image_load_freetype("/home/res/sans.ttf");
+      // libmaix_cv_image_load_freetype("/home/res/sans.ttf");
 
       libmaix_cv_image_get_string_size(&str_w, &str_h, "[A|B|佬鼠][]!H/~`_-=", 1.5, 1);
 
@@ -81,5 +81,8 @@ int main(int argc, char **argv)
     libmaix_disp_destroy(&disp);
   }
   libmaix_image_module_deinit();
+
+  system("sleep 1");
+
   return 0;
 }

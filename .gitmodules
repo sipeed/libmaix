@@ -1,3 +1,6 @@
 [submodule "tools/kconfig/Kconfiglib"]
 	path = tools/kconfig/Kconfiglib
 	url = https://github.com/ulfalizer/Kconfiglib.git
+[submodule "components/third_party/apriltag"]
+	path = components/third_party/apriltag
+	url = https://github.com/AprilRobotics/apriltag

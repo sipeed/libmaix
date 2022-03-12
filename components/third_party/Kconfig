@@ -1,0 +1,13 @@
+config COMPONENT_3RD_PARTY_ENABLE
+	bool "Enable 3rd party component, include lvgl,cjson,libjpeg"
+	default y
+
+#menu "3rd party configuration"
+#	depends on COMPONENT_3RD_PARTY_ENABLE
+#	config LVGL_ENABLE
+#		bool "enable LittleVGL"
+#		default y
+#	config CJSON_ENABLE
+#		bool "enable cJSON"
+#		default y
+#endmenu

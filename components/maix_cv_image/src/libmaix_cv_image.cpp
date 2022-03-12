@@ -267,7 +267,7 @@ extern "C"
     }
     return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
-  libmaix_err_t libmaix_cv_image_draw_image_save(libmaix_image_t *src, const char *path)
+  libmaix_err_t libmaix_cv_image_save_file(libmaix_image_t *src, const char *path)
   {
     if (src->data == NULL)
     {

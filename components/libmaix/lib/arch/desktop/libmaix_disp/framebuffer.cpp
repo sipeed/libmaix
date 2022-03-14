@@ -42,7 +42,7 @@ static libmaix_err_t disp_draw_image(struct libmaix_disp *disp, struct libmaix_i
   if (img->mode == LIBMAIX_IMAGE_MODE_RGB888){
       cv::Mat frame(img->height, img->width, CV_8UC3, img->data);
       // cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
-      cv::imshow("[framebuffer]", frame);
+      cv::imshow("[maixpy3]", frame);
   }
 
   // if (img->mode != priv->disp_img->mode){
@@ -150,12 +150,11 @@ static int priv_devInit(struct libmaix_disp *disp)
     // disp->height = priv->vinfo.yres;
     // disp->bpp = priv->vinfo.bits_per_pixel / 8;
 
-    disp->width = 240;
-    disp->height = 240;
+    // disp->width = 240, disp->height = 240;
     disp->bpp = 3; // RGB888
 
     // printf("The framebuffer device was mapped to memory successfully.\n");
-    cv::namedWindow( "[framebuffer]", cv::WINDOW_AUTOSIZE );
+    cv::namedWindow( "[maixpy3]", cv::WINDOW_AUTOSIZE );
     cv::startWindowThread(); // if( (char)cv::waitKey(33) >= 0 ) LIBMAIX_ERR_NONE;
 
     return LIBMAIX_ERR_NONE;

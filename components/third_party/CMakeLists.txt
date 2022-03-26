@@ -1,36 +1,14 @@
 if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
 
-    list(APPEND ADD_INCLUDE "./"
-                            # "lvgl"
-                            "cJSON/include"
-                            "sqlite3"
-                            "libjpeg/include"
-                            "libjpeg"
-                            "apriltag/common"
-                            "apriltag"
-                            "zbar/include")
-                            # "zbar/zbar"
-                            # "zbar/zbar/decoder")
+    list(APPEND ADD_INCLUDE "./")
 
-    # aux_source_directory("lvgl/lvgl/src/lv_core"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lvgl/src/lv_draw"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lvgl/src/lv_font"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lvgl/src/lv_hal"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lvgl/src/lv_misc"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lvgl/src/lv_objx"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lvgl/src/lv_widgets"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lvgl/src/lv_themes"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_examples"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_examples/src/assets/"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_examples/src/lv_demo_widgets/"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_examples/src/lv_demo_benchmark/"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_examples/src/lv_ex_get_started/"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_examples/src/lv_ex_style/"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_examples/src/lv_ex_widgets/lv_ex_img/"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_examples/src/lv_ex_widgets/lv_ex_canvas/"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_lib_gif"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_lib_png"    LVGL_SRCS)
-    # aux_source_directory("lvgl/lv_lib_qrcode"   LVGL_SRCS)
+    list(APPEND ADD_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    add_definitions(-DIMLIB_CONFIG_H_FILE="costom_imlib_config.h")
+
+    aux_source_directory("mfcc-with-vad/main"   MFCC_SRCS)
+    aux_source_directory("mfcc-with-vad/src"   MFCC_SRCS)
+    aux_source_directory("mfcc-with-vad/src/vad"   MFCC_SRCS)
+    aux_source_directory("mfcc-with-vad/src/signal_processing"   MFCC_SRCS)
 
     aux_source_directory("apriltag/common"  APRILTAG_SRCS)
     aux_source_directory("apriltag"  APRILTAG_SRCS)
@@ -39,32 +17,94 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
     aux_source_directory("libjpeg"  LIBJPEG_SRCS)
 
     aux_source_directory("zbar"   ZBAR_SRCS)
-    # aux_source_directory("zbar/zbar"   ZBAR_SRCS)
-    # aux_source_directory("zbar/zbar/decoder"   ZBAR_SRCS)
-    # aux_source_directory("zbar/zbar/qrcode"   ZBAR_SRCS)
 
-    list(APPEND ADD_SRCS # ${LVGL_SRCS}
-                         ${CJSON_SRCS}
-                         "sqlite3/sqlite3.c"
-                         ${APRILTAG_SRCS}
-                         ${LIBJPEG_SRCS}
-                         ${ZBAR_SRCS}
-                        )
+    aux_source_directory("imlib/src"   IMLIB_SRCS)
 
+    if(CONFIG_LVGL_ENABLE)
+        # list(APPEND ADD_INCLUDE "./"
+        # # "lvgl"
+        # )
+        # aux_source_directory("lvgl/lvgl/src/lv_core"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lvgl/src/lv_draw"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lvgl/src/lv_font"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lvgl/src/lv_hal"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lvgl/src/lv_misc"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lvgl/src/lv_objx"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lvgl/src/lv_widgets"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lvgl/src/lv_themes"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_examples"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_examples/src/assets/"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_examples/src/lv_demo_widgets/"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_examples/src/lv_demo_benchmark/"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_examples/src/lv_ex_get_started/"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_examples/src/lv_ex_style/"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_examples/src/lv_ex_widgets/lv_ex_img/"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_examples/src/lv_ex_widgets/lv_ex_canvas/"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_lib_gif"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_lib_png"    LVGL_SRCS)
+        # aux_source_directory("lvgl/lv_lib_qrcode"   LVGL_SRCS)
+    endif()
 
+    if(CONFIG_LIBJPEG_ENABLE)
+        list(APPEND ADD_INCLUDE
+            "libjpeg/include"
+            "libjpeg"
+        )
+        list(APPEND ADD_SRCS
+            ${LIBJPEG_SRCS}
+        )
+    endif()
 
-    list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag_pywrap.c")
+    if(CONFIG_CJSON_ENABLE)
+        list(APPEND ADD_INCLUDE "cJSON/include")
+        list(APPEND ADD_SRCS ${CJSON_SRCS})
+    endif()
 
-    # list(REMOVE_ITEM ADD_SRCS "zbar/zbar/svg.c")
-    # list(REMOVE_ITEM ADD_SRCS "zbar/zbar/jpeg.c")
-    # list(REMOVE_ITEM ADD_SRCS "zbar/zbar/decoder/databar.c")
-    # list(REMOVE_ITEM ADD_SRCS "zbar/zbar/decoder/code93.c")
-    # list(REMOVE_ITEM ADD_SRCS "zbar/zbar/decoder/codabar.c")
-    # list(REMOVE_ITEM ADD_SRCS "zbar/zbar/decoder/pdf417.c")
+    if(CONFIG_ZBAR_ENABLE)
+        list(APPEND ADD_INCLUDE "zbar/include")
+        list(APPEND ADD_SRCS ${ZBAR_SRCS})
+    endif()
+
+    if(CONFIG_SQLITE3_ENABLE)
+        list(APPEND ADD_INCLUDE "sqlite3")
+        list(APPEND ADD_SRCS "sqlite3/sqlite3.c")
+    endif()
+
+    if(CONFIG_IMLIB_ENABLE)
+        list(APPEND ADD_INCLUDE
+                "apriltag/common"
+                "apriltag"
+            )
+        list(APPEND ADD_SRCS
+                ${IMLIB_SRCS}
+            )
+        list(REMOVE_ITEM ADD_SRCS "imlib/src/apriltag.c")
+        # list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag.c")
+    endif()
+
+    if(CONFIG_APRILTAG_ENABLE)
+        list(APPEND ADD_INCLUDE
+                "imlib/include"
+            )
+        list(APPEND ADD_SRCS
+                ${APRILTAG_SRCS}
+            )
+        list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag_pywrap.c")
+    endif()
+
+    if(CONFIG_MFCC_ENABLE)
+        list(APPEND ADD_INCLUDE
+                "mfcc-with-vad"
+                "mfcc-with-vad/include"
+            )
+        list(APPEND ADD_SRCS
+                ${MFCC_SRCS}
+            )
+    endif()
 
     list(APPEND ADD_DEFINITIONS -fPIC) # for dynamic libs
 
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -Wno-strict-aliasing")
 
     register_component()
 endif()

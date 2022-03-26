@@ -237,6 +237,7 @@ static void apriltag_loop(libmaix_image_t* img)
 }
 
 #include "zbar.h"
+#include "symbol.h"
 
 static zbar_image_scanner_t *scanner = NULL;
 
@@ -305,18 +306,35 @@ static void qrcode_loop(libmaix_image_t* img)
         /* scan the image for barcodes */
         int n = zbar_scan_image(scanner, image);
 
-        // cap_get("zbar_scan_image");
+        cap_get("zbar_scan_image");
 
         /* extract results */
         const zbar_symbol_t *symbol = zbar_image_first_symbol(image);
         for(; symbol; symbol = zbar_symbol_next(symbol)) {
+
+            int point_count = zbar_symbol_set_get_size(symbol);
+            printf("point:%d",point_count);
+            point_t point_rect[4];
+            point_rect[0].x = zbar_symbol_get_loc_x(symbol, 0);
+            point_rect[0].y = zbar_symbol_get_loc_y(symbol, 0);
+            point_rect[1].x = zbar_symbol_get_loc_x(symbol, 1);
+            point_rect[1].y = zbar_symbol_get_loc_y(symbol, 1);
+            point_rect[2].x = zbar_symbol_get_loc_x(symbol, 2);
+            point_rect[2].y = zbar_symbol_get_loc_y(symbol, 2);
+            point_rect[3].x = zbar_symbol_get_loc_x(symbol, 3);
+            point_rect[3].y = zbar_symbol_get_loc_y(symbol, 3);
+            libmaix_cv_image_draw_line(img, point_rect[0].x, point_rect[0].y, point_rect[1].x, point_rect[1].y, MaixColor(0, 255, 0), 1);
+            libmaix_cv_image_draw_line(img, point_rect[2].x, point_rect[2].y, point_rect[1].x, point_rect[1].y, MaixColor(0, 255, 0), 1);
+            libmaix_cv_image_draw_line(img, point_rect[2].x, point_rect[2].y, point_rect[3].x, point_rect[3].y, MaixColor(0, 255, 0), 1);
+            libmaix_cv_image_draw_line(img, point_rect[3].x, point_rect[3].y, point_rect[1].x, point_rect[1].y, MaixColor(0, 255, 0), 1);
+
             /* do something useful with results */
             zbar_symbol_type_t typ = zbar_symbol_get_type(symbol);
             const char *data = zbar_symbol_get_data(symbol);
             if (typ == ZBAR_QRCODE) {
                 int datalen = strlen(data);
-                // libmaix_cv_image_draw_string(img, 0, 0, zbar_get_symbol_name(typ), 1.5, MaixColor(0, 0, 255), 1);
-                // libmaix_cv_image_draw_string(img, 0, 20, data, 1.5, MaixColor(255, 0, 0), 1);
+                libmaix_cv_image_draw_string(img, 0, 0, zbar_get_symbol_name(typ), 1.5, MaixColor(0, 0, 255), 1);
+                libmaix_cv_image_draw_string(img, 0, 20, data, 1.5, MaixColor(255, 0, 0), 1);
                 printf("decoded %s symbol \"%s\"\n", zbar_get_symbol_name(typ), data);
                 // break;
             }

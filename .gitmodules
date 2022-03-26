@@ -4,3 +4,12 @@
 [submodule "components/third_party/apriltag"]
 	path = components/third_party/apriltag
 	url = https://github.com/AprilRobotics/apriltag
+[submodule "components/third_party/imlib"]
+	path = components/third_party/imlib
+	url = https://github.com/dianjixz/minicv2.git
+[submodule "components/third_party/mfcc-with-vad"]
+	path = components/third_party/mfcc-with-vad
+	url = https://github.com/junhuanchen/mfcc-with-vad
+[submodule "components/maix_speech/Maix-Speech"]
+	path = components/maix_speech/Maix-Speech
+	url = https://github.com/sipeed/Maix-Speech

@@ -1,13 +1,31 @@
 config COMPONENT_3RD_PARTY_ENABLE
 	bool "Enable 3rd party component, include lvgl,cjson,libjpeg"
-	default y
+	default n
 
-#menu "3rd party configuration"
-#	depends on COMPONENT_3RD_PARTY_ENABLE
-#	config LVGL_ENABLE
-#		bool "enable LittleVGL"
-#		default y
-#	config CJSON_ENABLE
-#		bool "enable cJSON"
-#		default y
-#endmenu
+menu "3rd party configuration"
+	depends on COMPONENT_3RD_PARTY_ENABLE
+	config LVGL_ENABLE
+		bool "enable LittleVGL"
+		default y
+	config CJSON_ENABLE
+		bool "enable cJSON"
+		default y
+	config IMLIB_ENABLE
+		bool "enable imlib"
+		default y
+	config MFCC_ENABLE
+		bool "enable mfcc-with-vad"
+		default y
+	config APRILTAG_ENABLE
+		bool "enable apriltag"
+		default y
+	config LIBJPEG_ENABLE
+		bool "enable libjpeg"
+		default y
+	config SQLITE3_ENABLE
+		bool "enable sqlite3"
+		default y
+	config ZBAR_ENABLE
+		bool "enable zbar"
+		default y
+endmenu

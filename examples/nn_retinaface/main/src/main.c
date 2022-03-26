@@ -18,6 +18,7 @@
 
 #include "libmaix_nn_decoder_retinaface.h"
 #include "main.h"
+#include "mdsc.h"
 #include "time_utils.h"
 
 #define LOAD_IMAGE 0
@@ -25,6 +26,7 @@
 #if LOAD_IMAGE
     #define SAVE_NETOUT 1
 #endif
+#define debug_line printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
 static volatile bool program_exit = false;
 
@@ -75,16 +77,16 @@ void nn_test(struct libmaix_disp* disp)
     libmaix_image_module_init();
     libmaix_nn_module_init();
     libmaix_camera_module_init();
+    // read mdsc file
+    char * mdsc_path = "/root/mdsc/v831_retinaface.mdsc";
+    ini_info_t ini_info = read_file(mdsc_path);
+    //set single input shape
+    int res_h = ini_info.inputs_shape[0][0];
+    int res_w = ini_info.inputs_shape[0][1];
+    int res_c = ini_info.inputs_shape[0][2];
+    int input_w = res_w, input_h = res_h ,input_c = res_c;
+    printf("input_w :%d   , input_h :%d \n",input_w , input_h);
 
-
-    #ifdef CONFIG_ARCH_V831
-     int res_w = 224 , res_h = 224;
-     #endif
-     #ifdef CONFIG_ARCH_R329
-     int res_w = 320, res_h = 320;
-     #endif
-    int input_w = res_w, input_h = res_h;
-    int disp_w = 240, disp_h = 240;
     libmaix_nn_t* nn = NULL;
     libmaix_err_t err = LIBMAIX_ERR_NONE;
     libmaix_nn_decoder_t* decoder = NULL;
@@ -92,22 +94,12 @@ void nn_test(struct libmaix_disp* disp)
 
 
     printf("--cam create\n");
-
-
     libmaix_image_t* img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     libmaix_image_t * show  =  libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-
-    //  libmaix_image_t* img  = NULL;
-    //  libmaix_image_t* show = NULL;
-
-
-    // libmaix_cam_t* cam = libmaix_cam_create(0, 320, 320, 1, 1);
     libmaix_cam_t* cam = libmaix_cam_create(0, res_w, res_h, 1, 1);
-
     #ifdef CONFIG_ARCH_V831
-    libmaix_cam_t* cam2 = libmaix_cam_create(1, disp_w, disp_h, 0, 0);
+    libmaix_cam_t* cam2 = libmaix_cam_create(1, disp->width, disp->height, 0, 0);
     #endif
-
     if(!cam)
     {
         printf("create cam fail\n");
@@ -124,68 +116,53 @@ void nn_test(struct libmaix_disp* disp)
     }
 
     printf("--init\n");
-    libmaix_nn_model_path_t model_path = {
-
-        #ifdef CONFIG_ARCH_V831
-        .awnn.param_path = "/home/model/face_recognize/model_int8.param",
-        .awnn.bin_path = "/home/model/face_recognize/model_int8.bin",
-        #endif
-        // R329
-        #ifdef CONFIG_ARCH_R329
-         .aipu.model_path = "/root/models/aipu_Retinaface_320.bin",
-        #endif
-    };
-
-        #ifdef CONFIG_ARCH_R329
-        int min_sizes_list [] = {10, 16, 24, 32, 48, 64, 96, 128, 192, 256};
-        int steps_list []  = {8, 16, 32, 64};
-        #endif
-
-         #ifdef CONFIG_ARCH_V831
-        int steps_list []= {8, 16, 32};
-        int min_sizes_list []= {16, 32, 64,128,256,512};
-        #endif
+    libmaix_nn_model_path_t model_path ;
+    if(strcmp(ini_info.model_type , "aipu") == 0)
+    {
+        printf("r329\n");
+        if(strlen(ini_info.bin_path) == 0)
+        {
+            printf("this path is empty ! \n");
+            goto end;
+        }
+        model_path.aipu.model_path = ini_info.bin_path;
+    }
+    else if (strcmp(ini_info.model_type , "awnn") == 0)
+    {
+        printf("r831\n");
+        if(strlen(ini_info.bin_path) == 0  ||  strlen(ini_info.param_path)==0)
+        {
+            printf("this path is empty ! \n");
+            goto end;
+        }
+        model_path.awnn.bin_path = ini_info.bin_path;
+        model_path.awnn.param_path = ini_info.param_path;
+    }
+    else
+    {
+        printf("this type value is empty or the type is unsupport !\n");
+        goto end;
+    }
 
     libmaix_nn_decoder_retinaface_config_t config = {
         .nms = 0.2,
         .score_thresh = 0.7,
         .input_w = input_w,
         .input_h = input_h,
-
-        //R329
-        // .variance = {0.1, 0.2},
-        // .min_sizes_len = 10,   //  new membership
-        // .steps_len = 4,  //  new membership
-        // .steps = &steps_list,
-        // .min_sizes = &min_sizes_list,
-
-
-        //V831
         .variance ={0.1,0.2},
-
         #ifdef CONFIG_ARCH_V831
-        .steps = steps_list,
-        .min_sizes = min_sizes_list,
-        // .steps = &steps_list,
-        // .min_sizes = &min_sizes_list,
-        // .min_sizes_len = 6,   //  new membership
-        // .steps_len = 3,  //  new membership
+        .steps = {8, 16, 32},
+        .min_sizes = {16, 32, 64,128,256,512},
         #endif
-
         #ifdef CONFIG_ARCH_R329
-        .steps = steps_list,
-        .min_sizes = min_sizes_list,
-        // .steps = &steps_list,
-        // .min_sizes = &min_sizes_list,
-        // .min_sizes_len = 10,   //  new membership
-        // .steps_len = 4,  //  new membership
+        .steps = {8, 16, 32, 64},
+        .min_sizes = {10, 16, 24, 32, 48, 64, 96, 128, 192, 256},
         #endif
-
     };
     libmaix_nn_layer_t input = {
         .w = input_w,
         .h = input_h,
-        .c = 3,
+        .c = input_c,
         .dtype = LIBMAIX_NN_DTYPE_INT8,
         .data = NULL,
         .need_quantization = true,
@@ -199,6 +176,7 @@ void nn_test(struct libmaix_disp* disp)
         printf("start capture fail: %s\n", libmaix_get_err_msg(err));
         goto end;
     }
+    debug_line;
     printf("-- channel num: %d\n", config.channel_num);
     libmaix_nn_layer_t out_fmap[3] = {
         {
@@ -226,33 +204,51 @@ void nn_test(struct libmaix_disp* disp)
             .layout = LIBMAIX_NN_LAYOUT_CHW,
         }
     };
-    char* inputs_names[] = {"input0"};
-    char* outputs_names[] = {"output0", "output1", "output2"};
-
     #ifdef CONFIG_ARCH_V831
-    libmaix_nn_opt_param_t opt_param = {
-        .awnn.input_names             = inputs_names,
-        .awnn.output_names            = outputs_names,
-        // .awnn.input_ids               = NULL,
-        // .awnn.output_ids              = NULL,
-        .awnn.encrypt                 = false,
-        .awnn.input_num               = 1,              // len(input_names)
-        .awnn.output_num              = 3,              // len(output_names)
-        .awnn.mean                    = {127.5, 127.5, 127.5},
-        .awnn.norm                    = {0.0078125, 0.0078125, 0.0078125},
-    };
+    libmaix_nn_opt_param_t opt_param;
+    opt_param.awnn.input_names = ini_info.inputs;
+    opt_param.awnn.output_names = ini_info.outpus;
+    opt_param.awnn.input_num = ini_info.input_num;
+    opt_param.awnn.output_num = ini_info.output_num;
+    opt_param.awnn.encrypt = false;
+    for(int i=0 ; i !=3 ; i++ )
+    {
+        opt_param.awnn.mean[i] = ini_info.mean[0][i];
+        opt_param.awnn.norm[i] = ini_info.norm[0][i];
+    }
+    for (int i =0 ; i != 3 ; i++)
+    {
+        printf("mean%d : %f \n", i , opt_param.aipu.mean[i]);
+        printf("norm%d : %f \n", i , opt_param.aipu.norm[i]);
+    }
     #endif
 
     #ifdef CONFIG_ARCH_R329
-    libmaix_nn_opt_param_t opt_param = {
-        .aipu.input_names             = inputs_names,
-        .aipu.output_names            = outputs_names,
-        .aipu.input_num               = 1,              // len(input_names)
-        .aipu.output_num              = 3,              // len(output_names)
-        .aipu.mean                    = {104, 117, 123},
-        .aipu.norm                    = {1, 1, 1},
-        .aipu.scale                   = {32.752407 , 29.865177 , 14.620169},    //Only R329 has this option (r0p0 SDK)
-    };
+    libmaix_nn_opt_param_t opt_param;
+    opt_param.aipu.input_names = ini_info.inputs;
+    opt_param.aipu.output_names = ini_info.outpus;
+    opt_param.aipu.input_num = ini_info.input_num;
+    opt_param.aipu.output_num = ini_info.output_num;
+    for(int i=0 ; i !=3 ; i++ )
+    {
+        opt_param.aipu.mean[i] = ini_info.mean[0][i];
+        opt_param.aipu.norm[i] = ini_info.norm[0][i];
+    }
+    for (int i =0 ; i != ini_info.output_num ; i++)
+    {
+        opt_param.aipu.scale[i] = ini_info.ouputs_scale[i];
+    }
+
+    // for (int i =0 ; i != ini_info.output_num ; i++)
+    // {
+    //     printf("scale%d : %f \n", i , opt_param.aipu.scale[i]);
+    // }
+    // for (int i =0 ; i != 3 ; i++)
+    // {
+    //     printf("mean%d : %f \n", i , opt_param.aipu.mean[i]);
+    //     printf("norm%d : %f \n", i , opt_param.aipu.norm[i]);
+    // }
+
     # endif
 
 
@@ -269,6 +265,7 @@ void nn_test(struct libmaix_disp* disp)
         printf("no memory!!!\n");
         goto end;
     }
+
     out_fmap[1].data = output_buffer2;
     float* output_buffer3 = (float*)malloc(out_fmap[2].c * out_fmap[2].w * out_fmap[2].h * sizeof(float));
     if(!output_buffer3)
@@ -416,9 +413,6 @@ void nn_test(struct libmaix_disp* disp)
         }
         disp->draw_image(disp, show);
         #endif
-
-
-
 #if LOAD_IMAGE
         break;
 #endif

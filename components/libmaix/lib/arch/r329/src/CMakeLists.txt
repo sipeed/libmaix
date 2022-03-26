@@ -4,6 +4,7 @@ project("export r329 dll")
 
 set(CMAKE_C_COMPILER "/opt/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc")
 set(CMAKE_CXX_COMPILER "/opt/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-g++")
+add_definitions( -DCONFIG_ARCH_R329=1)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 

@@ -1,9 +1,11 @@
 #include "stdio.h"
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "global_config.h"
 #include "global_build_info_time.h"
 #include "global_build_info_version.h"
+
 #include "libmaix_cam.h"
 #include "libmaix_disp.h"
 #include "libmaix_image.h"
@@ -13,383 +15,477 @@
 #include <math.h>
 #include <string.h>
 #include <signal.h>
+
 #include "libmaix_nn_decoder_retinaface.h"
 #include "main.h"
 #include "time_utils.h"
 
 #define LOAD_IMAGE 0
-
+#define debug_line  //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 #if LOAD_IMAGE
     #define SAVE_NETOUT 1
 #endif
 
 static volatile bool program_exit = false;
 
-#define CALC_FPS(tips)                                                                                     \
-  {                                                                                                        \
-    static int fcnt = 0;                                                                                   \
-    fcnt++;                                                                                                \
-    static struct timespec ts1, ts2;                                                                       \
-    clock_gettime(CLOCK_MONOTONIC, &ts2);                                                                  \
-    if ((ts2.tv_sec * 1000 + ts2.tv_nsec / 1000000) - (ts1.tv_sec * 1000 + ts1.tv_nsec / 1000000) >= 1000) \
-    {                                                                                                      \
-      printf("%s => H26X FPS:%d\n", tips, fcnt);                                                  \
-      ts1 = ts2;                                                                                           \
-      fcnt = 0;                                                                                            \
-    }                                                                                                      \
-  }
 
-//定义全局控制模块
-struct  
+int loadFromBin(const char* binPath, int size, signed char* buffer)
 {
-    int input_w, input_h;
-    int disp_w, disp_h;
-    // nn module  
-    libmaix_nn_t* nn ;
-    //decoder module
-    libmaix_nn_decoder_t* decoder;
-    // error module
-    libmaix_err_t err;
-    // image mdoel 
-    libmaix_image_t* img ;
-    libmaix_image_t * show ;
-    // camera module   
-    libmaix_cam_t * cam1 ;
-    #ifdef CONFIG_ARCH_V831
-    libmaix_cam_t * cam2 ;
-    #endif
-    //decode result 
-     libmaix_nn_decoder_retinaface_result_t result;
-    // model path
-    libmaix_nn_model_path_t model_path;
-    // config
-    libmaix_nn_decoder_retinaface_config_t config;
-    //display
-    struct libmaix_disp* disp;
-    // buffer
-    float* output_buffer1;
-    float* output_buffer2;
-    float* output_buffer3;
-    int8_t* quantize_buffer;
-    libmaix_nn_layer_t out_fmap[3];
-    libmaix_nn_layer_t input;
-    //turn-off
-    bool is_run ;
-   
-}test = { 0 };
+    FILE* fp = fopen(binPath, "rb");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "fopen %s failed\n", binPath);
+        return -1;
+    }
+    int nread = fread(buffer, 1, size, fp);
+    if (nread != size)
+    {
+        fprintf(stderr, "fread bin failed %d\n", nread);
+        return -1;
+    }
+    fclose(fp);
 
-libmaix_nn_decoder_retinaface_config_t config = {
-    .nms = 0.2,
-    .score_thresh = 0.7,
-    .variance ={0.1,0.2},
-    #ifdef CONFIG_ARCH_V831
-    .min_sizes_len = 6,   //  new membership
-    .steps_len = 3,  //  new membership
-    .input_w = 224,
-    .input_h = 224,
-    #endif
-    #ifdef CONFIG_ARCH_R329
-    .min_sizes_len = 10,   //  new membership
-    .steps_len = 4,  //  new membership
-    .input_w = 320,
-    .input_h = 320,
-    #endif
-};
-
-char* inputs_names[] = {"input0"};
-char* outputs_names[] = {"output0", "output1", "output2"};
-#ifdef CONFIG_ARCH_V831
-int steps_list []= {8, 16, 32};
-int min_sizes_list []= {16, 32, 64,128,256,512};
-#endif
-#ifdef CONFIG_ARCH_R329
-int min_sizes_list [] = {10, 16, 24, 32, 48, 64, 96, 128, 192, 256};
-int steps_list []  = {8, 16, 32, 64};
-# endif
-static void test_handlesig(int signo)
-{
-  if (SIGINT == signo || SIGTSTP == signo || SIGTERM == signo || SIGQUIT == signo || SIGPIPE == signo || SIGKILL == signo)
-  {
-    test.is_run = false;
-  }
-  exit(0);
+    return 0;
 }
 
-// 初始化必要模块
-void test_init()
+int save_bin(const char* path, int size, uint8_t* buffer)
 {
+    FILE* fp = fopen(path, "wb");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "fopen %s failed\n", path);
+        return -1;
+    }
+    int nwrite = fwrite(buffer, 1, size, fp);
+    if (nwrite != size)
+    {
+        fprintf(stderr, "fwrite bin failed %d\n", nwrite);
+        return -1;
+    }
+    fclose(fp);
+
+    return 0;
+}
+
+
+void nn_test(struct libmaix_disp* disp)
+{
+
     printf("--image module init\n");
     libmaix_image_module_init();
-    printf("--camera module init\n");
-    libmaix_camera_module_init();
-    printf("-- nn module init\n");
     libmaix_nn_module_init();
-}
-
-//实例化必要模块
-void test_create()
-{
-  //cerate display
-  test.disp = libmaix_disp_create(0);
-  
-  //init settings 
-    #ifdef CONFIG_ARCH_V831;
-    test.input_h = 224 , test.input_w = 224;
-    test.model_path.awnn.bin_path = "/root/Run_model/models/Retinaface.bin";
-    test.model_path.awnn.param_path = "/root/Run_model/models/Retinaface.param";
-    #endif
-    #ifdef CONFIG_ARCH_R329
-    test.input_h = 320 , test.input_w = 320;
-    test.model_path.aipu.model_path = "/root/models/aipu_Retinaface_320.bin" ;
-    #endif
-
-  // create images
-  test.disp_h = test.disp->height;
-  test.disp_w =test.disp->width;
-  
-  test.img = libmaix_image_create(test.input_w, test.input_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-  test.show  =  libmaix_image_create(test.disp_w, test.disp_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-  //create camera
-  // #ifdef CONFIG_ARCH_R329 
-  test.cam1 =  libmaix_cam_create(0,test.input_w, test.input_h,1,1);
-  if(! test.cam1)
-  {
-      printf("create cam1 fail\n");
-  }
-  test.config.nms = 0.2;
-  test.config.score_thresh = 0.7;
-  test.config.input_h =320;
-  test.config.input_w =320;
-
-  //TODO
-  // test.config.variance = {0.1,0.2};   
-
-  // #endif 
-  #ifdef CONFIG_ARCH_V831
-  test.cam1 =  libmaix_cam_create(0,test.input_w, test.input_h,1,0);
-  if(! test.cam1)
-  {
-      printf("create cam1 fail\n");
-  }
-  test.cam2 = libmaix_cam_create(1, test.disp_w, test.disp_h, 0, 0);
-  if(! test.cam2)
-  {
-      printf("create cam2 fail\n");
-  }
-  #endif
+    libmaix_camera_module_init();
 
 
+    #ifdef CONFIG_ARCH_V831
+     int res_w = 224 , res_h = 224;
+     #endif
+     #ifdef CONFIG_ARCH_R329
+     int res_w = 320, res_h = 320;
+     #endif
+    int input_w = res_w, input_h = res_h;
+    int disp_w = 240, disp_h = 240;
+    libmaix_nn_t* nn = NULL;
+    libmaix_err_t err = LIBMAIX_ERR_NONE;
+    libmaix_nn_decoder_t* decoder = NULL;
+    libmaix_nn_decoder_retinaface_result_t result;
 
-  test. decoder = libmaix_nn_decoder_retinaface_create();
-  test.err = test.decoder->init(test.decoder,&config);  
 
-  if(test.err !=LIBMAIX_ERR_NONE )
-  {
-    printf("start capture fail: %s\n", libmaix_get_err_msg(test.err));
-  }
+    printf("--cam create\n");
 
-  out_fmap[0].c = config.channel_num;
-  out_fmap[1].c = config.channel_num;
-  out_fmap[2].c = config.channel_num;
-  test.output_buffer1 = (float*)malloc(out_fmap[0].c * out_fmap[0].w * out_fmap[0].h * sizeof(float));
-  test.output_buffer2 = (float*)malloc(out_fmap[1].c * out_fmap[1].w * out_fmap[1].h * sizeof(float));
-  test.output_buffer3 = (float*)malloc(out_fmap[2].c * out_fmap[2].w * out_fmap[2].h * sizeof(float));
-  if(! test.output_buffer1)
-  {
-    printf("no memory 1 !!!\n");
-  }
-  if(!test.output_buffer2)
-  {
-    printf("no memory 2 !!!\n");
-  }
-  if(!test.output_buffer3)
-  {
-    printf("no memory 3 !!!\n");
-  }
-  out_fmap[0].data = test.output_buffer1;
-  out_fmap[1].data = test.output_buffer2;
-  out_fmap[2].data = test.output_buffer3;
 
-  test.quantize_buffer = (int8_t*)malloc(input.w * input.h * input.c);
-  if(! test.quantize_buffer)
-  {
-    printf("no  input quantiztion memory !!!\n");
-  }
-   input.buff_quantization = test.quantize_buffer;
+    libmaix_image_t* img = libmaix_image_create(res_w, res_h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    libmaix_image_t * show  =  libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
 
-   // 实例化 nn 
-   test.nn = libmaix_nn_create();
-   if(! test.nn)
-   {
-     printf("libmaix_nn object create fail\n");
-   }
-}
+    //  libmaix_image_t* img  = NULL;
+    //  libmaix_image_t* show = NULL;
 
-//进行前向运算
-void test_load_forward_decode()
-{
-  //load
-  test.err = test.nn->load(test.nn,&(test.model_path),&opt_param);
-  printf("load model\n");
-  if(test.err != LIBMAIX_ERR_NONE)
-  {
-      printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(test.err));
-  }
 
-  test.is_run = true;
-  while(test.is_run)
-  {
-    printf("--loop\n");
-    test.err = test.cam1->capture_image(test.cam1,& (test.img));
-    # ifdef CONFIG_ARCH_V831
-    test.err = test.cam2->capture_image(test.cam2,& (test.show));
+    // libmaix_cam_t* cam = libmaix_cam_create(0, 320, 320, 1, 1);
+    libmaix_cam_t* cam = libmaix_cam_create(0, res_w, res_h, 1, 1);
+
+    #ifdef CONFIG_ARCH_V831
+    libmaix_cam_t* cam2 = libmaix_cam_create(1, disp_w, disp_h, 0, 0);
     #endif
 
-    if(test.err != LIBMAIX_ERR_NONE)
+    if(!cam)
     {
-        // not ready， sleep to release CPU
-        if(test.err == LIBMAIX_ERR_NOT_READY)
-        {
-            usleep(20 * 1000);
-            continue;
-        }
-        else
-        {
-            printf("capture fail: %s\n", libmaix_get_err_msg(test.err));
-            break;
-        }
+        printf("create cam fail\n");
     }
-    input.data = (uint8_t *)test.img->data;
-    CALC_TIME_START();
-    test.err = test.nn->forward(test.nn, &input,out_fmap);
-    CALC_TIME_END("forward");
-    if(test.err != LIBMAIX_ERR_NONE)
+    printf("--cam start capture\n");
+    err = cam->start_capture(cam);
+    #ifdef CONFIG_ARCH_V831
+    err = cam2->start_capture(cam2);
+    #endif
+    if(err != LIBMAIX_ERR_NONE)
     {
-        printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(test.err));
+        printf("start capture fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
     }
 
-    //decode
-    CALC_TIME_START();
-    test.decoder->decode(test.decoder,out_fmap, &(test.result));
-    CALC_TIME_END("decode face info");
-    #ifdef CONFIG_ARCH_R329
-        for(int i=0; i < test.result.num; ++i)
+    printf("--init\n");
+    libmaix_nn_model_path_t model_path = {
+        #ifdef CONFIG_ARCH_V831
+        .awnn.param_path = "/home/model/face_recognize/model_int8.param",
+        .awnn.bin_path = "/home/model/face_recognize/model_int8.bin",
+        #endif
+        // R329
+        #ifdef CONFIG_ARCH_R329
+         .aipu.model_path = "/root/models/aipu_Retinaface_320.bin",
+        #endif
+    };
+        // #ifdef CONFIG_ARCH_R329
+        //  int min_sizes_list [] = {10, 16, 24, 32, 48, 64, 96, 128, 192, 256};
+        //  int steps_list []  = {8, 16, 32, 64};
+        // #endif
+
+        //  #ifdef CONFIG_ARCH_V831
+        // int steps_list []= {8, 16, 32};
+        // int min_sizes_list []= {16, 32, 64,128,256,512};
+        // #endif
+
+    libmaix_nn_decoder_retinaface_config_t config = {
+        .nms = 0.2,
+        .score_thresh = 0.7,
+        .input_w = input_w,
+        .input_h = input_h,
+
+        //R329
+        // .variance = {0.1, 0.2},
+        // .min_sizes_len = 10,   //  new membership
+        // .steps_len = 4,  //  new membership
+        // .steps = &steps_list,
+        // .min_sizes = &min_sizes_list,
+
+
+        //V831
+        .variance ={0.1,0.2},
+        #ifdef CONFIG_ARCH_V831
+        .steps = {8, 16, 32},
+        .min_sizes = {16, 32, 64,128,256,512},
+        // .steps = &steps_list,
+        // .min_sizes = &min_sizes_list,
+        // .min_sizes_len = 6,   //  new membership
+        // .steps_len = 3,  //  new membership
+        #endif
+
+        #ifdef CONFIG_ARCH_R329
+        .steps = {8, 16, 32, 64},
+        .min_sizes = {10, 16, 24, 32, 48, 64, 96, 128, 192, 256},
+        // .steps = &steps_list,
+        // .min_sizes = &min_sizes_list,
+        // .min_sizes_len = 10,   //  new membership
+        // .steps_len = 4,  //  new membership
+        #endif
+
+    };
+    libmaix_nn_layer_t input = {
+        .w = input_w,
+        .h = input_h,
+        .c = 3,
+        .dtype = LIBMAIX_NN_DTYPE_INT8,
+        .data = NULL,
+        .need_quantization = true,
+        .buff_quantization = NULL
+    };
+    debug_line;
+    decoder = libmaix_nn_decoder_retinaface_create();
+    err = decoder->init(decoder, &config);
+    debug_line;
+
+    printf("--init decoder\n");
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("start capture fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
+    printf("-- channel num: %d\n", config.channel_num);
+    libmaix_nn_layer_t out_fmap[3] = {
         {
-            if(test.result.faces[i].score > config.score_thresh)
+            .w = 4,
+            .h = 1,
+            .c = config.channel_num,
+            .dtype = LIBMAIX_NN_DTYPE_FLOAT,
+            .data = NULL,
+            .layout = LIBMAIX_NN_LAYOUT_CHW,
+        },
+        {
+            .w = 2,
+            .h = 1,
+            .c = config.channel_num,
+            .dtype = LIBMAIX_NN_DTYPE_FLOAT,
+            .data = NULL,
+            .layout = LIBMAIX_NN_LAYOUT_CHW,
+        },
+        {
+            .w = 10,
+            .h = 1,
+            .c = config.channel_num,
+            .dtype = LIBMAIX_NN_DTYPE_FLOAT,
+            .data = NULL,
+            .layout = LIBMAIX_NN_LAYOUT_CHW,
+        }
+    };
+    char* inputs_names[] = {"input0"};
+    char* outputs_names[] = {"output0", "output1", "output2"};
+
+    #ifdef CONFIG_ARCH_V831
+    libmaix_nn_opt_param_t opt_param = {
+        .awnn.input_names             = inputs_names,
+        .awnn.output_names            = outputs_names,
+        // .awnn.input_ids               = NULL,
+        // .awnn.output_ids              = NULL,
+        .awnn.encrypt                 = false,
+        .awnn.input_num               = 1,              // len(input_names)
+        .awnn.output_num              = 3,              // len(output_names)
+        .awnn.mean                    = {127.5, 127.5, 127.5},
+        .awnn.norm                    = {0.0078125, 0.0078125, 0.0078125},
+    };
+    #endif
+
+    #ifdef CONFIG_ARCH_R329
+    libmaix_nn_opt_param_t opt_param = {
+        .aipu.input_names             = inputs_names,
+        .aipu.output_names            = outputs_names,
+        .aipu.input_num               = 1,              // len(input_names)
+        .aipu.output_num              = 3,              // len(output_names)
+        .aipu.mean                    = {104, 117, 123},
+        .aipu.norm                    = {1, 1, 1},
+        .aipu.scale                   = {32.752407 , 29.865177 , 14.620169},    //Only R329 has this option (r0p0 SDK)
+    };
+    # endif
+
+
+    float* output_buffer = (float*)malloc(out_fmap[0].c * out_fmap[0].w * out_fmap[0].h * sizeof(float));
+    if(!output_buffer)
+    {
+        printf("no memory!!!\n");
+        goto end;
+    }
+    out_fmap[0].data = output_buffer;
+    float* output_buffer2 = (float*)malloc(out_fmap[1].c * out_fmap[1].w * out_fmap[1].h * sizeof(float));
+    if(!output_buffer2)
+    {
+        printf("no memory!!!\n");
+        goto end;
+    }
+    out_fmap[1].data = output_buffer2;
+    float* output_buffer3 = (float*)malloc(out_fmap[2].c * out_fmap[2].w * out_fmap[2].h * sizeof(float));
+    if(!output_buffer3)
+    {
+        printf("no memory!!!\n");
+        goto end;
+    }
+    out_fmap[2].data = output_buffer3;
+
+    int8_t* quantize_buffer = (int8_t*)malloc(input.w * input.h * input.c);
+    if(!quantize_buffer)
+    {
+        printf("no memory!!!\n");
+        goto end;
+    }
+    input.buff_quantization = quantize_buffer;
+    printf("-- nn create\n");
+    nn = libmaix_nn_create();
+    if(!nn)
+    {
+        printf("libmaix_nn object create fail\n");
+        goto end;
+    }
+    printf("-- nn object init\n");
+    err = nn->init(nn);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
+    printf("-- nn object load model\n");
+    err = nn->load(nn, &model_path, &opt_param);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
+    printf("-- start loop\n");
+    while(!program_exit)
+    {
+#if LOAD_IMAGE
+        printf("-- load input bin file\n");
+        loadFromBin("/root/test_input/input_256x448.bin", res_w * res_h * 3, rgb_img->data);
+#else
+        err = cam->capture_image(cam, &img);
+        # ifdef CONFIG_ARCH_V831
+        err = cam2->capture_image(cam2, &show);
+        #endif
+
+        if(err != LIBMAIX_ERR_NONE)
+        {
+            // not ready， sleep to release CPU
+            if(err == LIBMAIX_ERR_NOT_READY)
             {
-                int x1 = test.result.faces[i].box.x * test.img->width;
-                int y1 =test.result.faces[i].box.y * test.img->height;
-                int x2 = x1 + test.result.faces[i].box.w * test.img->width;
-                int y2 = y1 + test.result.faces[i].box.h * test.img->height;
-                
-                libmaix_cv_image_draw_rectangle(test.img, x1, y1, x2, y2, MaixColor(255,0,0),2);
+                usleep(20 * 1000);
+                continue;
+            }
+            else
+            {
+                printf("capture fail: %s\n", libmaix_get_err_msg(err));
+                break;
+            }
+        }
+#endif
+
+        // forward process
+        input.data = (uint8_t *)img->data;
+
+        CALC_TIME_START();
+        err = nn->forward(nn, &input, out_fmap);
+        CALC_TIME_END("forward");
+        if(err != LIBMAIX_ERR_NONE)
+        {
+            printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(err));
+            goto end;
+        }
+
+// #if SAVE_NETOUT
+
+//         save_bin("loc.bin", out_fmap[0].w * out_fmap[0].h * out_fmap[0].c * sizeof(float), out_fmap[0].data);
+//         save_bin("conf.bin", out_fmap[1].w * out_fmap[1].h * out_fmap[1].c * sizeof(float), out_fmap[1].data);
+//         save_bin("landmark.bin", out_fmap[2].w * out_fmap[2].h * out_fmap[2].c * sizeof(float), out_fmap[2].data);
+
+// #endif
+
+        CALC_TIME_START();
+        decoder->decode(decoder,out_fmap, &result);
+        CALC_TIME_END("decode face info");
+        libmaix_image_color_t color = {
+            .rgb888.r = 255,
+            .rgb888.g = 0,
+            .rgb888.b = 0
+        };
+        // // draw image
+        #ifdef CONFIG_ARCH_R329
+        for(int i=0; i < result.num; ++i)
+        {
+            if(result.faces[i].score > config.score_thresh)
+            {
+                int x1 = result.faces[i].box.x * img->width;
+                int y1 = result.faces[i].box.y * img->height;
+                int x2 = x1 + result.faces[i].box.w * img->width;
+                int y2 = y1 + result.faces[i].box.h * img->height;
+
+                libmaix_cv_image_draw_rectangle(img, x1, y1, x2, y2, MaixColor(255,0,0),2);
 
                 printf("x1:%d , x2;%d \n",x1,y1);
 
                 for(int j=0; j<5; ++j)
                 {
-                    int x = test.result.faces[i].points[j * 2] * test.img->width;
-                    int y = test.result.faces[i].points[j * 2 + 1] * test.img->height;
-                    libmaix_cv_image_draw_rectangle(test.img,x-2,y-2,x+2,y+2,MaixColor(0,255,23) , -1);
+                    int x = result.faces[i].points[j * 2] * img->width;
+                    int y = result.faces[i].points[j * 2 + 1] * img->height;
+                    libmaix_cv_image_draw_rectangle(img,x-2,y-2,x+2,y+2,MaixColor(0,255,23) , -1);
                     printf("x:%d , y:%d\n ",x,y);
-                
+
                 }
             }
         }
-        test.err = libmaix_cv_image_resize(test.img,test.disp_w, test.disp_h, &(test.show));
-        test.disp->draw_image(test.disp, test.show);
+        err = libmaix_cv_image_resize(img, disp->width, disp->height, &show);
+        disp->draw_image(disp, show);
         #endif
 
 
-        // #ifdef CONFIG_ARCH_V831
-        for(int i=0; i < test.result.num; ++i)
+        #ifdef CONFIG_ARCH_V831
+        for(int i=0; i < result.num; ++i)
         {
-            if(test.result.faces[i].score > config.score_thresh)
+            if(result.faces[i].score > config.score_thresh)
             {
-                int x1 = test.result.faces[i].box.x * test.show->width;
-                int y1 = test.result.faces[i].box.y * test.show->height;
-                int x2 = x1 + test.result.faces[i].box.w * test.show->width;
-                int y2 = y1 + test.result.faces[i].box.h * test.show->height;
-                
-                libmaix_cv_image_draw_rectangle(test.show, x1, y1, x2, y2, MaixColor(255,0,0),2);
+                int x1 = result.faces[i].box.x * show->width;
+    //     printf("--image destory\n");
+    //     libmaix_image_destroy(&img);
+    // }
 
                 printf("x1:%d , x2;%d \n",x1,y1);
 
                 for(int j=0; j<5; ++j)
                 {
-                    int x = test.result.faces[i].points[j * 2] * test.show->width;
-                    int y = test.result.faces[i].points[j * 2 + 1] * test.show->height;
-                    libmaix_cv_image_draw_rectangle(test.show,x-2,y-2,x+2,y+2,MaixColor(0,255,23) , -1);
+                    int x = result.faces[i].points[j * 2] * show->width;
+                    int y = result.faces[i].points[j * 2 + 1] * show->height;
+                    libmaix_cv_image_draw_rectangle(show,x-2,y-2,x+2,y+2,MaixColor(0,255,23) , -1);
                     printf("x:%d , y:%d\n ",x,y);
-                
+
                 }
             }
         }
-        test.disp->draw_image(test.disp, test.show);
-        // #endif
+        disp->draw_image(disp, show);
+        #endif
 
-  }
-}
 
-void test_detory()
-{
-  if(test.quantize_buffer)
-  {
-    free(test.quantize_buffer);
-  }
-  if(test.output_buffer1)
-  {
-    free(test.output_buffer1);
-  }
-  if(test.output_buffer2)
-  {
-    free(test.output_buffer2);
-  }
-  if(test.output_buffer2)
-  {
-    free(test.output_buffer2);
-  }
 
-  if(test.nn)
-  {
-      printf("--cam destory\n");
-      test.nn->deinit(test.nn);
-      libmaix_cam_destroy(&(test.nn));
-  }
-  if(test.decoder)
-  {
-      test.decoder->deinit(test.decoder);
-      libmaix_nn_decoder_destroy(&(test.decoder));
-  }
-  if(test.cam1)
-  {
-      printf("--cam1 destory\n");
-      libmaix_cam_destroy(&(test.cam1));
-  }
-  if(test.cam2)
-  {
-      printf("--cam2 destory\n");
-      libmaix_cam_destroy(&(test.cam2));
-  }
-}
+#if LOAD_IMAGE
+        break;
+#endif
+    }
+end:
+    if(output_buffer)
+    {
+        free(output_buffer);
+    }
+    if(output_buffer2)
+    {
+        free(output_buffer2);
+    }
+    if(output_buffer3)
+    {
+        free(output_buffer3);
+    }
+    if(nn)
+    {
+        libmaix_nn_destroy(&nn);
+    }
+    // if(img)
+    // {
+    //     printf("--image destory\n");
+    //     libmaix_image_destroy(&img);
+    // }
+    if(cam)
+    {
+         printf("--cam destory\n");
+         libmaix_cam_destroy(&cam);
+    }
 
-void  test_deinit()
-{
+    if(decoder)
+    {
+        decoder->deinit(decoder);
+        libmaix_nn_decoder_destroy(&decoder);
+    }
     printf("--image module deinit\n");
     libmaix_nn_module_deinit();
     libmaix_image_module_deinit();
 }
 
-// main function 
-int main(int argc, char ** argv)
+static void handle_signal(int signo)
 {
-    signal(SIGINT, test_handlesig);
-    signal(SIGTERM, test_handlesig);
-    test_init();  // init module
-    test_create();  // alloction buffer 
-    printf("create done\n");
-    test_load_forward_decode();
-    // test_detory();
-    // test_deinit();
+  if (SIGINT == signo || SIGTSTP == signo || SIGTERM == signo || SIGQUIT == signo || SIGPIPE == signo || SIGKILL == signo)
+  {
+    program_exit = true;
+  }
+}
+
+int main(int argc, char* argv[])
+{
+    struct libmaix_disp* disp = libmaix_disp_create(0);
+    if(disp == NULL) {
+        printf("creat disp object fail\n");
+        return -1;
+    }
+
+
+
+    signal(SIGINT, handle_signal);
+    signal(SIGTERM, handle_signal);
+
+    printf("program start\n");
+    nn_test(disp);
+    printf("program end\n");
+
+    libmaix_disp_destroy(&disp);
     return 0;
 }

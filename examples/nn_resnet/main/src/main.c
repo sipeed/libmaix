@@ -10,6 +10,7 @@
 #include "libmaix_disp.h"
 #include "libmaix_image.h"
 #include "libmaix_nn.h"
+#include "mdsc.h"
 #include "main.h"
 #include <sys/time.h>
 #include <unistd.h>
@@ -22,6 +23,7 @@
 #include <getopt.h>
 #include <sys/mman.h>
 #include <errno.h>
+#include <string.h>
 
 static void softmax(float *data, int n )
 {
@@ -49,147 +51,514 @@ static void softmax(float *data, int n )
 	}
 }
 
-
-void nn_test(struct libmaix_disp *disp)
+int  nn_test(struct libmaix_disp *disp)
 {
+    //init module
+    printf("--basic module init\n");
+    libmaix_image_module_init();
+    libmaix_nn_module_init();
+    libmaix_camera_module_init();
+
     struct libmaix_cam *cam = NULL;
     libmaix_image_t* img;
-
-    uint32_t res_w = 224, res_h = 224;
     libmaix_nn_t *nn = NULL;
     float* result = NULL;
     libmaix_err_t err = LIBMAIX_ERR_NONE;
 
-#define DISPLAY_TIME 0
+    //mdsc infomation
+    char * mdsc_path = "/root/mdsc/r329_resnet.mdsc";
+    ini_info_t ini_info = read_file(mdsc_path);
 
-#if DISPLAY_TIME
-    struct timeval start, end;
-    int64_t interval_s;
-#define CALC_TIME_START()           \
-    do                              \
-    {                               \
-        gettimeofday(&start, NULL); \
-    } while (0)
-#define CALC_TIME_END(name)                                                               \
-    do                                                                                    \
-    {                                                                                     \
-        gettimeofday(&end, NULL);                                                         \
-        interval_s = (int64_t)(end.tv_sec - start.tv_sec) * 1000000ll;                    \
-        printf("%s use time: %lld us\n", name, interval_s + end.tv_usec - start.tv_usec); \
-    } while (0)
-#else
-#define CALC_TIME_START()
-#define CALC_TIME_END(name)
-#endif
+    //input (single)
+    uint32_t res_h  = ini_info.inputs_shape[0][0];
+    uint32_t res_w = ini_info.inputs_shape[0][1];
+    uint32_t res_c = ini_info.inputs_shape[0][2];
 
-    printf("--image module init\n");
-    libmaix_image_module_init();
-    libmaix_camera_module_init();
-    libmaix_nn_module_init();
-
-    printf("--create image\n");
+    // create show image
     libmaix_image_t *show = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     if(!show)
     {
         printf("create RGB image fail\n");
-        goto end;
+        if (nn)
+        {
+            nn->deinit(nn);
+            printf("--nn destory\n");
+            libmaix_nn_destroy(&nn);
+        }
+        if (cam)
+        {
+            printf("--cam destory\n");
+            libmaix_cam_destroy(&cam);
+        }
+        // if(img)
+        // {
+        //     printf("--image destory\n");
+        //     libmaix_image_destroy(&img);
+        // }
+        if (show)
+        {
+            printf("-- caputer destory\n");
+            libmaix_image_destroy(&show);
+        }
+        printf("--image module deinit\n");
+        libmaix_nn_module_deinit();
+        libmaix_image_module_deinit();
+        libmaix_camera_module_deinit();
+        return 0;
     }
-
-    printf("--create cam\n");
+    //create camera
     cam = libmaix_cam_create(0, res_w, res_h, 1, 0);
     if (!cam)
     {
         printf("create cam fail\n");
-        goto end;
+        if (nn)
+        {
+            nn->deinit(nn);
+            printf("--nn destory\n");
+            libmaix_nn_destroy(&nn);
+        }
+        if (cam)
+        {
+            printf("--cam destory\n");
+            libmaix_cam_destroy(&cam);
+        }
+        // if(img)
+        // {
+        //     printf("--image destory\n");
+        //     libmaix_image_destroy(&img);
+        // }
+        if (show)
+        {
+            printf("-- caputer destory\n");
+            libmaix_image_destroy(&show);
+        }
+        printf("--image module deinit\n");
+        libmaix_nn_module_deinit();
+        libmaix_image_module_deinit();
+        libmaix_camera_module_deinit();
+        return 0;
     }
+    // cam start capture
     printf("--cam start capture\n");
     err = cam->start_capture(cam);
     if (err != LIBMAIX_ERR_NONE)
     {
         printf("start capture fail:%s\n", libmaix_get_err_msg(err));
-        goto end;
+        if (nn)
+        {
+            nn->deinit(nn);
+            printf("--nn destory\n");
+            libmaix_nn_destroy(&nn);
+        }
+        if (cam)
+        {
+            printf("--cam destory\n");
+            libmaix_cam_destroy(&cam);
+        }
+        // if(img)
+        // {
+        //     printf("--image destory\n");
+        //     libmaix_image_destroy(&img);
+        // }
+        if (show)
+        {
+            printf("-- caputer destory\n");
+            libmaix_image_destroy(&show);
+        }
+        printf("--image module deinit\n");
+        libmaix_nn_module_deinit();
+        libmaix_image_module_deinit();
+        libmaix_camera_module_deinit();
+        return 0;
     }
 
-    printf("--resnet init\n");
-    libmaix_nn_model_path_t model_path = {
-        // .awnn.param_path = "./resnet18_1000_awnn.param",
-        // .awnn.bin_path = "./resnet18_1000_awnn.bin"
-        .aipu.model_path = "/root/models/aipu_resnet50.bin"
-    };
+    //input layer
     libmaix_nn_layer_t input = {
-        .w = 224,
-        .h = 224,
-        .c = 3,
+        .w = res_w,
+        .h = res_h,
+        .c = res_c,
         .dtype = LIBMAIX_NN_DTYPE_UINT8,
         .data = NULL,
         .need_quantization = true,
         .buff_quantization = NULL};
+    // output layer
     libmaix_nn_layer_t out_fmap = {
-        .w = 1,
-        .h = 1,
-        .c = 1000,
+        .w = ini_info.outputs_shape[0][1],
+        .h = ini_info.outputs_shape[0][0],
+        .c = ini_info.outputs_shape[0][2],
         .layout = LIBMAIX_IMAGE_LAYOUT_CHW,
         .dtype = LIBMAIX_NN_DTYPE_FLOAT,
         .data = NULL};
 
-    char *inputs_names[] = {"input0"};
-    char *outputs_names[] = {"output0"};
-    libmaix_nn_opt_param_t opt_param = {
-        .aipu.input_names = inputs_names,
-        .aipu.output_names = outputs_names,
-        .aipu.input_num = 1,  // len(input_names)
-        .aipu.output_num = 1, // len(output_names)
-        .aipu.mean = {127.5, 127.5, 127.5},
-        .aipu.norm = {0.00784313725490196, 0.00784313725490196, 0.00784313725490196},
-        .aipu.scale  = {7.5395403},
-    };
 
-
+    // malloc  output buffer
     float *output_buffer = (float *)malloc(1000 * sizeof(float));
     if (!output_buffer)
     {
-        printf("no memory!!!\n");
-        goto end;
+        printf("malloc output buffer is faild !!!\n");
+        if (output_buffer)
+        {
+            free(output_buffer);
+        }
+        if (nn)
+        {
+            nn->deinit(nn);
+            printf("--nn destory\n");
+            libmaix_nn_destroy(&nn);
+        }
+        if (cam)
+        {
+            printf("--cam destory\n");
+            libmaix_cam_destroy(&cam);
+        }
+        // if(img)
+        // {
+        //     printf("--image destory\n");
+        //     libmaix_image_destroy(&img);
+        // }
+        if (show)
+        {
+            printf("-- caputer destory\n");
+            libmaix_image_destroy(&show);
+        }
+        printf("--image module deinit\n");
+        libmaix_nn_module_deinit();
+        libmaix_image_module_deinit();
+        libmaix_camera_module_deinit();
+        return 0;
     }
-    uint8_t *quantize_buffer = (uint8_t *)malloc(input.w * input.h * input.c);  // origin branch is uint8
+    // malloc input buffer
+    uint8_t *quantize_buffer = (uint8_t *)malloc(input.w * input.h * input.c);
     if (!quantize_buffer)
     {
-        printf("no memory!!!\n");
-        goto end;
+        printf("malloc input buffer is faild !!!\n");
+        if (output_buffer)
+        {
+            free(output_buffer);
+        }
+        if (nn)
+        {
+            nn->deinit(nn);
+            printf("--nn destory\n");
+            libmaix_nn_destroy(&nn);
+        }
+        if (cam)
+        {
+            printf("--cam destory\n");
+            libmaix_cam_destroy(&cam);
+        }
+        // if(img)
+        // {
+        //     printf("--image destory\n");
+        //     libmaix_image_destroy(&img);
+        // }
+        if (show)
+        {
+            printf("-- caputer destory\n");
+            libmaix_image_destroy(&show);
+        }
+        printf("--image module deinit\n");
+        libmaix_nn_module_deinit();
+        libmaix_image_module_deinit();
+        libmaix_camera_module_deinit();
+        return 0;
     }
     input.buff_quantization = quantize_buffer;
     out_fmap.data = output_buffer;
 
-    printf("-- nn create\n");
-    nn = libmaix_nn_create();
-    if (!nn)
+    // init model and opt
+    // libmaix_nn_model_path_t model_path;
+    // libmaix_nn_opt_param_t opt_param;
+
+
+
+    if(strcmp (ini_info.model_type, "awnn") == 0)
     {
-        printf("libmaix_nn object create fail\n");
-        goto end;
+        libmaix_nn_model_path_t model_path = {
+            .awnn.bin_path = ini_info.bin_path,
+            .awnn.param_path = ini_info.param_path,
+        };
+        libmaix_nn_opt_param_t opt_param = {
+            .awnn.input_names = ini_info.inputs,
+            .awnn.output_names = ini_info.outpus,
+            .awnn.input_num = ini_info.input_num,
+            .awnn.output_num = ini_info.output_num,
+            .awnn.mean = * ini_info.mean[0],
+            .awnn.norm = * ini_info.norm[0],
+        };
+            //create nn  object
+        printf("-- nn create\n");
+        nn = libmaix_nn_create();
+        if (!nn)
+        {
+            printf("libmaix_nn object create fail\n");
+            if (output_buffer)
+            {
+                free(output_buffer);
+            }
+            if (nn)
+            {
+                nn->deinit(nn);
+                printf("--nn destory\n");
+                libmaix_nn_destroy(&nn);
+            }
+            if (cam)
+            {
+                printf("--cam destory\n");
+                libmaix_cam_destroy(&cam);
+            }
+            // if(img)
+            // {
+            //     printf("--image destory\n");
+            //     libmaix_image_destroy(&img);
+            // }
+            if (show)
+            {
+                printf("-- caputer destory\n");
+                libmaix_image_destroy(&show);
+            }
+            printf("--image module deinit\n");
+            libmaix_nn_module_deinit();
+            libmaix_image_module_deinit();
+            libmaix_camera_module_deinit();
+            return 0;
+        }
+        printf("-- nn object init\n");
+        err = nn->init(nn);
+        if (err != LIBMAIX_ERR_NONE)
+        {
+            printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+            if (output_buffer)
+            {
+                free(output_buffer);
+            }
+            if (nn)
+            {
+                nn->deinit(nn);
+                printf("--nn destory\n");
+                libmaix_nn_destroy(&nn);
+            }
+            if (cam)
+            {
+                printf("--cam destory\n");
+                libmaix_cam_destroy(&cam);
+            }
+            // if(img)
+            // {
+            //     printf("--image destory\n");
+            //     libmaix_image_destroy(&img);
+            // }
+            if (show)
+            {
+                printf("-- caputer destory\n");
+                libmaix_image_destroy(&show);
+            }
+            printf("--image module deinit\n");
+            libmaix_nn_module_deinit();
+            libmaix_image_module_deinit();
+            libmaix_camera_module_deinit();
+            return  0;
+        }
+
+        printf("-- nn object load model\n");
+
+        err = nn->load(nn, &model_path, &opt_param);
+        if (err != LIBMAIX_ERR_NONE)
+        {
+            printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+            if (output_buffer)
+            {
+                free(output_buffer);
+            }
+            if (nn)
+            {
+                nn->deinit(nn);
+                printf("--nn destory\n");
+                libmaix_nn_destroy(&nn);
+            }
+            if (cam)
+            {
+                printf("--cam destory\n");
+                libmaix_cam_destroy(&cam);
+            }
+            // if(img)
+            // {
+            //     printf("--image destory\n");
+            //     libmaix_image_destroy(&img);
+            // }
+            if (show)
+            {
+                printf("-- caputer destory\n");
+                libmaix_image_destroy(&show);
+            }
+            printf("--image module deinit\n");
+            libmaix_nn_module_deinit();
+            libmaix_image_module_deinit();
+            libmaix_camera_module_deinit();
+            return 0;
+        }
     }
-    printf("-- nn object init\n");
-    err = nn->init(nn);
-    if (err != LIBMAIX_ERR_NONE)
+    else if (strcmp (ini_info.model_type ,"aipu") == 0)
     {
-        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
-        goto end;
+        libmaix_nn_model_path_t model_path = {
+            .aipu.model_path = ini_info.bin_path,
+        };
+        libmaix_nn_opt_param_t opt_param = {
+            .aipu.input_names  =  ini_info.inputs,
+            .aipu.output_names = ini_info.outpus,
+            .aipu.input_num = ini_info.input_num,
+            .aipu.output_num = ini_info.output_num,
+            .aipu.mean = * ini_info.mean[0],
+            .aipu.norm = * ini_info.norm[0],
+            .aipu.scale =  *ini_info.ouputs_scale,
+        };
+        //create nn  object
+        printf("-- nn create\n");
+        nn = libmaix_nn_create();
+        if (!nn)
+        {
+            printf("libmaix_nn object create fail\n");
+            if (output_buffer)
+            {
+                free(output_buffer);
+            }
+            if (nn)
+            {
+                nn->deinit(nn);
+                printf("--nn destory\n");
+                libmaix_nn_destroy(&nn);
+            }
+            if (cam)
+            {
+                printf("--cam destory\n");
+                libmaix_cam_destroy(&cam);
+            }
+            // if(img)
+            // {
+            //     printf("--image destory\n");
+            //     libmaix_image_destroy(&img);
+            // }
+            if (show)
+            {
+                printf("-- caputer destory\n");
+                libmaix_image_destroy(&show);
+            }
+            printf("--image module deinit\n");
+            libmaix_nn_module_deinit();
+            libmaix_image_module_deinit();
+            libmaix_camera_module_deinit();
+            return 0;
+        }
+        printf("-- nn object init\n");
+        err = nn->init(nn);
+        if (err != LIBMAIX_ERR_NONE)
+        {
+            printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+            if (output_buffer)
+            {
+                free(output_buffer);
+            }
+            if (nn)
+            {
+                nn->deinit(nn);
+                printf("--nn destory\n");
+                libmaix_nn_destroy(&nn);
+            }
+            if (cam)
+            {
+                printf("--cam destory\n");
+                libmaix_cam_destroy(&cam);
+            }
+            // if(img)
+            // {
+            //     printf("--image destory\n");
+            //     libmaix_image_destroy(&img);
+            // }
+            if (show)
+            {
+                printf("-- caputer destory\n");
+                libmaix_image_destroy(&show);
+            }
+            printf("--image module deinit\n");
+            libmaix_nn_module_deinit();
+            libmaix_image_module_deinit();
+            libmaix_camera_module_deinit();
+            return  0;
+        }
+
+        printf("-- nn object load model\n");
+
+        err = nn->load(nn, &model_path, &opt_param);
+        if (err != LIBMAIX_ERR_NONE)
+        {
+            printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+            if (output_buffer)
+            {
+                free(output_buffer);
+            }
+            if (nn)
+            {
+                nn->deinit(nn);
+                printf("--nn destory\n");
+                libmaix_nn_destroy(&nn);
+            }
+            if (cam)
+            {
+                printf("--cam destory\n");
+                libmaix_cam_destroy(&cam);
+            }
+            // if(img)
+            // {
+            //     printf("--image destory\n");
+            //     libmaix_image_destroy(&img);
+            // }
+            if (show)
+            {
+                printf("-- caputer destory\n");
+                libmaix_image_destroy(&show);
+            }
+            printf("--image module deinit\n");
+            libmaix_nn_module_deinit();
+            libmaix_image_module_deinit();
+            libmaix_camera_module_deinit();
+            return 0;
+        }
+    }
+    else{
+        printf("this type model is not support \n");
+        if (output_buffer)
+        {
+            free(output_buffer);
+        }
+        if (nn)
+        {
+            nn->deinit(nn);
+            printf("--nn destory\n");
+            libmaix_nn_destroy(&nn);
+        }
+        if (cam)
+        {
+            printf("--cam destory\n");
+            libmaix_cam_destroy(&cam);
+        }
+        if (show)
+        {
+            printf("-- caputer destory\n");
+            libmaix_image_destroy(&show);
+        }
+        printf("--image module deinit\n");
+        libmaix_nn_module_deinit();
+        libmaix_image_module_deinit();
+        libmaix_camera_module_deinit();
+        return 0;
     }
 
-    printf("-- nn object load model\n");
-    err = nn->load(nn, &model_path, &opt_param);
-    if (err != LIBMAIX_ERR_NONE)
+    // start loop
+    while (true)
     {
-        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
-        goto end;
-    }
-
-    while (1)
-    {
-        // CALC_TIME_START();
-
-        err = cam->capture_image(cam, &img);
-        err = libmaix_cv_image_resize(img, 240, 240, &show);
-        disp->draw_image(disp, show);
+         err = cam->capture_image(cam, &img);
+         err = libmaix_cv_image_resize(img, 240, 240, &show);
+         disp->draw_image(disp, show);
         if (err != LIBMAIX_ERR_NONE)
         {
             // not ready， sleep to release CPU
@@ -205,9 +574,7 @@ void nn_test(struct libmaix_disp *disp)
             }
         }
         input.data = (uint8_t *)img->data;
-        CALC_TIME_START();
         err = nn->forward(nn, &input, &out_fmap);
-
         if (err != LIBMAIX_ERR_NONE)
         {
             printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(err));
@@ -226,53 +593,7 @@ void nn_test(struct libmaix_disp *disp)
             }
         }
         printf("%f::%s \n", max_p, labels[max_idx]);
-        printf("____________\n")
-        CALC_TIME_END("maix nn forward");
-
-        CALC_TIME_START();
-        // printf("--convert test end\n");
-        // libmaix_image_color_t color ={
-        //     .rgb888.r = 255,
-        //     .rgb888.g = 0,
-        //     .rgb888.b = 0
-        // };
-        // char temp_str[100];
-        // snprintf(temp_str, 100, "%f, %s", max_p, labels[max_idx]);
-        // rgb_img->draw_string(rgb_img, temp_str, 4, 4, 16, color, NULL);
-        // disp->draw(disp, rgb_img->data);
-        // CALC_TIME_END("display");
     }
-
-end:
-    if (output_buffer)
-    {
-        free(output_buffer);
-    }
-    if (nn)
-    {
-        nn->deinit(nn);
-        printf("--nn destory\n");
-        libmaix_nn_destroy(&nn);
-    }
-    if (cam)
-    {
-        printf("--cam destory\n");
-        libmaix_cam_destroy(&cam);
-    }
-    // if(img)
-    // {
-    //     printf("--image destory\n");
-    //     libmaix_image_destroy(&img);
-    // }
-    if (show)
-    {
-        printf("-- caputer destory\n");
-        libmaix_image_destroy(&show);
-    }
-    printf("--image module deinit\n");
-    libmaix_nn_module_deinit();
-    libmaix_image_module_deinit();
-    libmaix_camera_module_deinit();
 }
 
 int main(int argc, char *argv[])

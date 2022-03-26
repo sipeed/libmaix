@@ -26,7 +26,8 @@ libmaix_err_t libmaix_cv_image_draw_circle(libmaix_image_t *src, int x, int y, i
 libmaix_err_t libmaix_cv_image_draw_rectangle(libmaix_image_t *src, int x1, int y1, int x2, int y2, libmaix_image_color_t color, int thickness);
 libmaix_err_t libmaix_cv_image_draw_line(libmaix_image_t *src, int x1, int y1, int x2, int y2, libmaix_image_color_t color, int thickness);
 
-libmaix_err_t libmaix_cv_image_load_freetype(const char *path);
+libmaix_err_t libmaix_cv_image_load_freetype(const char *path, int fontHeight);
+libmaix_err_t libmaix_cv_image_free_freetype();
 void libmaix_cv_image_get_string_size(int *width, int *height, const char *str, double scale, int thickness);
 libmaix_err_t libmaix_cv_image_draw_string(libmaix_image_t *src, int x, int y, const char *str, double scale, libmaix_image_color_t color, int thickness);
 

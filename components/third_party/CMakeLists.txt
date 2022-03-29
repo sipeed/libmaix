@@ -1,6 +1,6 @@
 if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
 
-    list(APPEND ADD_INCLUDE "./")
+    list(APPEND ADD_INCLUDE "./include/")
 
     list(APPEND ADD_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
     add_definitions(-DIMLIB_CONFIG_H_FILE="costom_imlib_config.h")
@@ -72,23 +72,23 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
 
     if(CONFIG_IMLIB_ENABLE)
         list(APPEND ADD_INCLUDE
+                "imlib/include"
+            )
+        list(APPEND ADD_SRCS
+                ${APRILTAG_SRCS}
+            )
+        list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag.c")
+    endif()
+
+    if(CONFIG_APRILTAG_ENABLE)
+        list(APPEND ADD_INCLUDE
                 "apriltag/common"
                 "apriltag"
             )
         list(APPEND ADD_SRCS
                 ${IMLIB_SRCS}
             )
-        list(REMOVE_ITEM ADD_SRCS "imlib/src/apriltag.c")
-        # list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag.c")
-    endif()
-
-    if(CONFIG_APRILTAG_ENABLE)
-        list(APPEND ADD_INCLUDE
-                "imlib/include"
-            )
-        list(APPEND ADD_SRCS
-                ${APRILTAG_SRCS}
-            )
+        # list(REMOVE_ITEM ADD_SRCS "imlib/src/apriltag.c")
         list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag_pywrap.c")
     endif()
 

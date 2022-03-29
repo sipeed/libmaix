@@ -107,6 +107,12 @@ python3 project.py menuconfig
 
 然后在 menuconfig 勾选 R329 平台的动态链接库 (Target chip configuration  ---> Chip architecture (compile for arch R329)  ---> (X) compile for arch R329)
 
+## Desktop
+
+python3 project.py --toolchain /usr/bin --toolchain-prefix x86_64-linux-gnu- config
+
+和 R329 同理，改成 desktop 就行。
+
 ## V83x
 
 python3 project.py --toolchain /opt/toolchain-sunxi-musl/toolchain/bin/ --toolchain-prefix arm-openwrt-linux-muslgnueabi- config

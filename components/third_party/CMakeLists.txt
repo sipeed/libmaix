@@ -75,7 +75,7 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
                 "imlib/include"
             )
         list(APPEND ADD_SRCS
-                ${APRILTAG_SRCS}
+                ${IMLIB_SRCS}
             )
         list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag.c")
     endif()
@@ -86,7 +86,7 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
                 "apriltag"
             )
         list(APPEND ADD_SRCS
-                ${IMLIB_SRCS}
+                ${APRILTAG_SRCS}
             )
         # list(REMOVE_ITEM ADD_SRCS "imlib/src/apriltag.c")
         list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag_pywrap.c")

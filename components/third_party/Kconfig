@@ -1,6 +1,6 @@
 config COMPONENT_3RD_PARTY_ENABLE
 	bool "Enable 3rd party component, include lvgl,cjson,libjpeg"
-	default n
+	default y
 
 menu "3rd party configuration"
 	depends on COMPONENT_3RD_PARTY_ENABLE

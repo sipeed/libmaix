@@ -5,11 +5,6 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
     list(APPEND ADD_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
     add_definitions(-DIMLIB_CONFIG_H_FILE="costom_imlib_config.h")
 
-    aux_source_directory("mfcc-with-vad/main"   MFCC_SRCS)
-    aux_source_directory("mfcc-with-vad/src"   MFCC_SRCS)
-    aux_source_directory("mfcc-with-vad/src/vad"   MFCC_SRCS)
-    aux_source_directory("mfcc-with-vad/src/signal_processing"   MFCC_SRCS)
-
     aux_source_directory("apriltag/common"  APRILTAG_SRCS)
     aux_source_directory("apriltag"  APRILTAG_SRCS)
 
@@ -90,16 +85,6 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
             )
         # list(REMOVE_ITEM ADD_SRCS "imlib/src/apriltag.c")
         list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag_pywrap.c")
-    endif()
-
-    if(CONFIG_MFCC_ENABLE)
-        list(APPEND ADD_INCLUDE
-                "mfcc-with-vad"
-                "mfcc-with-vad/include"
-            )
-        list(APPEND ADD_SRCS
-                ${MFCC_SRCS}
-            )
     endif()
 
     list(APPEND ADD_DEFINITIONS -fPIC) # for dynamic libs

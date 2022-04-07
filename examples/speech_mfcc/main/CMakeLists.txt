@@ -13,7 +13,7 @@ append_srcs_dir(ADD_SRCS "src")
 ###############################################
 
 ###### Add required/dependent components ######
-list(APPEND ADD_REQUIREMENTS third_party maix_cv_image libmaix)
+list(APPEND ADD_REQUIREMENTS maix_speech maix_cv_image libmaix)
 ###############################################
 
 ############ Add static libs ##################

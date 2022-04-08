@@ -108,16 +108,17 @@ void nn_test(struct libmaix_disp* disp)
     libmaix_err_t err = LIBMAIX_ERR_NONE;
     uint32_t res_w = 224, res_h = 224;
 
-    char* labels[] = {"person"};
-    int class_num = 1;
-    float anchors [10] =  {4.72, 6.26, 1.39, 3.53, 0.78, 1.9, 0.35, 0.95, 2.49, 4.87};
-    char * mdsc_path = "/root/mdsc/r329_yolo_person.mdsc";
+    char* labels[] = {"aeroplane","bicycle","bird","boat","bottle","bus","car","cat","chair","cow","diningtable","dog","horse","motorbike","person","pottedplant","sheep","sofa","train","tvmonitor"};
+    int class_num = 20;
+    float anchors[10] = {0.4165, 0.693 , 0.9765, 1.6065, 1.5855, 3.122 , 2.821 , 1.8515,3.612 , 3.7275};
+
+    char * mdsc_path = "/root/mdsc/r329_yolo_voc.mdsc";
 
 
     uint8_t anchor_len = sizeof(anchors) / sizeof(float) / 2; //five anchors
     libmaix_nn_decoder_yolo2_config_t yolo2_config = {
         .classes_num     = class_num,
-        .threshold       = 0.5,   //Confidence level
+        .threshold       = 0.2,   //Confidence level
         .nms_value       = 0.3,
         .anchors_num     = 5,
         .anchors         = anchors,

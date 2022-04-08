@@ -86,7 +86,7 @@ libmaix_err_t vi_priv_capture_image(struct libmaix_cam *cam, struct libmaix_imag
               if (priv->vi_w == priv->vcap->capW) {
                 dst(cv::Rect(priv->vi_x, priv->vi_y, priv->vi_w, priv->vi_h)).copyTo(tmp);
               } else {
-                cv::resize(dst, tmp, tmp.size(), 0, 0, cv::INTER_NEAREST);
+                cv::resize(dst, tmp, tmp.size(), 0, 0, cv::INTER_LINEAR);
               }
               // cv::imwrite("tmp.jpg", tmp);
               // printf("[vi_priv_capture] %d %d %d %d\r\n", t.cols, t.rows, priv->vcap->capW, priv->vcap->capH);

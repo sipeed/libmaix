@@ -1,6 +1,6 @@
 #ifndef __INI_H__
 #define __INI_H__
-
+#include "libmaix_nn.h"
 #define INI_VERSION "0.1.1"
 #define MAX_LEN 5
 typedef struct ini_info
@@ -31,4 +31,5 @@ void set_inputs_scale(float * values , ini_info_t * ini_info);
 void set_outputs_scale(float * values , ini_info_t * ini_info);
 int get_section(FILE * fp , char *title , ini_info_t * ini_info);
 ini_info_t read_file (char * mdsc_path);
+libmaix_nn_t* load_mdsc(char * path);
 #endif

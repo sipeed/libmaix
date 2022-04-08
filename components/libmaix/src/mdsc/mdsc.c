@@ -3,6 +3,8 @@
 #include <string.h>
 #include <malloc.h>
 #include "mdsc.h"
+#include "libmaix_nn.h"
+
 #define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 FILE *load_file(char *filename)
 {
@@ -396,6 +398,10 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
 ini_info_t read_file (char * mdsc_path)
 {
     FILE *fp = load_file(mdsc_path);
+    if(fp == NULL)
+    {
+        printf("open %s is faild\n",mdsc_path);
+    }
     ini_info_t ini_info;
     get_section(fp , "basic", &ini_info);
     get_section(fp, "inputs", &ini_info);
@@ -450,3 +456,95 @@ ini_info_t read_file (char * mdsc_path)
 //     printf("____________________\n");
 
 // }
+
+libmaix_nn_t* load_mdsc(char * path )
+{
+    ini_info_t  ini_info = read_file(path);
+    int res_h = ini_info.inputs_shape[0][0];
+    int res_w = ini_info.inputs_shape[0][1];
+    int res_c = ini_info.inputs_shape[0][2];
+    int input_w = res_w, input_h = res_h ,input_c = res_c;
+    printf("input_w :%d   , input_h :%d \n",input_w , input_h);
+    printf("- -init");
+    libmaix_nn_model_path_t model_path;
+    libmaix_nn_opt_param_t opt_param;
+    libmaix_nn_t* nn = NULL;
+    libmaix_err_t err =LIBMAIX_ERR_NONE;
+
+    if(strcmp(ini_info.model_type , "aipu") == 0)
+    {
+        printf("r329\n");
+        if(strlen(ini_info.bin_path) == 0)
+        {
+            printf("this path is empty ! \n");
+        }
+        //path
+        model_path.aipu.model_path = ini_info.bin_path;
+        // opt
+        opt_param.aipu.input_names = ini_info.inputs;
+        opt_param.aipu.output_names = ini_info.outpus;
+        opt_param.aipu.input_num = ini_info.input_num;
+        opt_param.aipu.output_num = ini_info.output_num;
+        for(int i=0 ; i !=3 ; i++ )
+        {
+            opt_param.aipu.mean[i] = ini_info.mean[0][i];
+            opt_param.aipu.norm[i] = ini_info.norm[0][i];
+        }
+        for (int i =0 ; i != ini_info.output_num ; i++)
+        {
+            opt_param.aipu.scale[i] = ini_info.ouputs_scale[i];
+        }
+
+    }
+    else if (strcmp(ini_info.model_type , "awnn") == 0)
+    {
+        printf("r831\n");
+        if(strlen(ini_info.bin_path) == 0  ||  strlen(ini_info.param_path)==0)
+        {
+            printf("this path is empty ! \n");
+
+        }
+        //path
+        model_path.awnn.bin_path = ini_info.bin_path;
+        model_path.awnn.param_path = ini_info.param_path;
+        //opt
+        opt_param.awnn.input_names = ini_info.inputs;
+        opt_param.awnn.output_names = ini_info.outpus;
+        opt_param.awnn.input_num = ini_info.input_num;
+        opt_param.awnn.output_num = ini_info.output_num;
+        opt_param.awnn.encrypt = false;
+        for(int i=0 ; i !=3 ; i++ )
+        {
+            opt_param.awnn.mean[i] = ini_info.mean[0][i];
+            opt_param.awnn.norm[i] = ini_info.norm[0][i];
+        }
+        for (int i =0 ; i != 3 ; i++)
+        {
+            printf("mean%d : %f \n", i , opt_param.aipu.mean[i]);
+            printf("norm%d : %f \n", i , opt_param.aipu.norm[i]);
+        }
+    }
+    else
+    {
+        printf("this type value is empty or the type is unsupport !\n");
+    }
+
+    // nn create
+    nn = libmaix_nn_create();
+    if(!nn)
+    {
+        printf("libmaix_nn object create fail\n");
+    }
+    err = nn->init(nn);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+    }
+    printf("-- nn object load model\n");
+    err = nn->load(nn, &model_path, &opt_param);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+    }
+    return nn;
+}

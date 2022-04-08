@@ -3,3 +3,12 @@ config COMPONENT_LIBMS_ENABLE
     default n
     help
         Select this option to enable use libms base on Maix-Speech.
+menu "component libms configuration"
+	depends on COMPONENT_LIBMS_ENABLE
+	config ASR_ENABLE
+		bool "enable asr"
+		default y
+	config MFCC_ENABLE
+		bool "enable mfcc-with-vad"
+		default y
+endmenu

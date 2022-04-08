@@ -13,9 +13,6 @@ menu "3rd party configuration"
 	config IMLIB_ENABLE
 		bool "enable imlib"
 		default y
-	config MFCC_ENABLE
-		bool "enable mfcc-with-vad"
-		default y
 	config APRILTAG_ENABLE
 		bool "enable apriltag"
 		default y

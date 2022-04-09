@@ -377,258 +377,269 @@ extern "C"
 		}
 	}
 
-	void _dls_mfcc_event(dls_mfcc *self)
+	void dls_mfcc_event(dls_mfcc *self)
 	{
+		if (self->state == dls_state_destroy) return ;
 
 		struct _dls_mfcc_event_frame
 		{
 			uint8_t frame[BLOCKSIZE];
 		};
 
-		std::list<_dls_mfcc_event_frame> _mfcc_frames;
+		static std::list<_dls_mfcc_event_frame> _mfcc_frames;
 
-		bool is_save = false;
+		static bool is_save = false;
 
-		while (self->state != dls_state_destroy)
+		switch (self->state)
 		{
-			usleep(10000); // 10ms
-			switch (self->state)
+			case dls_state_save:
+				is_save = true;
+				self->state = dls_state_init;
+				break;
+			case dls_state_init:
 			{
-				case dls_state_save:
-					is_save = true;
-					self->state = dls_state_init;
-					break;
-				case dls_state_init:
-				{
-					_mfcc_frames.clear();
-					self->state = dls_state_idle;
-				}
-				case dls_state_idle:
-				{
-					int vadres, prev = -1;
-					long frames[2] = {0, 0};
-					long segments[2] = {0, 0};
-					uint8_t voice[BLOCKSIZE] = {0};
-
-					for (int i = 0; i < 20; i++)
-					{ // 20 * 30 ms = 600ms check noise
-						int r = snd_pcm_readi(self->handle, voice, FRAMES_IN_BLOCK);
-						if (r < 0)
-						{
-							// fprintf(stderr, "WARNUNG: snd_pcm_readi %d\n", r);
-						}
-						else
-						{
-							vadres = fvad_process(self->vad, (const int16_t *)(voice), FRAMES_IN_BLOCK);
-							if (vadres < 0)
-							{
-								// fprintf(stderr, "VAD processing failed\n");
-							}
-							vadres = !!vadres; // make sure it is 0 or 1
-							frames[vadres]++;
-							if (prev != vadres)
-								segments[vadres]++;
-							prev = vadres;
-						}
-					}
-
-					if (frames[1] < 5)
-					{
-						self->state = dls_state_ready;
-						_mfcc_frames.clear();
-						// fprintf(stderr, "dls_state_ready\n");
-					}
-
-					// printf("1 voice detected in %ld of %ld frames (%.2f%%)\n",
-					// 	frames[1], frames[0] + frames[1],
-					// 	frames[0] + frames[1] ?
-					// 		100.0 * ((double)frames[1] / (frames[0] + frames[1])) : 0.0);
-
-					break;
-				}
-				case dls_state_ready:
-				{
-					int vadres, prev = -1;
-					long frames[2] = {0, 0};
-					long segments[2] = {0, 0};
-					for (int i = 0; i < 20; i++)
-					{ // 20 * 30 ms = 600ms check voice
-						_dls_mfcc_event_frame tmp;
-						int r = snd_pcm_readi(self->handle, tmp.frame, FRAMES_IN_BLOCK);
-						if (r < 0)
-						{
-							// fprintf(stderr, "WARNUNG: snd_pcm_readi %d\n", r);
-						}
-						else
-						{
-							vadres = fvad_process(self->vad, (const int16_t *)(tmp.frame), FRAMES_IN_BLOCK);
-							if (vadres < 0)
-							{
-								// fprintf(stderr, "VAD processing failed\n");
-							}
-							vadres = !!vadres; // make sure it is 0 or 1
-							frames[vadres]++;
-							if (prev != vadres)
-								segments[vadres]++;
-							prev = vadres;
-							_mfcc_frames.push_back(tmp);
-						}
-					}
-
-					if (frames[1] > 10)
-					{ // have voice
-						self->state = dls_state_work;
-						// fprintf(stderr, "dls_state_work\n");
-					}
-					else
-					{
-						if (_mfcc_frames.size() >= 20)
-						{ // 600ms no-voice to clear
-							_mfcc_frames.clear();
-							self->state = dls_state_ready;
-						}
-					}
-
-					// printf("2 voice detected in %ld of %ld frames (%.2f%%)\n",
-					// 	frames[1], frames[0] + frames[1],
-					// 	frames[0] + frames[1] ?
-					// 		100.0 * ((double)frames[1] / (frames[0] + frames[1])) : 0.0);
-
-					break;
-				}
-				case dls_state_work:
-				{
-					int vadres, prev = -1;
-					long frames[2] = {0, 0};
-					long segments[2] = {0, 0};
-					for (int i = 0; i < 30; i++)
-					{ // 30 * 30 ms = 600ms check voice to stop
-						_dls_mfcc_event_frame tmp;
-						int r = snd_pcm_readi(self->handle, tmp.frame, FRAMES_IN_BLOCK);
-						if (r < 0)
-						{
-							// fprintf(stderr, "WARNUNG: snd_pcm_readi %d\n", r);
-						}
-						else
-						{
-							vadres = fvad_process(self->vad, (const int16_t *)(tmp.frame), FRAMES_IN_BLOCK);
-							if (vadres < 0)
-							{
-								// fprintf(stderr, "VAD processing failed\n");
-							}
-							vadres = !!vadres; // make sure it is 0 or 1
-							frames[vadres]++;
-							if (prev != vadres)
-								segments[vadres]++;
-							prev = vadres;
-							_mfcc_frames.push_back(tmp);
-						}
-					}
-					if (frames[1] < 10)
-					{ // no voice
-						self->state = dls_state_finish;
-						// fprintf(stderr, "dls_state_finish\n");
-					}
-					else
-					{
-						if (_mfcc_frames.size() > 150)
-						{ // mfcc voice max 5 * 600ms 3000ms
-							self->state = dls_state_init;
-						}
-					}
-
-					// printf("3 voice detected in %ld of %ld frames (%.2f%%)\n",
-					//     frames[1], frames[0] + frames[1],
-					//     frames[0] + frames[1] ?
-					//         100.0 * ((double)frames[1] / (frames[0] + frames[1])) : 0.0);
-
-					break;
-				}
-				case dls_state_finish:
-				{
-					const unsigned int size = BLOCKSIZE * _mfcc_frames.size();
-					int16_t *buffer = (int16_t *)malloc(size);
-					uint32_t buflen = ((int)(((size) / N)) * N) / 2; // uint8_t-> int16_t
-					// printf("size %d buflen %d\r\n", size, buflen);
-					if (buffer)
-					{
-						uint8_t *tmp = (uint8_t *)buffer;
-						for (auto it = _mfcc_frames.begin(); it != _mfcc_frames.end(); ++it)
-						{
-							memcpy(tmp, it->frame, BLOCKSIZE), tmp += BLOCKSIZE;
-						}
-						self->frames = NULL;
-						self->mfcc_frames = NULL;
-						self->frame_n = _make_frames_hamming(buffer, buflen, &self->frames);
-						self->mfcc_frames = (mfcc_frame *)malloc(sizeof(mfcc_frame) * self->frame_n);
-						if (self->mfcc_frames)
-						{
-							_mfcc_features(self->frames, self->frame_n, self->mfcc_frames);
-							// printf("frames %p mfcc_frames %p frame_n %d words %p words_size %d\r\n", self->frames, self->mfcc_frames, self->frame_n, self->words, self->words_size);
-							if (is_save)
-							{
-								{
-									char *path = "/tmp/replay.wav";
-									FILE *file = NULL;
-									//Dateideskriptor zuweisen
-									if (path != NULL) {
-										file = fopen(path, "w");
-										if (file != NULL) {
-											const unsigned int size = BLOCKSIZE * _mfcc_frames.size();
-											//Header vorbereiten
-											prepare_header(size + 44);
-											//Schreiben
-											fwrite(header, 44, 1, file);
-											for (auto it = _mfcc_frames.begin(); it != _mfcc_frames.end(); ++it) {
-												fwrite(it->frame, BLOCKSIZE, 1, file);
-											}
-											fclose(file);
-											system("aplay /tmp/replay.wav");
-										}
-									}
-								}
-								is_save = false;
-								new_word(self->mfcc_frames, self->frame_n, self->frame_id);
-								dls_mfcc_load(self);
-							}
-							else
-							{
-								if (self->words && self->words_size != 0)
-								{
-									double best = self->frame_min;
-									int id = -1;
-									for (word *words = self->words; words != NULL; words = words->next)
-									{
-										double now = compare(self->mfcc_frames, self->frame_n, words->frames, words->n);
-										printf("words %p id %d now %f best %f (%f, %f)\r\n", words, words->id, now, best, self->frame_min, self->frame_max), fflush(NULL);
-										if (now < best)
-											best = now, id = words->id;
-									}
-									if (best < self->frame_max)
-									{
-										self->frame_id = id;
-										printf("maybe is %d %f \r\n", id, best), fflush(NULL);
-									}
-								}
-							}
-							self->state = dls_state_result;
-							free(self->mfcc_frames);
-						}
-						free(self->frames);
-						free(buffer);
-					}
-					break;
-				}
-				case dls_state_error:
-					break;
-				case dls_state_destroy:
-					break;
+				_mfcc_frames.clear();
+				self->state = dls_state_idle;
 			}
+			case dls_state_idle:
+			{
+				int vadres, prev = -1;
+				long frames[2] = {0, 0};
+				long segments[2] = {0, 0};
+				uint8_t voice[BLOCKSIZE] = {0};
+
+				for (int i = 0; i < 20; i++)
+				{ // 20 * 30 ms = 600ms check noise
+					int r = snd_pcm_readi(self->handle, voice, FRAMES_IN_BLOCK);
+					if (r < 0)
+					{
+						// fprintf(stderr, "WARNUNG: snd_pcm_readi %d\n", r);
+					}
+					else
+					{
+						vadres = fvad_process(self->vad, (const int16_t *)(voice), FRAMES_IN_BLOCK);
+						if (vadres < 0)
+						{
+							// fprintf(stderr, "VAD processing failed\n");
+						}
+						vadres = !!vadres; // make sure it is 0 or 1
+						frames[vadres]++;
+						if (prev != vadres)
+							segments[vadres]++;
+						prev = vadres;
+					}
+				}
+
+				if (frames[1] < 5)
+				{
+					self->state = dls_state_ready;
+					_mfcc_frames.clear();
+					// fprintf(stderr, "dls_state_ready\n");
+				}
+
+				// printf("1 voice detected in %ld of %ld frames (%.2f%%)\n",
+				// 	frames[1], frames[0] + frames[1],
+				// 	frames[0] + frames[1] ?
+				// 		100.0 * ((double)frames[1] / (frames[0] + frames[1])) : 0.0);
+
+				break;
+			}
+			case dls_state_ready:
+			{
+				int vadres, prev = -1;
+				long frames[2] = {0, 0};
+				long segments[2] = {0, 0};
+				for (int i = 0; i < 20; i++)
+				{ // 20 * 30 ms = 600ms check voice
+					_dls_mfcc_event_frame tmp;
+					int r = snd_pcm_readi(self->handle, tmp.frame, FRAMES_IN_BLOCK);
+					if (r < 0)
+					{
+						// fprintf(stderr, "WARNUNG: snd_pcm_readi %d\n", r);
+					}
+					else
+					{
+						vadres = fvad_process(self->vad, (const int16_t *)(tmp.frame), FRAMES_IN_BLOCK);
+						if (vadres < 0)
+						{
+							// fprintf(stderr, "VAD processing failed\n");
+						}
+						vadres = !!vadres; // make sure it is 0 or 1
+						frames[vadres]++;
+						if (prev != vadres)
+							segments[vadres]++;
+						prev = vadres;
+						_mfcc_frames.push_back(tmp);
+					}
+				}
+
+				if (frames[1] > 10)
+				{ // have voice
+					self->state = dls_state_work;
+					// fprintf(stderr, "dls_state_work\n");
+				}
+				else
+				{
+					if (_mfcc_frames.size() >= 20)
+					{ // 600ms no-voice to clear
+						_mfcc_frames.clear();
+						self->state = dls_state_ready;
+					}
+				}
+
+				// printf("2 voice detected in %ld of %ld frames (%.2f%%)\n",
+				// 	frames[1], frames[0] + frames[1],
+				// 	frames[0] + frames[1] ?
+				// 		100.0 * ((double)frames[1] / (frames[0] + frames[1])) : 0.0);
+
+				break;
+			}
+			case dls_state_work:
+			{
+				int vadres, prev = -1;
+				long frames[2] = {0, 0};
+				long segments[2] = {0, 0};
+				for (int i = 0; i < 30; i++)
+				{ // 30 * 30 ms = 600ms check voice to stop
+					_dls_mfcc_event_frame tmp;
+					int r = snd_pcm_readi(self->handle, tmp.frame, FRAMES_IN_BLOCK);
+					if (r < 0)
+					{
+						// fprintf(stderr, "WARNUNG: snd_pcm_readi %d\n", r);
+					}
+					else
+					{
+						vadres = fvad_process(self->vad, (const int16_t *)(tmp.frame), FRAMES_IN_BLOCK);
+						if (vadres < 0)
+						{
+							// fprintf(stderr, "VAD processing failed\n");
+						}
+						vadres = !!vadres; // make sure it is 0 or 1
+						frames[vadres]++;
+						if (prev != vadres)
+							segments[vadres]++;
+						prev = vadres;
+						_mfcc_frames.push_back(tmp);
+					}
+				}
+				if (frames[1] < 10)
+				{ // no voice
+					self->state = dls_state_finish;
+					// fprintf(stderr, "dls_state_finish\n");
+				}
+				else
+				{
+					if (_mfcc_frames.size() > 150)
+					{ // mfcc voice max 5 * 600ms 3000ms
+						self->state = dls_state_init;
+					}
+				}
+
+				// printf("3 voice detected in %ld of %ld frames (%.2f%%)\n",
+				//     frames[1], frames[0] + frames[1],
+				//     frames[0] + frames[1] ?
+				//         100.0 * ((double)frames[1] / (frames[0] + frames[1])) : 0.0);
+
+				break;
+			}
+			case dls_state_finish:
+			{
+				const unsigned int size = BLOCKSIZE * _mfcc_frames.size();
+				int16_t *buffer = (int16_t *)malloc(size);
+				uint32_t buflen = ((int)(((size) / N)) * N) / 2; // uint8_t-> int16_t
+				// printf("size %d buflen %d\r\n", size, buflen);
+				if (buffer)
+				{
+					uint8_t *tmp = (uint8_t *)buffer;
+					for (auto it = _mfcc_frames.begin(); it != _mfcc_frames.end(); ++it)
+					{
+						memcpy(tmp, it->frame, BLOCKSIZE), tmp += BLOCKSIZE;
+					}
+					self->frames = NULL;
+					self->mfcc_frames = NULL;
+					self->frame_n = _make_frames_hamming(buffer, buflen, &self->frames);
+					self->mfcc_frames = (mfcc_frame *)malloc(sizeof(mfcc_frame) * self->frame_n);
+					if (self->mfcc_frames)
+					{
+						_mfcc_features(self->frames, self->frame_n, self->mfcc_frames);
+						// printf("frames %p mfcc_frames %p frame_n %d words %p words_size %d\r\n", self->frames, self->mfcc_frames, self->frame_n, self->words, self->words_size);
+						if (is_save)
+						{
+							{
+								char *path = "/tmp/replay.wav";
+								FILE *file = NULL;
+								//Dateideskriptor zuweisen
+								if (path != NULL) {
+									file = fopen(path, "w");
+									if (file != NULL) {
+										const unsigned int size = BLOCKSIZE * _mfcc_frames.size();
+										//Header vorbereiten
+										prepare_header(size + 44);
+										//Schreiben
+										fwrite(header, 44, 1, file);
+										for (auto it = _mfcc_frames.begin(); it != _mfcc_frames.end(); ++it) {
+											fwrite(it->frame, BLOCKSIZE, 1, file);
+										}
+										fclose(file);
+										system("aplay /tmp/replay.wav");
+									}
+								}
+							}
+							is_save = false;
+							new_word(self->mfcc_frames, self->frame_n, self->frame_id);
+							dls_mfcc_load(self);
+						}
+						else
+						{
+							if (self->words && self->words_size != 0)
+							{
+								double best = self->frame_min;
+								int id = -1;
+								for (word *words = self->words; words != NULL; words = words->next)
+								{
+									double now = compare(self->mfcc_frames, self->frame_n, words->frames, words->n);
+									printf("words %p id %d now %f best %f (%f, %f)\r\n", words, words->id, now, best, self->frame_min, self->frame_max), fflush(NULL);
+									if (now < best)
+										best = now, id = words->id;
+								}
+								if (best < self->frame_max)
+								{
+									self->frame_id = id;
+									printf("maybe is %d %f \r\n", id, best), fflush(NULL);
+								}
+							}
+						}
+						self->state = dls_state_result;
+						free(self->mfcc_frames);
+					}
+					free(self->frames);
+					free(buffer);
+				}
+				break;
+			}
+			case dls_state_result:
+			case dls_state_error:
+			case dls_state_destroy:
+				break;
 		}
 	}
 
-	int dls_mfcc_init(dls_mfcc *self, const char *device, float min, float max)
+	void _dls_mfcc_event(dls_mfcc *self)
 	{
+		while (self->state != dls_state_destroy)
+		{
+			usleep(10000); // 10ms
+			dls_mfcc_event(self);
+		}
+	}
+
+	dls_mfcc *dls_mfcc_init(const char *device, float min, float max)
+	{
+		dls_mfcc *self = (dls_mfcc *)malloc(sizeof(dls_mfcc));
+		if (!self) return NULL;
+
+		memset(self, 0, sizeof(*self));
+
 		self->frame_min = min, self->frame_max = max;
 
 		unsigned int sample_rate = WAVE_SAMPLE_RATE;
@@ -639,46 +650,46 @@ extern "C"
 		if (snd_pcm_open(&self->handle, !device ? "default" : device, SND_PCM_STREAM_CAPTURE, 0) < 0)
 		{
 			fprintf(stderr, "Konnte Geraet %s nicht oeffnen\n", !device ? "default" : device);
-			return -1;
+			return NULL;
 		}
 		// Speicher fuer Hardware-Parameter reservieren
 		if (snd_pcm_hw_params_malloc(&hw_params) < 0)
 		{
 			fprintf(stderr, "Fehler beim Reservieren von Speicher fuer die Hardware-Parameter\n");
-			return -2;
+			return NULL;
 		}
 		// Standard Hardware-Parameter erfragen
 		if (snd_pcm_hw_params_any(self->handle, hw_params) < 0)
 		{
 			fprintf(stderr, "Fehler beim Holen der Standard-Hardware-Parameter\n");
-			return -3;
+			return NULL;
 		}
 		// Setzen der Hardware-Parameter innerhalb der Struktur
 		if (snd_pcm_hw_params_set_access(self->handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED) < 0)
 		{
 			fprintf(stderr, "Fehler beim Setzen des Lese-\\Schreibe-Zugriffs\n");
-			return -4;
+			return NULL;
 		}
 		if (snd_pcm_hw_params_set_format(self->handle, hw_params, SND_PCM_FORMAT_S16_LE) < 0)
 		{
 			fprintf(stderr, "Fehler beim Setzen des PCM-Formates\n");
-			return -5;
+			return NULL;
 		}
 		if (snd_pcm_hw_params_set_rate_near(self->handle, hw_params, &sample_rate, 0) < 0)
 		{
 			fprintf(stderr, "Fehler beim Setzen der Frequenz\n");
-			return -6;
+			return NULL;
 		}
 		if (snd_pcm_hw_params_set_channels(self->handle, hw_params, 1) < 0)
 		{
 			fprintf(stderr, "Fehler beim Setzen der Anzahl der Kanaele\n");
-			return -7;
+			return NULL;
 		}
 		// Setzen der Hardware-Parameter beim Handle
 		if (snd_pcm_hw_params(self->handle, hw_params) < 0)
 		{
 			fprintf(stderr, "Fehler beim Setzen der Hardwareparameter\n");
-			return -8;
+			return NULL;
 		}
 		// Speicher freigeben
 		snd_pcm_hw_params_free(hw_params);
@@ -686,7 +697,7 @@ extern "C"
 		if (snd_pcm_prepare(self->handle) < 0)
 		{
 			fprintf(stderr, "Fehler beim Vorbereiten des Handles\n");
-			return -9;
+			return NULL;
 		}
 		self->vad = fvad_new();
 		// Set aggressiveness mode
@@ -696,40 +707,42 @@ extern "C"
 			fprintf(stderr, "invalid sample rate: %d Hz\n", sample_rate);
 		}
 
-		pthread_attr_init(&self->tattr);
-		self->stack = malloc(64 * 1024); // 64k for _dls_mfcc_event
-		pthread_attr_setstack(&self->tattr, self->stack, 64 * 1024);
 
-		// Starten des Thread
-		if (pthread_create(&self->_thread, &self->tattr, (void *(*)(void *))_dls_mfcc_event, self) < 0)
-		{
-			return dls_state_error;
-		}
+		// pthread_attr_init(&self->tattr);
+		// self->stack = malloc(64 * 1024); // 64k for _dls_mfcc_event
+		// pthread_attr_setstack(&self->tattr, self->stack, 64 * 1024);
+
+		// // Starten des Thread
+		// if (pthread_create(&self->_thread, &self->tattr, (void *(*)(void *))_dls_mfcc_event, self) < 0)
+		// {
+		// 	return dls_state_error;
+		// }
 
 		dls_mfcc_load(self);
-		return dls_state_init;
+		return self;
 	}
 
-	void dls_mfcc_exit(dls_mfcc *self)
+	void dls_mfcc_exit(dls_mfcc **self)
 	{
-		self->state = dls_state_destroy;
-		pthread_join(self->_thread, NULL);
-		if (self->vad)
-			fvad_free(self->vad);
+		(*self)->state = dls_state_destroy;
+		// pthread_join(self->_thread, NULL);
+		// //
+		// pthread_attr_destroy(&self->tattr);
+		// free(self->stack);
 		// Handle schliessen
-		snd_pcm_close(self->handle);
+		snd_pcm_close((*self)->handle);
+		if ((*self)->vad)
+			fvad_free((*self)->vad);
 		//
-		pthread_attr_destroy(&self->tattr);
-		free(self->stack);
+		dls_mfcc_free(*self);
 		//
-		// dls_mfcc_free(self);
+		if (*self) free(*self), *self = NULL;
 	}
 
 	int unit_test_mfcc()
 	{
-		dls_mfcc mfcc, *self = &mfcc;
-		dls_mfcc_init(self, NULL, 5.0, 3.0);
-		puts("dls_mfcc_init");
+		printf("dls_mfcc_init\r\n");
+		dls_mfcc * self = dls_mfcc_init(NULL, 5.0, 3.0);
 
 		char ans[16];
 		printf("\r\n0 Enter identifier number (0, 1, 2) (x to skip): \r\n"), fflush(NULL);
@@ -742,49 +755,51 @@ extern "C"
 			dls_mfcc_save(self, id);
 			while (1)
 			{
+				dls_mfcc_event(self);
 				if (self->state == dls_state_idle)
 				{
-					puts("0 keep quiet...");
+					printf("0 keep quiet...\r\n");
 				}
 				if (self->state == dls_state_ready)
 				{
-					puts("0 speak, please...");
+					printf("0 speak, please...\r\n");
 				}
 				if (self->state == dls_state_result)
 				{
 					printf("0 save id: %d \r\n", id), fflush(NULL);
 					break;
 				}
-				usleep(300 * 1000); // 100ms
+				usleep(10 * 1000); // 10ms
 			}
 		}
 
 		printf("\r\n1 Enter recognition 3 times \r\n"), fflush(NULL);
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < 1; i++)
 		{
 			printf("1 recognition... \r\n");
 			dls_mfcc_reset(self);
 			while (1)
 			{
+				dls_mfcc_event(self);
 				if (self->state == dls_state_idle)
 				{
-					puts("1 keep quiet...");
+					printf("1 keep quiet...\r\n");
 				}
 				if (self->state == dls_state_ready)
 				{
-					puts("1 speak, please...");
+					printf("1 speak, please...\r\n");
 				}
 				if (self->state == dls_state_result)
 				{
 					printf("1 reco id: %d \r\n", self->frame_id);
 					break;
 				}
-				usleep(300 * 1000); // 100ms
+				usleep(10 * 1000); // 10ms
 			}
 		}
 
-		puts("dls_mfcc_exit");
-		dls_mfcc_exit(self);
+		dls_mfcc_exit(&self);
+		printf("dls_mfcc_exit\r\n");
 
 		return 0;
 	}

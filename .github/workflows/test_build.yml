@@ -61,9 +61,9 @@ jobs:
         python project.py clean
         python project.py distclean
         cd ../..
-    - name: Test nn_yolo2 build
+    - name: Test nn_yolo_20class build
       run: |
-        cd examples/nn_yolo2
+        cd examples/nn_yolo_20class
         python project.py build
         python project.py clean
         python project.py distclean

@@ -13,7 +13,6 @@
 #include "libmaix_nn.h"
 #include "libmaix_nn_decoder_yolo2.h"
 #include "main.h"
-#include "mdsc.h"
 #include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
@@ -108,11 +107,10 @@ void nn_test(struct libmaix_disp* disp)
     libmaix_err_t err = LIBMAIX_ERR_NONE;
     uint32_t res_w = 224, res_h = 224;
 
+
     char* labels[] = {"person"};
     int class_num = 1;
     float anchors [10] =  {4.72, 6.26, 1.39, 3.53, 0.78, 1.9, 0.35, 0.95, 2.49, 4.87};
-    char * mdsc_path = "/root/mdsc/v831_yolo_person.mdsc";
-
 
     uint8_t anchor_len = sizeof(anchors) / sizeof(float) / 2; //five anchors
     libmaix_nn_decoder_yolo2_config_t yolo2_config = {
@@ -193,6 +191,17 @@ void nn_test(struct libmaix_disp* disp)
 
 #endif
 
+    #ifdef CONFIG_ARCH_R329
+    libmaix_nn_model_path_t model_path = {
+        .aipu.model_path = "/root/models/aipu_yolo_person.bin",
+    };
+    #endif
+    #ifdef CONFIG_ARCH_V831
+    libmaix_nn_model_path_t model_path = {
+        .awnn.bin_path = "/root/models/awnn_person.bin",
+        .awnn.param_path ="/root/models/awnn_person.param",
+    };
+    #endif
 
     libmaix_nn_layer_t input = {
         .w = yolo2_config.net_in_width,
@@ -210,6 +219,32 @@ void nn_test(struct libmaix_disp* disp)
         .dtype = LIBMAIX_NN_DTYPE_FLOAT,
         .data = NULL
     };
+    char* inputs_names[] = {"input0"};
+    char* outputs_names[] = {"output0"};
+
+    #ifdef CONFIG_ARCH_R329
+    libmaix_nn_opt_param_t opt_param = {
+        .aipu.input_names             = inputs_names,
+        .aipu.output_names            = outputs_names,
+        .aipu.input_num               = 1,              // len(input_names)
+        .aipu.output_num              = 1,              // len(output_names)
+        .aipu.mean                    = {127, 127, 127},
+        .aipu.norm                    = {0.0078125, 0.0078125, 0.0078125},
+        .aipu.scale                   = {6.56008},    //Only R329 has this option (r0p0 SDK)
+    };
+    #endif
+    #ifdef CONFIG_ARCH_V831
+    libmaix_nn_opt_param_t opt_param = {
+        .awnn.input_names             = inputs_names,
+        .awnn.output_names            = outputs_names,
+        .awnn.input_num               = 1,              // len(input_names)
+        .awnn.output_num              = 1,              // len(output_names)
+        .awnn.mean                    = {127.5, 127.5, 127.5},
+        .awnn.norm                    = {0.0078125, 0.0078125, 0.0078125},
+    };
+    #endif
+
+
     // malloc buffer
     float* output_buffer = (float*)malloc(out_fmap.w * out_fmap.h * out_fmap.c * sizeof(float));
     if(!output_buffer)
@@ -237,7 +272,27 @@ void nn_test(struct libmaix_disp* disp)
     img->mode = LIBMAIX_IMAGE_MODE_RGB888;`
 #endif
     // nn model init
-    nn = load_mdsc(mdsc_path);
+    printf("-- nn create\n");
+    nn = libmaix_nn_create();
+    if(!nn)
+    {
+        printf("libmaix_nn object create fail\n");
+        goto end;
+    }
+    printf("-- nn object init\n");
+    err = nn->init(nn);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
+    printf("-- nn object load model\n");
+    err = nn->load(nn, &model_path, &opt_param);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
     // decoder init
     printf("-- yolo2 decoder create\n");
     yolo2_decoder = libmaix_nn_decoder_yolo2_create();
@@ -280,7 +335,7 @@ void nn_test(struct libmaix_disp* disp)
         }
 
 #endif
-
+        CALC_TIME_START();
         input.data = (uint8_t *)img->data;
         err = nn->forward(nn, &input, &out_fmap);
         if(err != LIBMAIX_ERR_NONE)

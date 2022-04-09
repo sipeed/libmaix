@@ -11,7 +11,7 @@
 #include "stdlib.h"
 #include <string.h>
 #define FNAME_MAX_LEN 4096
-
+#define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
 #ifdef __cplusplus
 extern "C"
@@ -31,7 +31,7 @@ typedef struct obj_config
     const char *status_msg;
 
     libmaix_nn_opt_param_t * opt;
-    
+
 } obj_config_t;
 
 libmaix_err_t libmaix_nn_obj_init(struct libmaix_nn *obj)
@@ -72,7 +72,7 @@ libmaix_err_t libmaix_nn_obj_deinit(struct libmaix_nn *obj)
     if ( ((obj_config_t *)(obj->_config))->status != LIBMAIX_ERR_NONE)
     {
         return LIBMAIX_ERR_NOT_IMPLEMENT;
-    }   
+    }
     else
     {
         // aipu_ctx_handle_t *ctx  = ((obj_config_t *)(obj->_config))->ctx;
@@ -100,7 +100,7 @@ libmaix_err_t libmaix_nn_obj_load(struct libmaix_nn *obj, const libmaix_nn_model
     libmaix_err_t *status = &(((obj_config_t *)(obj->_config))->status);
     aipu_graph_desc_t *gdesc_ptr = &(((obj_config_t *)(obj->_config))->gdesc);
     aipu_buffer_alloc_info_t * buffer_ptr =  &(((obj_config_t *)(obj->_config))->buffer);
-    
+
     aipu_ctx_handle_t ** ctx = &(((obj_config_t *)(obj->_config))->ctx);
     const char ** status_msg = &(((obj_config_t *)(obj->_config))->status_msg);
 
@@ -124,7 +124,7 @@ libmaix_err_t libmaix_nn_obj_load(struct libmaix_nn *obj, const libmaix_nn_model
         AIPU_get_status_msg(ret, status_msg);
         printf("[libmaix_nn ]  -- load_graph_error\n");
         fprintf(stderr, "[TEST ERROR] AIPU_load_graph_helper: %s\n",*status_msg);
-        
+
         ret = AIPU_deinit_ctx(*ctx);
         if (ret != AIPU_STATUS_SUCCESS)
          {
@@ -185,58 +185,73 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     int model_inh = gdesc_ptr->inputs.desc[0].fmt.shape.H;
     int model_inch = gdesc_ptr->inputs.desc[0].fmt.shape.C;
     // printf("[libmaix_nn]--   Model input:  W=%3d, H=%3d, C =%d, size=%d\r\n", model_inw, model_inh, model_inch, (*buffer_ptr).inputs.tensors[0].size);
-
+    int size = inputs->h * inputs->w;
+    uint8_t R = ((obj_config_t *)(obj->_config))->opt->aipu.mean[0];
+    uint8_t G = ((obj_config_t *)(obj->_config))->opt->aipu.mean[1];
+    uint8_t B = ((obj_config_t *)(obj->_config))->opt->aipu.mean[2];
+    float norm_R = ((obj_config_t *)(obj->_config))->opt->aipu.norm[0];
+    float norm_G = ((obj_config_t *)(obj->_config))->opt->aipu.norm[1];
+    float norm_B = ((obj_config_t *)(obj->_config))->opt->aipu.norm[2];
+    uint8_t * pixels = (uint8_t *) inputs->data;
     if(inputs->need_quantization == true)
     {
-        // printf("[libmaix_nn]--  input need  quantization \n");
-        // int size = (inputs->h * inputs->w * inputs->c);
-        int size = inputs->h * inputs->w;
-        //  printf("[libmaix_nn]--  size is %d \n",size);
-
+        debug_line;
         int8_t * temp_buffer =(int8_t *) (inputs->buff_quantization);
-
         if(inputs->buff_quantization == NULL )
         {
+            debug_line;
              printf("[libmaix_nn] --  input has not init quantization buffer\n");
-            uint8_t * pixels = (uint8_t *) inputs->data;  //  input data comes from camera data
-            int8_t *quant_data = (int8_t *)malloc(sizeof(int8_t) * size);
-            uint8_t R = ((obj_config_t *)(obj->_config))->opt->aipu.mean[0];
-            uint8_t G = ((obj_config_t *)(obj->_config))->opt->aipu.mean[1];
-            uint8_t B = ((obj_config_t *)(obj->_config))->opt->aipu.mean[2];
+            int8_t *quant_data = (int8_t *)malloc(sizeof(int8_t) * size * 3);
             for(int i=0 ; i != size ;i ++)
             {
                 quant_data[i *3 + 0] = pixels[i * 3 + 0] - R;
                 quant_data[i *3 + 1] = pixels[i * 3 + 1] - G;
                 quant_data[i *3 + 2] = pixels[i * 3 + 2] - B;
             }
-            // t1 = quant_data + i *3, t2 = pixels  
-
             memcpy((*buffer_ptr).inputs.tensors[0].va,  quant_data, (*buffer_ptr).inputs.tensors[0].size);
             free(quant_data);
         }
         else
         {
-            //  printf("[libmaix_nn] --  input has  init quantization buffer\n");
-            uint8_t * pixels = (uint8_t *) inputs->data;   
-            uint8_t R = ((obj_config_t *)(obj->_config))->opt->aipu.mean[0];
-            uint8_t G = ((obj_config_t *)(obj->_config))->opt->aipu.mean[1];
-            uint8_t B = ((obj_config_t *)(obj->_config))->opt->aipu.mean[2];
+            debug_line;
+            uint8_t * pixels = (uint8_t *) inputs->data;
             for(int i=0 ; i < size ;i++)
             {
                 temp_buffer[i *3 + 0] = pixels[i * 3+ 0] - R;
                 temp_buffer[i *3 + 1] = pixels[i * 3+ 1] - G;
                 temp_buffer[i *3 + 2] = pixels[i * 3+ 2] - B;
             }
+            debug_line;
             memcpy((*buffer_ptr).inputs.tensors[0].va, temp_buffer, (*buffer_ptr).inputs.tensors[0].size);
         }
 
     }
     else
     {
-        memcpy((*buffer_ptr).inputs.tensors[0].va,  inputs->data, (*buffer_ptr).inputs.tensors[0].size);
+        debug_line;
+        float *temp_float_buffer = (float *)malloc(sizeof(float) * size *  3);
+        debug_line;
+        for(int i=0 ; i < size ;i++)
+        {
+            int8_t int8_temp_R = pixels[i * 3+ 0] - R;
+            int8_t int8_temp_G = pixels[i * 3+ 1] - G;
+            int8_t int8_temp_B = pixels[i * 3+ 2] - B;
+            // debug_line;
+            float temp_R = (float)int8_temp_R;
+            float temp_G = (float)int8_temp_G;
+            float temp_B = (float)int8_temp_B;
+            // debug_line;
+            temp_float_buffer[i *3 + 0] =  temp_R * norm_R;
+            temp_float_buffer[i *3 + 1] =  temp_G * norm_G;
+            temp_float_buffer[i *3 + 2] =  temp_B * norm_B;
+            // debug_line;
+        }
+        debug_line;
+        memcpy((*buffer_ptr).inputs.tensors[0].va, temp_float_buffer, (*buffer_ptr).inputs.tensors[0].size);
+        debug_line;
+        free(temp_float_buffer);
     }
-    
-
+    debug_line;
     uint32_t * job_id = &(((obj_config_t *)(obj->_config))->job_id);
     // ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(((obj_config_t *)(obj->_config))->job_id));
     // printf("[libmaix_nn] --  ready create job\n");
@@ -285,7 +300,9 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     // printf("[libmaix_nn]-- the job id is %d \n",&(((obj_config_t *)(obj->_config))->job_id));
     // ret = AIPU_finish_job(ctx, ((obj_config_t *)(obj->_config))->job_id, ((obj_config_t *)(obj->_config))->time_out);
     // printf("[libmaix_nn] --  ready finish job \n");
+    debug_line;
     ret = AIPU_finish_job(*ctx, *job_id, ((obj_config_t *)(obj->_config))->time_out);
+    debug_line;
     // printf("[libmaix_nn] --  ready finish job  is done\n");
 
     if (ret != AIPU_STATUS_SUCCESS)
@@ -305,8 +322,8 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             printf("free tensor buffers is faild\n");
             // free input data memory
         }
-
-        ret = AIPU_unload_graph(*ctx,gdesc_ptr); 
+        debug_line;
+        ret = AIPU_unload_graph(*ctx,gdesc_ptr);
         if (ret != AIPU_STATUS_SUCCESS)
         {
             *status = LIBMAIX_ERR_NOT_READY;
@@ -315,6 +332,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             printf("deinit nn module is faild\n");
             return *status;
         }
+        debug_line;
 
         ret = AIPU_clean_job(*ctx, *job_id);
         if (ret != AIPU_STATUS_SUCCESS)
@@ -350,7 +368,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
                 printf("output feature map is not init \n");
                 return  LIBMAIX_ERR_NOT_INIT;
             }
-            
+
             float * temp =(float *) outputs[out_id].data;
             float ** prediction = &temp;
             for(int i=0 ; i < size ; i++)
@@ -391,7 +409,7 @@ libmaix_nn_t *libmaix_nn_create()
     nn_obj_ptr->forward = libmaix_nn_obj_forward;
     // made a struct to add
     obj_config_t *obj_config_ptr = (obj_config_t *)malloc(1 * sizeof(obj_config_t));
-    
+
     nn_obj_ptr->_config = obj_config_ptr;
     return nn_obj_ptr;
 }
@@ -420,7 +438,7 @@ libmaix_err_t libmaix_nn_module_init()
     //     return status;
     // }
     return LIBMAIX_ERR_NONE;
-    
+
 }
 
 libmaix_err_t libmaix_nn_module_deinit()

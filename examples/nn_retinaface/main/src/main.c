@@ -75,11 +75,20 @@ void nn_test(struct libmaix_disp *disp)
     libmaix_image_module_init();
     libmaix_nn_module_init();
     libmaix_camera_module_init();
-    // read mdsc file
+
+    #ifdef CONFIG_ARCH_R329
     char *mdsc_path = "/root/mdsc/r329_retinaface.mdsc";
-    // set single input shape
     int res_w = 320;
     int res_h = 320;
+    #endif
+
+    #ifdef CONFIG_ARCH_V831
+    printf("V831 \n");
+    char *mdsc_path = "/root/mdsc/v831_retinaface.mdsc";
+    int res_w = 224;
+    int res_h = 224;
+    #endif
+
     libmaix_nn_t *nn = NULL;
     libmaix_err_t err = LIBMAIX_ERR_NONE;
 
@@ -111,21 +120,22 @@ void nn_test(struct libmaix_disp *disp)
     libmaix_nn_decoder_retinaface_config_t config = {
         .nms = 0.2,
         .score_thresh = 0.5,
-        .input_w = 320,
-        .input_h = 320,
+        .input_w = res_w,
+        .input_h = res_h,
         .variance = {0.1, 0.2},
 #ifdef CONFIG_ARCH_V831
         .steps = {8, 16, 32},
         .min_sizes = {16, 32, 64, 128, 256, 512},
 #endif
+
 #ifdef CONFIG_ARCH_R329
         .steps = {8, 16, 32, 64},
         .min_sizes = {10, 16, 24, 32, 48, 64, 96, 128, 192, 256},
 #endif
     };
     libmaix_nn_layer_t input = {
-        .w = 320,
-        .h = 320,
+        .w = res_w,
+        .h = res_h,
         .c = 3,
         .dtype = LIBMAIX_NN_DTYPE_INT8,
         .data = NULL,

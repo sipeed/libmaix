@@ -111,7 +111,7 @@ void nn_test(struct libmaix_disp* disp)
     char* labels[] = {"person"};
     int class_num = 1;
     float anchors [10] =  {4.72, 6.26, 1.39, 3.53, 0.78, 1.9, 0.35, 0.95, 2.49, 4.87};
-    char * mdsc_path = "/root/mdsc/r329_yolo_person.mdsc";
+    char * mdsc_path = "/root/mdsc/v831_yolo_person.mdsc";
 
 
     uint8_t anchor_len = sizeof(anchors) / sizeof(float) / 2; //five anchors

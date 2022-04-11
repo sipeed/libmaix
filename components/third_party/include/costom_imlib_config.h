@@ -16,7 +16,7 @@ extern "C"
 {
 #endif
 // Enable Image I/O
-#define IMLIB_ENABLE_IMAGE_IO 
+#define IMLIB_ENABLE_IMAGE_IO
 
 // Enable Image File I/O
 #define IMLIB_ENABLE_IMAGE_FILE_IO
@@ -155,6 +155,14 @@ extern "C"
 
 // Enable selective_search()
 #define IMLIB_ENABLE_SELECTIVE_SEARCH
+
+// Enable PRINT
+// #define IMLIB_ENABLE_PRINT
+
+// FB Heap Block Size
+#define OMV_UMM_BLOCK_SIZE      256
+
+#define OMV_FB_ALLOC_SIZE       (2 * 1024 * 1024)       // minimum fb alloc size
 
 // Enable STM32 DMA2D
 // #define IMLIB_ENABLE_DMA2D

@@ -24,6 +24,24 @@ typedef struct
     libmaix_image_t*       img;
 }callback_param_t;
 
+int save_bin(const char *path, int size, uint8_t *buffer)
+{
+    FILE *fp = fopen(path, "wb");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "fopen %s failed\n", path);
+        return -1;
+    }
+    int nwrite = fwrite(buffer, 1, size, fp);
+    if (nwrite != size)
+    {
+        fprintf(stderr, "fwrite bin failed %d\n", nwrite);
+        return -1;
+    }
+    fclose(fp);
+
+    return 0;
+}
 
 //get model from a binary file
 int loadFromBin(const char* binPath, int size, signed char* buffer)
@@ -198,8 +216,8 @@ void nn_test(struct libmaix_disp* disp)
     #endif
     #ifdef CONFIG_ARCH_V831
     libmaix_nn_model_path_t model_path = {
-        .awnn.bin_path = "/root/models/awnn_person.bin",
-        .awnn.param_path ="/root/models/awnn_person.param",
+        .awnn.bin_path = "/root/models/awnn_yolo_person.bin",
+        .awnn.param_path ="/root/models/awnn_yolo_person.param",
     };
     #endif
 
@@ -262,15 +280,6 @@ void nn_test(struct libmaix_disp* disp)
     }
     out_fmap.data = output_buffer;
     input.buff_quantization = quantize_buffer;
-#if TEST_IMAGE
-    ret = loadFromBin("/root/test_input/input_data.bin", input.w * input.h * input.c, img->data);
-    if(ret != 0)
-    {
-        printf("read file fail!\n");
-        goto end;
-    }
-    img->mode = LIBMAIX_IMAGE_MODE_RGB888;`
-#endif
     // nn model init
     printf("-- nn create\n");
     nn = libmaix_nn_create();
@@ -295,7 +304,7 @@ void nn_test(struct libmaix_disp* disp)
     }
     // decoder init
     printf("-- yolo2 decoder create\n");
-    yolo2_decoder = libmaix_nn_decoder_yolo2_create();
+    yolo2_decoder = libmaix_nn_decoder_yolo2_create(libmaix_nn_decoder_yolo2_init , libmaix_nn_decoder_yolo2_deinit , libmaix_nn_decoder_yolo2_decode);
     if(!yolo2_decoder)
     {
         printf("no mem\n");

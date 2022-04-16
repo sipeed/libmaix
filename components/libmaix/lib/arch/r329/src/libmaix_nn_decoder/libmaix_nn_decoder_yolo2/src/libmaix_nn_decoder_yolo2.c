@@ -8,7 +8,7 @@
 typedef struct
 {
     libmaix_nn_decoder_yolo2_config_t* config;
-    uint32_t coords;          // coord length, 4: xmin, ymin, xmax, ymax  diagonally
+    uint32_t coords;          // coord length, 4: xmin, ymin, xmax, ymax
     uint32_t net_out_wh;
     uint32_t boxes_number;
     uint32_t output_number;
@@ -42,15 +42,15 @@ static libmaix_err_t region_layer_init(region_layer_t *rl)
 {
     libmaix_err_t flag = LIBMAIX_ERR_NONE;
 
-    rl->coords = 4;       // x y h w
+    rl->coords = 4;
     rl->net_out_wh = rl->config->net_out_width * rl->config->net_out_height;
     rl->boxes_number = (rl->net_out_wh * rl->config->anchors_num);
-    rl->one_box_output_number = (rl->config->classes_num + rl->coords + 1);   //40
-    rl->one_ch_output_number = rl->one_box_output_number * rl->config->anchors_num; //200
-    rl->output_number = rl->boxes_number * rl->one_box_output_number;  //9800
+    rl->one_box_output_number = (rl->config->classes_num + rl->coords + 1);
+    rl->one_ch_output_number = rl->one_box_output_number * rl->config->anchors_num;
+    rl->output_number = rl->boxes_number * rl->one_box_output_number;
     rl->output = NULL;
 
-    rl->scale = 1;
+    //rl->scale = output_scale;
     //rl->bias = output_bias;
 
     // Initialize for out-of-memory situations
@@ -202,7 +202,7 @@ static void forward_region_layer(region_layer_t *rl)
         ch_offset_x = n * rl->one_box_output_number;
         ch_offset_y = ch_offset_x + 1;
         ch_offset_pd = ch_offset_x + rl->coords;
-        for(int i = 0; i < rl->net_out_wh; ++i) // each cell of OutPut Map
+        for(int i = 0; i < rl->net_out_wh; ++i)
         {
             stride = i * rl->one_ch_output_number;
             rl->output[ch_offset_x + stride] = sigmod(rl->output[ch_offset_x + stride]);
@@ -287,6 +287,9 @@ static void get_region_boxes(region_layer_t *rl, float *predictions, float **pro
                 probs[index][j] = 0;
             int box_ch_offset = rl->one_ch_output_number * i + rl->one_box_output_number * n;
             int obj_ch_offset = box_ch_offset + coords;
+
+
+
             float max = 0;
             float p_classes_sum = 0;
 
@@ -496,17 +499,17 @@ void libmaix_nn_decoder_yolo2_draw_result(struct libmaix_nn_decoder* obj, libmai
             if(labels)
             {
                 label = labels[class_id];
-                printf("label : %s\n",label);
             }
             callback(id, x1, y1, w, h, class_id, prob, label, arg);
         }
     }
 }
 
-libmaix_nn_decoder_t* libmaix_nn_decoder_yolo2_create()
+libmaix_nn_decoder_t* libmaix_nn_decoder_yolo2_create(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func,
+                                                libmaic_nn_decoder_decode_func_t decode_func)
 {
     LIBMAIX_DEBUG_PRINTF("--[func]: libmaix_nn_decoder_yolo2_create\n");
-    libmaix_nn_decoder_t* obj = libmaix_nn_decoder_creat(libmaix_nn_decoder_yolo2_init,
+    libmaix_nn_decoder_t* obj = libmaix_nn_decoder_create(libmaix_nn_decoder_yolo2_init,
                             libmaix_nn_decoder_yolo2_deinit,
                             libmaix_nn_decoder_yolo2_decode);
     return obj;
@@ -517,5 +520,4 @@ void libmaix_nn_decoder_yolo2_destroy(libmaix_nn_decoder_t** obj)
     LIBMAIX_DEBUG_PRINTF("--[func]: libmaix_nn_decoder_yolo2_destroy\n");
     libmaix_nn_decoder_destroy(obj);
 }
-
 

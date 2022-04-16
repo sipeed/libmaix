@@ -25,11 +25,8 @@ typedef struct obj_config
     aipu_graph_desc_t gdesc;
     uint32_t job_id  ;
     int32_t time_out ;
-
-
     aipu_ctx_handle_t * ctx ;
     const char *status_msg;
-
     libmaix_nn_opt_param_t * opt;
 
 } obj_config_t;

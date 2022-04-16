@@ -17,7 +17,7 @@ link_directories("./lib/")
 link_directories("../../../r329/")
 
 add_library(maix_nn_decoder SHARED # STATIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix/src/decoder/decoder_retinaface.c
+        # ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../libmaix/src/decoder/decoder_retinaface.c
         src/libmaix_nn_decoder.c
         libmaix_nn_decoder_yolo2/src/libmaix_nn_decoder_yolo2.c
 )
@@ -28,7 +28,6 @@ target_link_libraries(
     maix_nn_decoder
     m
 )
-
 
 set_target_properties(maix_nn_decoder PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${export_dir}/lib/arch/r329")
 

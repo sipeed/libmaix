@@ -116,7 +116,7 @@ extern "C"
 
 
 // Enable find_qrcodes() (14 KB)
-// #define IMLIB_ENABLE_QRCODES
+#define IMLIB_ENABLE_QRCODES
 
 
 // Enable find_datamatrices() (26 KB)

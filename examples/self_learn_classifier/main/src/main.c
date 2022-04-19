@@ -212,7 +212,6 @@ void nn_test(struct libmaix_disp* disp)
             break;
         }
         delay(2000);
-        
 
 #if TEST_IMAGE
         break;

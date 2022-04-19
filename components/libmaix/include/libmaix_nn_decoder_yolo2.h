@@ -34,6 +34,34 @@ typedef struct
     uint32_t input_height;
 }libmaix_nn_decoder_yolo2_config_t;
 
+
+typedef struct
+{
+    libmaix_nn_decoder_yolo2_config_t* config;
+    uint32_t coords;          // coord length, 4: xmin, ymin, xmax, ymax
+    uint32_t net_out_wh;
+    uint32_t boxes_number;
+    uint32_t output_number;
+    uint32_t one_box_output_number;
+    uint32_t one_ch_output_number;
+    float scale;
+    float bias;
+    libmaix_nn_decoder_yolo2_box_t* boxes;
+    //uint8_t *input;
+    float *output;
+    float *probs_buf;
+    float **probs;
+    float *activate;
+    float *softmax;
+} region_layer_t;
+
+typedef struct
+{
+    int index;
+    int class_id;
+    float **probs;
+}sortable_box_t;
+
 typedef struct
 {
     uint32_t                        boxes_num;

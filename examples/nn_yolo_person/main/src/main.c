@@ -11,6 +11,7 @@
 #include "libmaix_image.h"
 #include "libmaix_cv_image.h"
 #include "libmaix_nn.h"
+#include "libmaix_nn_decoder.h"
 #include "libmaix_nn_decoder_yolo2.h"
 #include "main.h"
 #include <sys/time.h>
@@ -56,12 +57,15 @@ int loadFromBin(const char* binPath, int size, signed char* buffer)
 	if (nread != size)
 	{
 		fprintf(stderr, "fread bin failed %d\n", nread);
+
+
 		return -1;
 	}
 	fclose(fp);
-
 	return 0;
 }
+
+
 /*use opencv to draw object box */
 void on_draw_box(uint32_t id, uint32_t x, uint32_t y, uint32_t w, uint32_t h, uint32_t class_id, float prob, char* label, void* arg)
 {
@@ -148,6 +152,7 @@ void nn_test(struct libmaix_disp* disp)
 
 #define TEST_IMAGE   0
 #define DISPLAY_TIME 1
+#define SAVE_NETOUT 0
 
 #if DISPLAY_TIME
     struct timeval start, end;
@@ -234,6 +239,7 @@ void nn_test(struct libmaix_disp* disp)
         .w = yolo2_config.net_out_width,
         .h = yolo2_config.net_out_height,
         .c = (class_num + 5) * anchor_len,
+        // .layout =LIBMAIX_NN_LAYOUT_CHW,
         .dtype = LIBMAIX_NN_DTYPE_FLOAT,
         .data = NULL
     };
@@ -322,6 +328,7 @@ void nn_test(struct libmaix_disp* disp)
     printf("-- start loop\n");
     while(1)
     {
+
 #if !TEST_IMAGE
         err = cam->capture_image(cam,&img);
         # ifdef CONFIG_ARCH_V831
@@ -345,15 +352,32 @@ void nn_test(struct libmaix_disp* disp)
 
 #endif
         CALC_TIME_START();
+
+        #if TEST_IMAGE
+        libmaix_cv_image_open_file(&img , "/root/imgs/people.jpg");
+        #endif
+
         input.data = (uint8_t *)img->data;
         err = nn->forward(nn, &input, &out_fmap);
+        // printf("output layeout : %s \n",out_fmap.layout);
         if(err != LIBMAIX_ERR_NONE)
         {
             printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(err));
-            break;
+            goto end;
         }
-        err = yolo2_decoder->decode(yolo2_decoder, &out_fmap, (void*)&yolo2_result);
+#if SAVE_NETOUT
 
+        // save_bin("loc.bin", out_fmap[0].w * out_fmap[0].h * out_fmap[0].c * sizeof(float), out_fmap[0].data);
+        // save_bin("conf.bin", out_fmap[1].w * out_fmap[1].h * out_fmap[1].c * sizeof(float), out_fmap[1].data);
+        // save_bin("landmark.bin", out_fmap[2].w * out_fmap[2].h * out_fmap[2].c * sizeof(float), out_fmap[2].data);
+        save_bin("yolo_out_c.bin" ,out_fmap.w * out_fmap.h * out_fmap.c *sizeof(float) ,out_fmap.data);
+        save_bin("/root/C/person/input_c.bin" , input.c * input.h*input.w * sizeof(int8_t) , input.data);
+
+
+#endif
+
+
+        err = yolo2_decoder->decode(yolo2_decoder, &out_fmap, (void*)&yolo2_result);
         if(err != LIBMAIX_ERR_NONE)
         {
             printf("yolo2 decode fail: %s\n", libmaix_get_err_msg(err));
@@ -383,8 +407,13 @@ void nn_test(struct libmaix_disp* disp)
 
             libmaix_nn_decoder_yolo2_draw_result(yolo2_decoder, &yolo2_result, count++, labels, on_draw_box, (void*)&callback_arg);
         }
-        disp->draw_image(disp,show);
+        #if TEST_IMAGE
+        err = libmaix_cv_image_resize(img, disp->width, disp->height, &show);
         #endif
+        disp->draw_image(disp,show);
+        CALC_TIME_END("one image");
+        #endif
+
         disp->draw_image(disp,show);
 
 #if TEST_IMAGE

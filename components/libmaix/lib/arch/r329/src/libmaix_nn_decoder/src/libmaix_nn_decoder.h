@@ -31,7 +31,7 @@ typedef libmaix_err_t (*libmaic_nn_decoder_deinit_func_t)(struct libmaix_nn_deco
 typedef libmaix_err_t (*libmaic_nn_decoder_decode_func_t)(struct libmaix_nn_decoder *obj, libmaix_nn_layer_t* feature_map, void* result);
 
 
-libmaix_nn_decoder_t* libmaix_nn_decoder_creat(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func, 
+libmaix_nn_decoder_t* libmaix_nn_decoder_creat(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func,
                                                 libmaic_nn_decoder_decode_func_t decode_func);
 
 

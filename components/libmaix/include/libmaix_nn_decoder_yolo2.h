@@ -77,7 +77,7 @@ libmaix_err_t libmaix_nn_decoder_yolo2_deinit(struct libmaix_nn_decoder* obj);
 libmaix_err_t libmaix_nn_decoder_yolo2_decode(struct libmaix_nn_decoder* obj, libmaix_nn_layer_t* feature_map, void* result);
 void libmaix_nn_decoder_yolo2_draw_result(struct libmaix_nn_decoder* obj, libmaix_nn_decoder_yolo2_result_t* result, uint32_t id, char** labels, callback_draw_result_func_t callback, void* arg);
 
-libmaix_nn_decoder_t* libmaix_nn_decoder_yolo2_create(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func,
+libmaix_nn_decoder_t* libmaix_nn_decoder_yolo2_creat(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func,
                                                 libmaic_nn_decoder_decode_func_t decode_func);
 void libmaix_nn_decoder_yolo2_destroy(libmaix_nn_decoder_t** obj);
 

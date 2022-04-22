@@ -183,9 +183,9 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
     int model_inch = gdesc_ptr->inputs.desc[0].fmt.shape.C;
     // printf("[libmaix_nn]--   Model input:  W=%3d, H=%3d, C =%d, size=%d\r\n", model_inw, model_inh, model_inch, (*buffer_ptr).inputs.tensors[0].size);
     int size = inputs->h * inputs->w;
-    uint8_t R = ((obj_config_t *)(obj->_config))->opt->aipu.mean[0];
-    uint8_t G = ((obj_config_t *)(obj->_config))->opt->aipu.mean[1];
-    uint8_t B = ((obj_config_t *)(obj->_config))->opt->aipu.mean[2];
+    float R = ((obj_config_t *)(obj->_config))->opt->aipu.mean[0];
+    float G = ((obj_config_t *)(obj->_config))->opt->aipu.mean[1];
+    float B = ((obj_config_t *)(obj->_config))->opt->aipu.mean[2];
     float norm_R = ((obj_config_t *)(obj->_config))->opt->aipu.norm[0];
     float norm_G = ((obj_config_t *)(obj->_config))->opt->aipu.norm[1];
     float norm_B = ((obj_config_t *)(obj->_config))->opt->aipu.norm[2];
@@ -211,7 +211,6 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         else
         {
             debug_line;
-            uint8_t * pixels = (uint8_t *) inputs->data;
             for(int i=0 ; i < size ;i++)
             {
                 temp_buffer[i *3 + 0] = pixels[i * 3+ 0] - R;
@@ -240,7 +239,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             // debug_line;
             temp_float_buffer[i *3 + 0] =  temp_R * norm_R;
             temp_float_buffer[i *3 + 1] =  temp_G * norm_G;
-            temp_float_buffer[i *3 + 2] =  temp_B * norm_B;
+            [i *3 + 2] =  temp_B * norm_B;
             // debug_line;
         }
         debug_line;

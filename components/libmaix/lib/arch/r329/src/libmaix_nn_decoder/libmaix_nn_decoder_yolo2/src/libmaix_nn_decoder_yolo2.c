@@ -509,7 +509,7 @@ libmaix_nn_decoder_t* libmaix_nn_decoder_yolo2_create(libmaic_nn_decoder_init_fu
                                                 libmaic_nn_decoder_decode_func_t decode_func)
 {
     LIBMAIX_DEBUG_PRINTF("--[func]: libmaix_nn_decoder_yolo2_create\n");
-    libmaix_nn_decoder_t* obj = libmaix_nn_decoder_create(libmaix_nn_decoder_yolo2_init,
+    libmaix_nn_decoder_t* obj = libmaix_nn_decoder_creat(libmaix_nn_decoder_yolo2_init,
                             libmaix_nn_decoder_yolo2_deinit,
                             libmaix_nn_decoder_yolo2_decode);
     return obj;

@@ -84,9 +84,9 @@ void nn_test(struct libmaix_disp *disp)
 
     #ifdef CONFIG_ARCH_V831
     printf("V831 \n");
-    char *mdsc_path = "/root/mdsc/v831_face.mdsc";
-    int res_w = 448;
-    int res_h = 448;
+    char *mdsc_path = "/root/mdsc/v831_retinaface.mdsc";
+    int res_w = 224;
+    int res_h = 224;
     #endif
 
     libmaix_nn_t *nn = NULL;
@@ -208,8 +208,8 @@ void nn_test(struct libmaix_disp *disp)
         goto end;
     }
     input.buff_quantization = quantize_buffer;
-
-    nn = load_mdsc(mdsc_path);
+    ini_info_t info = read_file(mdsc_path);
+    nn = build_model(&info);
     printf("-- start loop\n");
     while (!program_exit)
     {
@@ -271,10 +271,10 @@ void nn_test(struct libmaix_disp *disp)
         {
             if (result.faces[i].score > config.score_thresh)
             {
-                int x1 = result.faces[i].box.x * disp->width;
-                int y1 = result.faces[i].box.y * disp->height;
-                int x2 = x1 + result.faces[i].box.w * disp->width;
-                int y2 = y1 + result.faces[i].box.h * disp->height;
+                int x1 = result.faces[i].box.x * img->width;
+                int y1 = result.faces[i].box.y * img->height;
+                int x2 = x1 + result.faces[i].box.w * img->width;
+                int y2 = y1 + result.faces[i].box.h * img->height;
 
                 libmaix_cv_image_draw_rectangle(img, x1, y1, x2, y2, MaixColor(255, 0, 0), 2);
 
@@ -298,10 +298,10 @@ void nn_test(struct libmaix_disp *disp)
         {
             if (result.faces[i].score > config.score_thresh)
             {
-                int x1 = result.faces[i].box.x * disp->width;
-                int y1 = result.faces[i].box.y * disp->height;
-                int x2 = x1 + result.faces[i].box.w * disp->width;
-                int y2 = y1 + result.faces[i].box.h * disp->height;
+                int x1 = result.faces[i].box.x * img->width;
+                int y1 = result.faces[i].box.y * img->height;
+                int x2 = x1 + result.faces[i].box.w * img->width;
+                int y2 = y1 + result.faces[i].box.h * img->height;
                 printf("x1:%d  y1:%d  x2:%d  y2:%d , (%d,%d)\n",x1 ,y1, x2 , y2 , img->width,img->height);
                 libmaix_cv_image_draw_rectangle(show, x1, y1, x2, y2, MaixColor(255, 0, 0), 2);
 
@@ -316,6 +316,7 @@ void nn_test(struct libmaix_disp *disp)
             }
         }
         disp->draw_image(disp, show);
+        // break;
 #endif
 #if LOAD_IMAGE
         break;

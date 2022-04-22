@@ -44,8 +44,17 @@ define func1
 	bash /tmp/tmp.sh; rm /tmp/tmp.sh
 endef
 
+ssh_port=$(shell lsof -i:15630 | grep adb | awk '{print $$1}')
+
+ifeq ("$(ssh_port)", "")
+	push_s=adb push ./dist /root
+else
+	push_s=sshpass -p "root" rsync -rvlzt -e 'ssh -p 15630' ./dist root@127.0.0.1:/root
+endif
+
 target:
 	python3 project.py build
+	@if [ -f "./build_dist.sh" ] ; then ./build_dist.sh ; fi >> /dev/null
 
 clean:
 	$(RM) -r build/ dist
@@ -70,10 +79,7 @@ pc_init:
 	sed -i "7c \    \       default\ \"/opt/v831/toolchain-sunxi-musl/toolchain/bin/\"" ../../Kconfig
 	sed -i "11c \	\	default\ \"arm-openwrt-linux-muslgnueabi-\"" ../../Kconfig
 
-pc_set_toolchain:
-	sed -i "7c \    \       default\ \"/opt/v831/toolchain-sunxi-musl/toolchain/bin/\"" ../../Kconfig
-	sed -i "11c \	\	default\ \"arm-openwrt-linux-muslgnueabi-\"" ../../Kconfig
-	
+
 # 运行程序
 run:
 	adb shell "cd /root/dist; ./start_app.sh"
@@ -95,7 +101,7 @@ forward:
 
 # 上传程序到开发板
 push:
-	sshpass -p "root" rsync -rvlzt -e 'ssh -p 15630' ./dist root@127.0.0.1:/root
+	$(push_s)
 
 # 自定义功能测试
 test:

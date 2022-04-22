@@ -63,3 +63,4 @@ dist
 __pycache__
 
 components/libmaix/lib/arch/r329/aarch64-linux-gnu/
+.vscode-ctags

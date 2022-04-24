@@ -22,10 +22,10 @@ extern "C"
 #define IMLIB_ENABLE_IMAGE_FILE_IO
 
 // Enable LAB LUT
-//#define IMLIB_ENABLE_LAB_LUT
+// #define IMLIB_ENABLE_LAB_LUT
 
 // Enable YUV LUT
-//#define IMLIB_ENABLE_YUV_LUT
+// #define IMLIB_ENABLE_YUV_LUT
 
 // Enable mean pooling
 #define IMLIB_ENABLE_MEAN_POOLING
@@ -123,7 +123,7 @@ extern "C"
 #define IMLIB_ENABLE_DATAMATRICES
 
 // Enable find_barcodes() (42 KB)
-// #define IMLIB_ENABLE_BARCODES
+#define IMLIB_ENABLE_BARCODES
 
 // Enable CMSIS NN
 // #if !defined(CUBEAI)

@@ -209,11 +209,6 @@ void nn_test(struct libmaix_disp* disp)
 
 #endif
 
-    #ifdef CONFIG_ARCH_R329
-    libmaix_nn_model_path_t model_path = {
-        .aipu.model_path = "/root/models/aipu_yolo_person.bin",
-    };
-    #endif
     #ifdef CONFIG_ARCH_V831
     libmaix_nn_model_path_t model_path = {
         .awnn.bin_path = "/root/models/traffic_awnn.bin",

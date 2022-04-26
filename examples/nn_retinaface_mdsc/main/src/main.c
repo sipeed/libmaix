@@ -83,7 +83,6 @@ void nn_test(struct libmaix_disp *disp)
     #endif
 
     #ifdef CONFIG_ARCH_V831
-    printf("V831 \n");
     char *mdsc_path = "/root/mdsc/v831_retinaface.mdsc";
     int res_w = 224;
     int res_h = 224;
@@ -208,8 +207,9 @@ void nn_test(struct libmaix_disp *disp)
         goto end;
     }
     input.buff_quantization = quantize_buffer;
-    ini_info_t info = read_file(mdsc_path);
-    nn = build_model(&info);
+    ini_info_t * ini_info_ptr = (ini_info_t * )malloc(sizeof(ini_info_t));
+    read_file(mdsc_path , ini_info_ptr);
+    nn = build_model(ini_info_ptr);
     printf("-- start loop\n");
     while (!program_exit)
     {
@@ -316,7 +316,7 @@ void nn_test(struct libmaix_disp *disp)
             }
         }
         disp->draw_image(disp, show);
-        // break;
+        break;
 #endif
 #if LOAD_IMAGE
         break;

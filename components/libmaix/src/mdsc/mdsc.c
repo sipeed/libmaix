@@ -96,17 +96,18 @@ char *get_sting_value(char *line)
 {
 
     char *strline = (char *)malloc(sizeof(char) * 1024);
+    memset(strline,0,1024);
     if(strline == NULL)
     {
         printf("malloc strine buffer is faild\n");
     }
     memcpy(strline, line, 1024);
-    char *string_value = (char *)malloc(sizeof(char) * 32);
+    char *string_value = (char *)malloc(sizeof(char) * 1024);
     if(string_value ==  NULL)
     {
         printf("malloc strlinr value buffer is faild\n");
     }
-    memset(string_value , 0 ,32);
+    memset(string_value , 0 ,1024);
     char *string_value_head = string_value;
     char *start = strchr(strline, '=') + 1;
     while (*start != '\n'  )
@@ -324,24 +325,23 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
 
                 if (0 == strcmp(key, "type")) // input scale
                 {
-                    ini_info->model_type = value;
+                    // value is a buffer
                     printf("type len:%d, type:%s\n",strlen(value), value);
+                    ini_info->model_type = value;
                 }
                 if (0 == strcmp(key, "bin"))
                 {
-                    ini_info->bin_path = value;
                     printf("bin len :%d , bin:%s\n",strlen(value), value);
+                    ini_info->bin_path = value;
                 }
                 if (0 == strcmp(key, "param"))
                 {
-
-                    ini_info->param_path = value;
                     printf("param len:%d, param:%s\n",strlen(value),value);
+                    ini_info->param_path = value;
                 }
             }
             else if (strspn(string_lines, " \t\n") == strlen(string_lines))
             {
-
                 flag = 0;
                 continue;
             }
@@ -395,20 +395,158 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
     }
 }
 
-ini_info_t read_file (char * mdsc_path)
+void read_file (char * mdsc_path , ini_info_t * ini_info_ptr)
 {
     FILE *fp = load_file(mdsc_path);
     if(fp == NULL)
     {
         printf("open %s is faild\n",mdsc_path);
     }
-    ini_info_t ini_info;
-    get_section(fp , "basic", &ini_info);
-    get_section(fp, "inputs", &ini_info);
-    get_section(fp , "outputs", &ini_info);
-    get_section(fp , "extra", &ini_info);
-    return ini_info;
+    get_section(fp , "basic", ini_info_ptr);
+    get_section(fp, "inputs", ini_info_ptr);
+    get_section(fp , "outputs", ini_info_ptr);
+    get_section(fp , "extra", ini_info_ptr);
 }
+
+libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt)
+{
+    // libmaix_nn_model_path_t model_path;
+    // libmaix_nn_opt_param_t opt_param;
+    libmaix_nn_t* nn = NULL;
+    libmaix_err_t err =LIBMAIX_ERR_NONE;
+
+    if(strcmp(info_ptr->model_type , "aipu") == 0)
+    {
+        printf("r329\n");
+        if(strlen(info_ptr->bin_path) == 0)
+        {
+            printf("this path is empty ! \n");
+        }
+        //path
+        path->aipu.model_path = info_ptr->bin_path;
+        // opt
+        opt->aipu.input_names = info_ptr->inputs;
+        opt->aipu.output_names = info_ptr->outpus;
+        opt->aipu.input_num = info_ptr->input_num;
+        opt->aipu.output_num = info_ptr->output_num;
+        for(int i=0 ; i !=3 ; i++ )
+        {
+            opt->aipu.mean[i] = info_ptr->mean[0][i];
+            opt->aipu.norm[i] = info_ptr->norm[0][i];
+        }
+        for (int i =0 ; i != info_ptr->output_num ; i++)
+        {
+            opt->aipu.scale[i] = info_ptr->ouputs_scale[i];
+        }
+
+    }
+    else if (strcmp(info_ptr->model_type , "awnn") == 0)
+    {
+        printf("v831\n");
+        if(strlen(info_ptr->bin_path) == 0  ||  strlen(info_ptr->param_path)==0)
+        {
+            printf("this path is empty ! \n");
+
+        }
+        //input && output num && enrypt
+
+        opt->awnn.input_num = info_ptr->input_num;
+        opt->awnn.output_num = info_ptr->output_num;
+        opt->awnn.encrypt = false;
+        //path
+        // path->awnn.bin_path = info_ptr->bin_path;
+        // path->awnn.param_path = info_ptr->param_path;
+
+        int bin_len = strlen(info_ptr->bin_path);
+        char *bin_src = info_ptr->bin_path;
+        char *bin_dst = (char *)malloc(bin_len +1);
+        if(bin_dst)
+        {
+            memcpy(bin_dst, bin_src, bin_len);
+            bin_dst[bin_len] = '\0';
+            path->awnn.bin_path = bin_dst;
+        }
+
+        int param_len = strlen(info_ptr->param_path);
+        char *param_src = info_ptr->param_path;
+        char *param_dst = (char *)malloc(param_len +1);
+        if(param_dst)
+        {
+            memcpy(param_dst, param_src, param_len);
+            param_dst[param_len] = '\0';
+            path->awnn.param_path = param_dst;
+        }
+
+
+
+        //opt
+        // opt_param.awnn.input_names = info_ptr->inputs;
+        // opt_param.awnn.output_names = info_ptr->outpus;
+        opt->awnn.input_names = (char **)malloc(sizeof(char*) * info_ptr->input_num);
+        for(int i=0 ; i !=opt->awnn.input_num;i++)
+        {
+            int len = strlen(info_ptr->inputs[i])+1;
+            char *src = info_ptr->inputs[i];
+            printf("i:%d len:%d inputs:%s\n", i,  len, src);
+            char *dst =  (char*)malloc(len);
+            if (dst) {
+                strcpy(dst, src);
+                opt->awnn.input_names[i] = dst;
+            }
+        }
+
+        opt->awnn.output_names = (char **)malloc(sizeof(char*) *info_ptr->output_num);
+        for(int i=0 ; i !=opt->awnn.output_num;i++)
+        {
+            int len = strlen(info_ptr->outpus[i]) +1;
+            char * src = info_ptr->outpus[i];
+            printf("i:%d len:%d outputs:%s\n", i , len, src);
+            char *dst = (char *)malloc(len);
+            if(dst)
+            {
+                strcpy(dst, src);
+                opt->awnn.output_names[i] =  dst;
+            }
+        }
+
+        //mean & norm
+        for(int i=0 ; i !=3 ; i++ )
+        {
+            opt->awnn.mean[i] = info_ptr->mean[0][i];
+            opt->awnn.norm[i] = info_ptr->norm[0][i];
+        }
+        for (int i =0 ; i != 3 ; i++)
+        {
+            printf("mean%d : %f \n", i , opt->awnn.mean[i]);
+            printf("norm%d : %f \n", i , opt->awnn.norm[i]);
+        }
+    }
+    else
+    {
+        printf("this type value is empty or the type is unsupport !\n");
+    }
+
+    // nn create
+    nn = libmaix_nn_create();
+    if(!nn)
+    {
+        printf("libmaix_nn object create fail\n");
+    }
+    err = nn->init(nn);
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+    }
+    printf("-- mdsc nn object load model\n");
+    err = nn->load(nn, path, opt);
+    printf("--mdsc nn object load model is done\n");
+    if(err != LIBMAIX_ERR_NONE)
+    {
+        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+    }
+    return nn;
+}
+
 
 // int main(int argc, char const *argv[])
 // {
@@ -456,194 +594,3 @@ ini_info_t read_file (char * mdsc_path)
 //     printf("____________________\n");
 
 // }
-
-libmaix_nn_t* load_mdsc(char * path , ini_info_t * info_ptr)
-{
-    FILE *fp = load_file(path);
-    if(fp == NULL)
-    {
-        printf("open %s is faild\n",path);
-    }
-    get_section(fp , "basic",info_ptr);
-    get_section(fp, "inputs", info_ptr);
-    get_section(fp , "outputs", info_ptr);
-    get_section(fp , "extra", info_ptr);
-
-    int res_h = info_ptr->inputs_shape[0][0];
-    int res_w = info_ptr->inputs_shape[0][1];
-    int res_c = info_ptr->inputs_shape[0][2];
-    int input_w = res_w, input_h = res_h ,input_c = res_c;
-    printf("input_w :%d   , input_h :%d \n",input_w , input_h);
-    printf("- -init\n");
-    libmaix_nn_model_path_t model_path;
-    libmaix_nn_opt_param_t opt_param;
-    libmaix_nn_t* nn = NULL;
-    libmaix_err_t err =LIBMAIX_ERR_NONE;
-
-    if(strcmp(info_ptr->model_type , "aipu") == 0)
-    {
-        printf("r329\n");
-        if(strlen(info_ptr->bin_path) == 0)
-        {
-            printf("this path is empty ! \n");
-        }
-        //path
-        model_path.aipu.model_path = info_ptr->bin_path;
-        // opt
-        opt_param.aipu.input_names = info_ptr->inputs;
-        opt_param.aipu.output_names = info_ptr->outpus;
-        opt_param.aipu.input_num = info_ptr->input_num;
-        opt_param.aipu.output_num = info_ptr->output_num;
-        for(int i=0 ; i !=3 ; i++ )
-        {
-            opt_param.aipu.mean[i] = info_ptr->mean[0][i];
-            opt_param.aipu.norm[i] = info_ptr->norm[0][i];
-        }
-        for (int i =0 ; i != info_ptr->output_num ; i++)
-        {
-            opt_param.aipu.scale[i] = info_ptr->ouputs_scale[i];
-        }
-
-    }
-    else if (strcmp(info_ptr->model_type , "awnn") == 0)
-    {
-        printf("v831\n");
-        if(strlen(info_ptr->bin_path) == 0  ||  strlen(info_ptr->param_path)==0)
-        {
-            printf("this path is empty ! \n");
-
-        }
-        //path
-        model_path.awnn.bin_path = info_ptr->bin_path;
-        model_path.awnn.param_path = info_ptr->param_path;
-        printf("bin: %s\nparam:%s \n",info_ptr->bin_path , info_ptr->param_path);
-        //opt
-        opt_param.awnn.input_names = info_ptr->inputs;
-        opt_param.awnn.output_names = info_ptr->outpus;
-        opt_param.awnn.input_num = info_ptr->input_num;
-        opt_param.awnn.output_num = info_ptr->output_num;
-        opt_param.awnn.encrypt = false;
-        for(int i=0 ; i !=3 ; i++ )
-        {
-            opt_param.awnn.mean[i] = info_ptr->mean[0][i];
-            opt_param.awnn.norm[i] = info_ptr->norm[0][i];
-        }
-        for (int i =0 ; i != 3 ; i++)
-        {
-            printf("mean%d : %f \n", i , opt_param.aipu.mean[i]);
-            printf("norm%d : %f \n", i , opt_param.aipu.norm[i]);
-        }
-    }
-    else
-    {
-        printf("this type value is empty or the type is unsupport !\n");
-    }
-
-    // nn create
-    nn = libmaix_nn_create();
-    if(!nn)
-    {
-        printf("libmaix_nn object create fail\n");
-    }
-    err = nn->init(nn);
-    if(err != LIBMAIX_ERR_NONE)
-    {
-        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
-    }
-    printf("-- nn object load model\n");
-    err = nn->load(nn, &model_path, &opt_param);
-    printf("-- nn object load model is done");
-    if(err != LIBMAIX_ERR_NONE)
-    {
-        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
-    }
-    return nn;
-}
-
-
-libmaix_nn_t* build_model(ini_info_t * info_ptr)
-{
-libmaix_nn_model_path_t model_path;
-    libmaix_nn_opt_param_t opt_param;
-    libmaix_nn_t* nn = NULL;
-    libmaix_err_t err =LIBMAIX_ERR_NONE;
-
-    if(strcmp(info_ptr->model_type , "aipu") == 0)
-    {
-        printf("r329\n");
-        if(strlen(info_ptr->bin_path) == 0)
-        {
-            printf("this path is empty ! \n");
-        }
-        //path
-        model_path.aipu.model_path = info_ptr->bin_path;
-        // opt
-        opt_param.aipu.input_names = info_ptr->inputs;
-        opt_param.aipu.output_names = info_ptr->outpus;
-        opt_param.aipu.input_num = info_ptr->input_num;
-        opt_param.aipu.output_num = info_ptr->output_num;
-        for(int i=0 ; i !=3 ; i++ )
-        {
-            opt_param.aipu.mean[i] = info_ptr->mean[0][i];
-            opt_param.aipu.norm[i] = info_ptr->norm[0][i];
-        }
-        for (int i =0 ; i != info_ptr->output_num ; i++)
-        {
-            opt_param.aipu.scale[i] = info_ptr->ouputs_scale[i];
-        }
-
-    }
-    else if (strcmp(info_ptr->model_type , "awnn") == 0)
-    {
-        printf("v831\n");
-        if(strlen(info_ptr->bin_path) == 0  ||  strlen(info_ptr->param_path)==0)
-        {
-            printf("this path is empty ! \n");
-
-        }
-        //path
-        model_path.awnn.bin_path = info_ptr->bin_path;
-        model_path.awnn.param_path = info_ptr->param_path;
-        printf("bin: %s\nparam:%s \n",info_ptr->bin_path , info_ptr->param_path);
-        //opt
-        opt_param.awnn.input_names = info_ptr->inputs;
-        opt_param.awnn.output_names = info_ptr->outpus;
-        opt_param.awnn.input_num = info_ptr->input_num;
-        opt_param.awnn.output_num = info_ptr->output_num;
-        opt_param.awnn.encrypt = false;
-        for(int i=0 ; i !=3 ; i++ )
-        {
-            opt_param.awnn.mean[i] = info_ptr->mean[0][i];
-            opt_param.awnn.norm[i] = info_ptr->norm[0][i];
-        }
-        for (int i =0 ; i != 3 ; i++)
-        {
-            printf("mean%d : %f \n", i , opt_param.aipu.mean[i]);
-            printf("norm%d : %f \n", i , opt_param.aipu.norm[i]);
-        }
-    }
-    else
-    {
-        printf("this type value is empty or the type is unsupport !\n");
-    }
-
-    // nn create
-    nn = libmaix_nn_create();
-    if(!nn)
-    {
-        printf("libmaix_nn object create fail\n");
-    }
-    err = nn->init(nn);
-    if(err != LIBMAIX_ERR_NONE)
-    {
-        printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
-    }
-    printf("-- nn object load model\n");
-    err = nn->load(nn, &model_path, &opt_param);
-    printf("-- nn object load model is done");
-    if(err != LIBMAIX_ERR_NONE)
-    {
-        printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
-    }
-    return nn;
-}

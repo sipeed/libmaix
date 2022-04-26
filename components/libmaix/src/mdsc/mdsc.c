@@ -395,7 +395,7 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
     }
 }
 
-void read_file (char * mdsc_path , ini_info_t * ini_info_ptr)
+void read_file (const char * mdsc_path , ini_info_t * ini_info_ptr)
 {
     FILE *fp = load_file(mdsc_path);
     if(fp == NULL)

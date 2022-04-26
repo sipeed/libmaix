@@ -18,7 +18,7 @@ typedef struct ini_info
     int input_num;
     int output_num;
     int  outputs_shape[MAX_LEN][3];
-    int inputs_shape[MAX_LEN][3]
+    int inputs_shape[MAX_LEN][3];
 }ini_info_t;
 
 FILE * load_file(char *filename);
@@ -30,7 +30,7 @@ void set_outputs_value(float **values, ini_info_t *ini_info);
 void set_inputs_scale(float * values , ini_info_t * ini_info);
 void set_outputs_scale(float * values , ini_info_t * ini_info);
 int get_section(FILE * fp , char *title , ini_info_t * ini_info);
-void read_file (char * mdsc_path , ini_info_t * ini_info_ptr);
+void read_file (const char * mdsc_path , ini_info_t * ini_info_ptr);
 libmaix_nn_t* load_mdsc(char * path , ini_info_t * info_ptr);
 // libmaix_nn_t* build_model(ini_info_t * info_ptr);
 libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt);

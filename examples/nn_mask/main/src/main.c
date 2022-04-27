@@ -237,7 +237,11 @@ void nn_test(struct libmaix_disp* disp)
     img->mode = LIBMAIX_IMAGE_MODE_RGB888;`
 #endif
     // nn model init
-    nn = load_mdsc(mdsc_path);
+    ini_info_t * ini_info_ptr = (ini_info_t * )malloc(sizeof(ini_info_t));
+    read_file(mdsc_path , ini_info_ptr);
+    libmaix_nn_model_path_t  path ;
+    libmaix_nn_opt_param_t  opt;
+    nn = build_model(ini_info_ptr,&path , &opt);
     // decoder init
     printf("-- yolo2 decoder create\n");
     yolo2_decoder = libmaix_nn_decoder_yolo2_create();

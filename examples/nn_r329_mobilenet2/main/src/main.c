@@ -197,7 +197,11 @@ void nn_test(struct libmaix_disp *disp)
     }
     out_fmap.data = output_buffer;
 
-    nn = load_mdsc(mdsc_path);
+    ini_info_t * ini_info_ptr = (ini_info_t * )malloc(sizeof(ini_info_t));
+    read_file(mdsc_path , ini_info_ptr);
+    libmaix_nn_model_path_t  path ;
+    libmaix_nn_opt_param_t  opt;
+    nn = build_model(ini_info_ptr,&path , &opt);
     printf("-- start loop\n");
     while (!program_exit)
     {

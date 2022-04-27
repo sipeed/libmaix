@@ -63,7 +63,7 @@ jobs:
         cd ../..
     - name: Test nn_yolo_20class build
       run: |
-        cd examples/nn_yolo_20class
+        cd examples/nn_yolo_20class_mdsc
         python project.py build
         python project.py clean
         python project.py distclean

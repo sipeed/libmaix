@@ -13,3 +13,6 @@
 [submodule "components/maix_speech/Maix-Speech"]
 	path = components/maix_speech/Maix-Speech
 	url = https://github.com/sipeed/Maix-Speech
+[submodule "components/third_party/lvgl/lv_lib_freetype"]
+	path = components/third_party/lvgl/lv_lib_freetype
+	url = https://github.com/lvgl/lv_lib_freetype

@@ -651,15 +651,40 @@ void gui_exit(void)
 // ==================
 
 #include <pthread.h>
+
+/* 互斥锁创建 */
+static pthread_mutex_t _gui_mutex_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* 互斥锁初始化 */
+int mf_gui_mutex_lock_init()
+{
+ return !pthread_mutex_init(&_gui_mutex_lock, NULL);
+}
+
+/* 互斥锁加锁 */
+int mf_gui_mutex_lock()
+{
+  return !pthread_mutex_lock(&_gui_mutex_lock);
+}
+
+/* 互斥锁解锁 */
+int mf_gui_mutex_unlock()
+{
+ return !pthread_mutex_unlock(&_gui_mutex_lock);
+}
+
 pthread_t th;
 int th_usec = 0;
 
 void *thread(void *arg)
 {
+  mf_gui_mutex_lock_init();
   while (th_usec)
   {
+    mf_gui_mutex_lock();
     lv_task_handler();
     usleep(th_usec);
+    mf_gui_mutex_unlock();
   }
   return 0;
 }

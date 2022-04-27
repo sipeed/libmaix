@@ -4,7 +4,7 @@
 #include "string.h"
 
 
-libmaix_nn_decoder_t* libmaix_nn_decoder_creat(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func, 
+libmaix_nn_decoder_t* libmaix_nn_decoder_creat(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func,
                                                 libmaic_nn_decoder_decode_func_t decode_func)
 {
     libmaix_nn_decoder_t* obj = (libmaix_nn_decoder_t*)malloc(sizeof(libmaix_nn_decoder_t));
@@ -12,7 +12,7 @@ libmaix_nn_decoder_t* libmaix_nn_decoder_creat(libmaic_nn_decoder_init_func_t in
     {
         return NULL;
     }
-    memset(obj, 0, sizeof(libmaix_nn_decoder_t)); //init space 
+    memset(obj, 0, sizeof(libmaix_nn_decoder_t)); //init space
     obj->init = init_func;
     obj->deinit = deinit_func;
     obj->decode = decode_func;

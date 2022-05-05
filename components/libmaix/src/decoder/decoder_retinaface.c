@@ -10,6 +10,11 @@
 
 // int *steps = NULL; // config->steps;
 // int *min_sizes = NULL; // config->min_sizes;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int min_size_len = MIN_SIZE_LEN;
 int anchor_size_len = ANCHOR_SIZE_NUM;
 
@@ -474,3 +479,6 @@ void libmaix_nn_decoder_retinaface_destroy(libmaix_nn_decoder_t** obj)
     }
     *obj = NULL;
 }
+#ifdef __cplusplus
+}
+#endif

@@ -4,35 +4,33 @@
 #include <stdio.h>
 #include "libmaix_debug.h"
 #include <string.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-typedef struct
-{
-    libmaix_nn_decoder_yolo2_config_t* config;
-    uint32_t coords;          // coord length, 4: xmin, ymin, xmax, ymax
-    uint32_t net_out_wh;
-    uint32_t boxes_number;
-    uint32_t output_number;
-    uint32_t one_box_output_number;
-    uint32_t one_ch_output_number;
-    float scale;
-    float bias;
-    libmaix_nn_decoder_yolo2_box_t* boxes;
-    //uint8_t *input;
-    float *output;
-    float *probs_buf;
-    float **probs;
-    float *activate;
-    float *softmax;
-} region_layer_t;
 
-typedef struct
-{
-    int index;
-    int class_id;
-    float **probs;
-}sortable_box_t;
+// typedef struct
+// {
+//     libmaix_nn_decoder_yolo2_config_t* config;
+//     uint32_t coords;          // coord length, 4: xmin, ymin, xmax, ymax
+//     uint32_t net_out_wh;
+//     uint32_t boxes_number;
+//     uint32_t output_number;
+//     uint32_t one_box_output_number;
+//     uint32_t one_ch_output_number;
+//     float scale;
+//     float bias;
+//     libmaix_nn_decoder_yolo2_box_t* boxes;
+//     //uint8_t *input;
+//     float *output;
+//     float *probs_buf;
+//     float **probs;
+//     float *activate;
+//     float *softmax;
+// } region_layer_t;
+
+// typedef struct
+// {
+//     int index;
+//     int class_id;
+//     float **probs;
+// }sortable_box_t;
 
 
 /**
@@ -40,6 +38,11 @@ typedef struct
  * befor call it, ensure rl->config is set
  *
  */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 static libmaix_err_t region_layer_init(region_layer_t *rl)
 {
     libmaix_err_t flag = LIBMAIX_ERR_NONE;

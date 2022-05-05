@@ -1,6 +1,6 @@
 /**
  * maix neural network lib, network decoder
- * 
+ *
  * @copyright © 2020-2021 Sipeed Ltd, All rights reserved
  * @author neucrack
  * @update --2020.12.28--neucrack: create lib

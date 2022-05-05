@@ -3,6 +3,9 @@
 #include "libmaix_nn.h"
 #define INI_VERSION "0.1.1"
 #define MAX_LEN 5
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct ini_info
 {
     /* data */
@@ -34,4 +37,7 @@ void read_file (const char * mdsc_path , ini_info_t * ini_info_ptr);
 libmaix_nn_t* load_mdsc(char * path , ini_info_t * info_ptr);
 // libmaix_nn_t* build_model(ini_info_t * info_ptr);
 libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt);
+#ifdef __cplusplus
+}
+#endif
 #endif

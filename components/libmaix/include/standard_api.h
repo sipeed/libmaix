@@ -26,7 +26,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef struct ctx_handle aipu_ctx_handle_t;
 
 /**
@@ -561,5 +563,7 @@ aipu_status_t AIPU_debugger_run_job(const aipu_ctx_handle_t* ctx, uint32_t job_i
  *
  */
 aipu_status_t AIPU_printf(aipu_tensor_buffer_t* printf_dumps, char* redirect_file);
-
+#ifdef __cplusplus
+}
+#endif
 #endif /* _STANDARD_API_H_ */

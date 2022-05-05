@@ -3,6 +3,7 @@
 #include "stdlib.h"
 #include "string.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,6 +32,7 @@ void libmaix_nn_decoder_destroy(libmaix_nn_decoder_t** obj)
         *obj = NULL;
     }
 }
+
 #ifdef __cplusplus
 }
 #endif

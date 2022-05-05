@@ -1,7 +1,7 @@
 
 #include "libmaix.h"
 #include "stdio.h"
-#include "global_config.h"
+// #include "global_config.h"
 
 void test_maix()
 {

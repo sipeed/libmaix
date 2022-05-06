@@ -1,10 +1,6 @@
 
 
-#include <math.h>
-#include "libmaix_nn_decoder_retinaface.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+
 
 #define debug_line  //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
@@ -14,6 +10,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <math.h>
+#include "libmaix_nn_decoder_retinaface.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 
 int min_size_len = MIN_SIZE_LEN;
 int anchor_size_len = ANCHOR_SIZE_NUM;

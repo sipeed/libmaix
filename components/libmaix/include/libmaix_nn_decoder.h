@@ -9,13 +9,12 @@
 #ifndef __LIBMAIX_NN_DECODER_H__
 #define __LIBMAIX_NN_DECODER_H__
 
-#include "libmaix_err.h"
-#include "libmaix_nn.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include "libmaix_err.h"
+#include "libmaix_nn.h"
 
 typedef struct libmaix_nn_decoder
 {

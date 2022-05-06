@@ -1,15 +1,16 @@
 #ifndef __LIBMAIX_NN_DECODER_YOLO2_H
 #define __LIBMAIX_NN_DECODER_YOLO2_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "libmaix_err.h"
-#include "libmaix_nn_decoder.h"
+
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+#include <stdint.h>
+#include <stdbool.h>
+#include "libmaix_err.h"
+#include "libmaix_nn_decoder.h"
 
 typedef struct
 {

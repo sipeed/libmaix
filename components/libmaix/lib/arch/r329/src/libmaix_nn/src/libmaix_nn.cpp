@@ -239,7 +239,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             // debug_line;
             temp_float_buffer[i *3 + 0] =  temp_R * norm_R;
             temp_float_buffer[i *3 + 1] =  temp_G * norm_G;
-            [i *3 + 2] =  temp_B * norm_B;
+            temp_float_buffer[i *3 + 2] =  temp_B * norm_B;
             // debug_line;
         }
         debug_line;

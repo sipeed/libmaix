@@ -1,9 +1,3 @@
-#include "libmaix_nn_decoder_yolo2.h"
-#include <stdlib.h>
-#include <math.h>
-#include <stdio.h>
-#include "libmaix_debug.h"
-#include <string.h>
 
 // typedef struct
 // {
@@ -43,6 +37,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "libmaix_nn_decoder_yolo2.h"
+#include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
+#include "libmaix_debug.h"
+#include <string.h>
+
+
 static libmaix_err_t region_layer_init(region_layer_t *rl)
 {
     libmaix_err_t flag = LIBMAIX_ERR_NONE;

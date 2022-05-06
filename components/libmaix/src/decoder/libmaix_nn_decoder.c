@@ -1,12 +1,14 @@
 
-#include "libmaix_nn_decoder.h"
-#include "stdlib.h"
-#include "string.h"
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+#include "libmaix_nn_decoder.h"
+#include "stdlib.h"
+#include "string.h"
+
 libmaix_nn_decoder_t* libmaix_nn_decoder_creat(libmaic_nn_decoder_init_func_t init_func, libmaic_nn_decoder_deinit_func_t deinit_func,
                                                 libmaic_nn_decoder_decode_func_t decode_func)
 {

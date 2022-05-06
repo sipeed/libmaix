@@ -1,3 +1,9 @@
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -395,7 +401,7 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
     }
 }
 
-void read_file (const char * mdsc_path , ini_info_t * ini_info_ptr)
+void read_file(char * mdsc_path , ini_info_t * ini_info_ptr)
 {
     FILE *fp = load_file(mdsc_path);
     if(fp == NULL)
@@ -410,8 +416,6 @@ void read_file (const char * mdsc_path , ini_info_t * ini_info_ptr)
 
 libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt)
 {
-    // libmaix_nn_model_path_t model_path;
-    // libmaix_nn_opt_param_t opt_param;
     libmaix_nn_t* nn = NULL;
     libmaix_err_t err =LIBMAIX_ERR_NONE;
 
@@ -443,6 +447,7 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
     else if (strcmp(info_ptr->model_type , "awnn") == 0)
     {
         printf("v831\n");
+        debug_line;
         if(strlen(info_ptr->bin_path) == 0  ||  strlen(info_ptr->param_path)==0)
         {
             printf("this path is empty ! \n");
@@ -456,7 +461,7 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
         //path
         // path->awnn.bin_path = info_ptr->bin_path;
         // path->awnn.param_path = info_ptr->param_path;
-
+        debug_line;
         int bin_len = strlen(info_ptr->bin_path);
         char *bin_src = info_ptr->bin_path;
         char *bin_dst = (char *)malloc(bin_len +1);
@@ -477,11 +482,6 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
             path->awnn.param_path = param_dst;
         }
 
-
-
-        //opt
-        // opt_param.awnn.input_names = info_ptr->inputs;
-        // opt_param.awnn.output_names = info_ptr->outpus;
         opt->awnn.input_names = (char **)malloc(sizeof(char*) * info_ptr->input_num);
         for(int i=0 ; i !=opt->awnn.input_num;i++)
         {
@@ -494,7 +494,6 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
                 opt->awnn.input_names[i] = dst;
             }
         }
-
         opt->awnn.output_names = (char **)malloc(sizeof(char*) *info_ptr->output_num);
         for(int i=0 ; i !=opt->awnn.output_num;i++)
         {
@@ -533,11 +532,13 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
         printf("libmaix_nn object create fail\n");
     }
     err = nn->init(nn);
+
     if(err != LIBMAIX_ERR_NONE)
     {
         printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
     }
     printf("-- mdsc nn object load model\n");
+
     err = nn->load(nn, path, opt);
     printf("--mdsc nn object load model is done\n");
     if(err != LIBMAIX_ERR_NONE)
@@ -594,3 +595,7 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
 //     printf("____________________\n");
 
 // }
+
+#ifdef __cplusplus
+}
+#endif

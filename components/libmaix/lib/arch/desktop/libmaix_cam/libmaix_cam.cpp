@@ -83,10 +83,15 @@ libmaix_err_t vi_priv_capture_image(struct libmaix_cam *cam, struct libmaix_imag
               cv::Mat dst;
               cv::cvtColor(src, dst, (priv->vi_f == 1) ? cv::COLOR_YUV2RGB_YUYV : cv::COLOR_YUV2BGR_YUYV); // opencv4 flip yuv bug
               cv::Mat tmp(priv->vi_h, priv->vi_w, CV_8UC3, priv->vi_img->data);
-              if (priv->vi_w == priv->vcap->capW) {
+              if (priv->vi_w == priv->vcap->capW) {// 320x240 not 240x240
                 dst(cv::Rect(priv->vi_x, priv->vi_y, priv->vi_w, priv->vi_h)).copyTo(tmp);
-              } else {
-                cv::resize(dst, tmp, tmp.size(), 0, 0, cv::INTER_LINEAR);
+              } else { // only 320x240 > 224x224 or 640x480 > 320x240
+                // printf("resize %d %d to %d %d\r\n", priv->vcap->capW, priv->vcap->capH, priv->vi_w, priv->vi_h);
+                if (priv->vi_w == priv->vi_h) {
+                    cv::resize(dst(cv::Rect((priv->vcap->capW - priv->vcap->capH) / 2, 0, priv->vcap->capH, priv->vcap->capH)), tmp, tmp.size(), 0, 0, cv::INTER_LINEAR);
+                } else {
+                    cv::resize(dst, tmp, tmp.size(), 0, 0, cv::INTER_LINEAR);
+                }
               }
               // cv::imwrite("tmp.jpg", tmp);
               // printf("[vi_priv_capture] %d %d %d %d\r\n", t.cols, t.rows, priv->vcap->capW, priv->vcap->capH);

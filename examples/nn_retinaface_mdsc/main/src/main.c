@@ -318,7 +318,7 @@ void nn_test(struct libmaix_disp *disp)
             }
         }
         disp->draw_image(disp, show);
-        break;
+        // break;
 #endif
 #if LOAD_IMAGE
         break;

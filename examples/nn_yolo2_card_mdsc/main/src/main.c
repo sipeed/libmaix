@@ -13,7 +13,7 @@
 #include "libmaix_nn.h"
 #include "libmaix_nn_decoder_yolo2.h"
 #include "main.h"
-#include "mdsc.h"
+#include "mud.h"
 #include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
@@ -111,7 +111,7 @@ void nn_test(struct libmaix_disp* disp)
     char* labels[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "mouse", "microbit", "ruler", "cat", "peer", "ship", "apple", "car", "pan", "dog", "umbrella", "airplane", "clock", "grape", "cup", "left", "right", "front", "stop", "back"};
     int class_num = 35;
     float anchors [10] =  {2.44, 2.25, 5.03, 4.91, 3.5, 3.53, 4.16, 3.94, 2.97, 2.84};
-    char * mdsc_path = "/root/mdsc/r329_yolo_card.mdsc";
+    char * mdsc_path = "/root/mud/r329_yolo_card.mud";
 
 
 

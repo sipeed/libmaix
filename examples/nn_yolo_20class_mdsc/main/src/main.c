@@ -13,7 +13,7 @@
 #include "libmaix_nn.h"
 #include "libmaix_nn_decoder_yolo2.h"
 #include "main.h"
-#include "mdsc.h"
+#include "mud.h"
 #include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
@@ -112,7 +112,7 @@ void nn_test(struct libmaix_disp* disp)
     int class_num = 20;
     float anchors[10] = {0.4165, 0.693 , 0.9765, 1.6065, 1.5855, 3.122 , 2.821 , 1.8515,4.72, 6.26};
 
-    char * mdsc_path = "/root/mdsc/v831_yolo_voc.mdsc";
+    char * mdsc_path = "/root/mud/v831_yolo_voc.mud";
 
 
     uint8_t anchor_len = sizeof(anchors) / sizeof(float) / 2; //five anchors

@@ -12,7 +12,7 @@ if(CONFIG_LIBMAIX_ENABLED)
     # list(REMOVE_ITEM COMPONENT_SRCS "src/test.c")
     append_srcs_dir(ADD_SRCS "src/decoder")
     ###############################################
-    append_srcs_dir(ADD_SRCS "src/mdsc")
+    append_srcs_dir(ADD_SRCS "src/mud")
     ###### Add required/dependent components ######
     # list(APPEND ADD_REQUIREMENTS component1)
     ###############################################
@@ -129,7 +129,7 @@ if(CONFIG_LIBMAIX_ENABLED)
 
       )
       set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -fuse-ld=gold -Wl,--start-group libmaix/liblibmaix.a -lm -Wl,--end-group" PARENT_SCOPE)
-      
+
       list(APPEND ADD_DEFINITIONS -DCONFIG_ARCH_R329=1)
 
     else()

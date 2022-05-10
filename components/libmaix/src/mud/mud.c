@@ -8,7 +8,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
-#include "mdsc.h"
+#include "mud.h"
 #include "libmaix_nn.h"
 
 #define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
@@ -411,7 +411,7 @@ void read_file(char * mdsc_path , ini_info_t * ini_info_ptr)
     get_section(fp , "basic", ini_info_ptr);
     get_section(fp, "inputs", ini_info_ptr);
     get_section(fp , "outputs", ini_info_ptr);
-    get_section(fp , "extra", ini_info_ptr);
+    // get_section(fp , "extra", ini_info_ptr);
 }
 
 libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt)
@@ -537,10 +537,10 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
     {
         printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
     }
-    printf("-- mdsc nn object load model\n");
+    printf("-- mud nn object load model\n");
 
     err = nn->load(nn, path, opt);
-    printf("--mdsc nn object load model is done\n");
+    printf("--mud nn object load model is done\n");
     if(err != LIBMAIX_ERR_NONE)
     {
         printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));

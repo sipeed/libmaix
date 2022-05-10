@@ -1,6 +1,6 @@
 ## 模型描述文件
 1. 模型描述文件
-    - 文件格式后缀名： .mdsc
+    - 文件格式后缀名： .mud
     - 文件内容使用 INI 格式，内容定义如下：
 
         [basic]
@@ -105,9 +105,9 @@ retinaface 特有：
 1. .mdsc文件的使用
 
 ```python
-    m = nn.load("*.mdsc")
+    m = nn.load("*.mud")
     outs = m.forward(inputs)
-    decoder = nn.get_decoder("*.mdsc")
+    decoder = nn.get_decoder("*.mud")
     print(decoder.id)
     outs = decoder.run(outs)
 ```

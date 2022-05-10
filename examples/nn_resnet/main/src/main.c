@@ -23,7 +23,7 @@
 #include <getopt.h>
 #include <sys/mman.h>
 #include <errno.h>
-#include "mdsc.h"
+#include "mud.h"
 #include <string.h>
 
 #define LOAD_IMAGE 0
@@ -132,7 +132,7 @@ void nn_test(struct libmaix_disp *disp)
     libmaix_nn_module_init();
     libmaix_camera_module_init();
 
-    char *mdsc_path = "/root/mdsc/r329_resnet50.mdsc";
+    char *mdsc_path = "/root/mud/r329_resnet50.mud";
     uint32_t res_w = 224;
     uint32_t res_h = 224;
     libmaix_nn_t *nn = NULL;

@@ -18,7 +18,7 @@
 
 #include "libmaix_nn_decoder_retinaface.h"
 #include "main.h"
-#include "mdsc.h"
+#include "mud.h"
 #include "time_utils.h"
 
 #define LOAD_IMAGE 0
@@ -77,13 +77,13 @@ void nn_test(struct libmaix_disp *disp)
     libmaix_camera_module_init();
 
     #ifdef CONFIG_ARCH_R329
-    char *mdsc_path = "/root/mdsc/r329_retinaface.mdsc";
+    char *mdsc_path = "/root/mud/r329_retinaface.mud";
     int res_w = 320;
     int res_h = 320;
     #endif
 
     #ifdef CONFIG_ARCH_V831
-    char *mdsc_path = "/root/mdsc/v831_retinaface.mdsc";
+    char *mdsc_path = "/root/mud/v831_retinaface.mud";
     int res_w = 224;
     int res_h = 224;
     #endif

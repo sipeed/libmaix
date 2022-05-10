@@ -13,7 +13,7 @@
 #include "libmaix_nn.h"
 #include "libmaix_nn_decoder_yolo2.h"
 #include "main.h"
-#include "mdsc.h"
+#include "mud.h"
 #include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
@@ -111,7 +111,7 @@ void nn_test(struct libmaix_disp* disp)
     char *labels[] = {"no wear","wear"};
     int class_num = 2;
     float anchors [10] =  {1.19, 1.98, 2.79, 4.59, 4.53, 8.92, 8.06, 5.29, 10.32, 10.65};
-    char * mdsc_path = "/root/mdsc/v831_yolo_mask.mdsc";
+    char * mdsc_path = "/root/mud/v831_yolo_mask.mud";
 
 
     uint8_t anchor_len = sizeof(anchors) / sizeof(float) / 2; //five anchors

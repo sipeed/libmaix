@@ -411,7 +411,7 @@ void read_file(char * mdsc_path , ini_info_t * ini_info_ptr)
     get_section(fp , "basic", ini_info_ptr);
     get_section(fp, "inputs", ini_info_ptr);
     get_section(fp , "outputs", ini_info_ptr);
-    // get_section(fp , "extra", ini_info_ptr);
+    get_section(fp , "extra", ini_info_ptr);
 }
 
 libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt)

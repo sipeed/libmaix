@@ -367,13 +367,13 @@ extern "C"
       if (!libmaix_font::is_load)
       {
         cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, scale, thickness, &baseline);
-        *width = textSize.width * scale, *height = textSize.height + baseline - (scale * thickness) + 1;
+        *width = textSize.width * scale, *height = textSize.height + baseline - (scale * thickness);
         // printf("old textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
       }
       else
       {
         cv::Size textSize = libmaix_font::ft->getTextSize(text, libmaix_font::fontHeight, thickness, &baseline);
-        *width = textSize.width * scale, *height = libmaix_font::fontHeight * scale;
+        *width = textSize.width * scale, *height = libmaix_font::fontHeight * scale + thickness;
         // printf("new textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
       }
   }
@@ -405,13 +405,12 @@ extern "C"
     {
       cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, scale, thickness, &baseline);
       // printf("old textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
-      int tmp = baseline - (scale * thickness);
-      cv::putText(input, text, cv::Point(x, y + textSize.height + tmp), cv::FONT_HERSHEY_PLAIN, scale,
+      cv::putText(input, text, cv::Point(x, y + textSize.height + baseline - (scale * thickness)), cv::FONT_HERSHEY_PLAIN, scale,
           cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), thickness);
     }
     else
     {
-      cv::Size textSize = libmaix_font::ft->getTextSize(text, libmaix_font::fontHeight, thickness, &baseline);
+      // cv::Size textSize = libmaix_font::ft->getTextSize(text, libmaix_font::fontHeight, thickness, &baseline);
       // printf("new textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
       libmaix_font::ft->putText(input, text, cv::Point(x, y), libmaix_font::fontHeight * scale,
           cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), -1, 16, false);

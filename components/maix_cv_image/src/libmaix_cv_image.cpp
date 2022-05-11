@@ -367,8 +367,7 @@ extern "C"
       if (!libmaix_font::is_load)
       {
         cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, scale, thickness, &baseline);
-        int tmp = baseline - (scale * thickness);
-        *width = textSize.width * scale, *height = textSize.height + tmp;
+        *width = textSize.width * scale, *height = textSize.height + baseline - (scale * thickness) + 1;
         // printf("old textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
       }
       else
@@ -860,6 +859,28 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
           return LIBMAIX_ERR_PARAM;
         }
       } //end else
+    }
+    else
+    {
+      LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+      return LIBMAIX_ERR_NOT_IMPLEMENT;
+    }
+    // -------------------------------
+    return LIBMAIX_ERR_NONE;
+  }
+
+  libmaix_err_t libmaix_cv_image_flip(libmaix_image_t *src, int flipCode)
+  {
+    libmaix_err_t err = LIBMAIX_ERR_NONE;
+    if (src->width == 0 || src->height == 0 || src->data == NULL)
+    {
+      return LIBMAIX_ERR_PARAM;
+    }
+    // -------------------------------
+    if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    {
+      cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
+      cv::flip(cv_src, cv_src, flipCode);
     }
     else
     {

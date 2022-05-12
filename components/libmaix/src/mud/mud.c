@@ -8,17 +8,76 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
+#include <unistd.h>
 #include "mud.h"
 #include "libmaix_nn.h"
 
 #define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
-FILE *load_file(char *filename)
+
+char mud_sorce_dir_full_path [1024]; //mud 所在路径
+
+char *get_dirpath_from_str(char * path)
 {
-    FILE *fp;
-    if (NULL == (fp = fopen(filename, "r")))
+    char *string = (char *)malloc(sizeof(char) * 1024);
+    char *tmp = (char *)malloc(sizeof(char) * 1024);
+    char *string_head = string;
+    char *tmp_head = tmp;
+    strcpy(tmp, path);
+    char *ptr = strrchr(tmp , '/');
+    while(tmp != ptr +1)
     {
-        perror("fopen");
-        return NULL;
+        *string = *tmp;
+        string ++ ;
+        tmp ++;
+    }
+    *string = '\0';
+    free(tmp_head);
+    return string_head;
+}
+
+char *get_filename_from_str(char * path)
+{
+    char *tmp = (char *)malloc(sizeof(char) * 1024);
+    char *string = (char *)malloc(sizeof(char) * 1024);
+    strcpy(tmp, path);
+    char *ptr = strrchr(tmp , '/');
+    stpcpy(string , ptr+1);
+    free(tmp);
+    return string;
+}
+
+FILE *load_file(char *mud_path)
+{
+    //TODO:  should judge whether the file is legal or not
+    FILE *fp;
+    if(*mud_path ==  '/')
+    {
+        char * dirpath = get_dirpath_from_str(mud_path);
+        strcpy(mud_sorce_dir_full_path , dirpath);
+        if (NULL == (fp = fopen(mud_path, "r")))
+        {
+            perror("fopen");
+            return NULL;
+        }
+    }
+    else
+    {
+        char *mud_sorce_dir_full_path;
+        if((mud_sorce_dir_full_path = getcwd(NULL,0))==NULL){
+            perror("getcwd error");
+        }
+        strcat(mud_sorce_dir_full_path , "/");
+        char * dirpath = get_dirpath_from_str(mud_path);
+        strcat(mud_sorce_dir_full_path,dirpath);
+        char * filename = get_filename_from_str(mud_path);
+        char * full_path = (char *)malloc(sizeof(char) * 1024);
+        strcpy(full_path , mud_sorce_dir_full_path);
+        strcat(full_path,filename);
+        if (NULL == (fp = fopen(full_path, "r")))
+        {
+            perror("fopen");
+            return NULL;
+        }
     }
     return fp;
 }
@@ -338,12 +397,32 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
                 if (0 == strcmp(key, "bin"))
                 {
                     printf("bin len :%d , bin:%s\n",strlen(value), value);
-                    ini_info->bin_path = value;
+                    if(*value == '/')
+                    {
+                        ini_info->bin_path = value;
+                    }
+                    else
+                    {
+                        char * full_path = (char *)malloc(sizeof(char) * 1024);
+                        strcpy(full_path, mud_sorce_dir_full_path);
+                        strcat(full_path,value);
+                        ini_info->bin_path = full_path;
+                    }
                 }
                 if (0 == strcmp(key, "param"))
                 {
                     printf("param len:%d, param:%s\n",strlen(value),value);
-                    ini_info->param_path = value;
+                    if(*value == '/')
+                    {
+                        ini_info->param_path = value;
+                    }
+                    else
+                    {
+                        char * full_path = (char *)malloc(sizeof(char) * 1024);
+                        strcpy(full_path, mud_sorce_dir_full_path);
+                        strcat(full_path,value);
+                        ini_info->param_path = full_path;
+                    }
                 }
             }
             else if (strspn(string_lines, " \t\n") == strlen(string_lines))
@@ -407,6 +486,7 @@ void read_file(char * mdsc_path , ini_info_t * ini_info_ptr)
     if(fp == NULL)
     {
         printf("open %s is faild\n",mdsc_path);
+        exit(0);
     }
     get_section(fp , "basic", ini_info_ptr);
     get_section(fp, "inputs", ini_info_ptr);

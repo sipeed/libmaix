@@ -17,7 +17,6 @@ extern "C" {
 #include "libmaix_debug.h"
 #include "stdint.h"
 #include "stdbool.h"
-#include "standard_api.h"
 
 typedef enum
 {

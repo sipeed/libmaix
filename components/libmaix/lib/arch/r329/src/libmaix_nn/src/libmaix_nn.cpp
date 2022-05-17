@@ -1,4 +1,4 @@
-#include "standard_api.h"
+
 #include "libmaix_err.h"
 #include "libmaix_nn.h"
 #include <stdio.h>
@@ -10,13 +10,9 @@
 #include <errno.h>
 #include "stdlib.h"
 #include <string.h>
-#define FNAME_MAX_LEN 4096
-#define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
+#include "standard_api.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+#define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
 typedef struct obj_config
 {
@@ -481,7 +477,3 @@ float libmaix_nn_feature_compare_float(float* a, float* b, int len)
     float score = count / len ;
     return score ;
 }
-
-#ifdef __cplusplus
-}
-#endif

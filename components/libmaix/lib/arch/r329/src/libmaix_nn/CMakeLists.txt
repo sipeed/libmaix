@@ -31,7 +31,7 @@ target_link_libraries(
 
 set_target_properties(maix_nn PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${export_dir}/lib/arch/r329")
 
-# set_target_properties(maix_image PROPERTIES LINK_FLAGS "-Wl,-rpath,/usr/local/lib/python3.9/dist-packages/maix/")
+set_target_properties(maix_nn PROPERTIES LINK_FLAGS "-Wl,-rpath,/usr/local/lib/python3.9/dist-packages/maix/")
 
 
 # add_custom_command(

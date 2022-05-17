@@ -194,7 +194,7 @@ typedef struct dump_option {
  *        and their identifiers start with the AIPU_STATUS_ERROR prefix.
  */
 
-// r0p1 has more one option than this 
+// r0p1 has more one option than this
 typedef enum {
     AIPU_STATUS_SUCCESS                    = 0x0,
     AIPU_STATUS_ERROR_NULL_PTR             = 0x1,

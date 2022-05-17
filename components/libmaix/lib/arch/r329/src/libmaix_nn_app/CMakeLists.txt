@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 # message(STATUS "cmake_source_dir ->" ${CMAKE_SOURCE_DIR})
 # message(STATUS "project_source_dir ->"  ${PROJECT_SOURCE_DIR})
 # message(STATUS "executable_output_dir - > "${EXECUTABLE_OUTPUT_PATH})
-# message(STATUS "current_source_path ->."${CMAKE_CURRENT_SOURCE_DIR}) 
+# message(STATUS "current_source_path ->."${CMAKE_CURRENT_SOURCE_DIR})
 # message("_____________________________________________________________")
 
 
@@ -31,7 +31,7 @@ target_link_libraries(
 
 set_target_properties(maix_nn_app PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${export_dir}/lib/arch/r329")
 
-# set_target_properties(maix_image PROPERTIES LINK_FLAGS "-Wl,-rpath,/usr/local/lib/python3.9/dist-packages/maix/")
+set_target_properties(maix_nn_app PROPERTIES LINK_FLAGS "-Wl,-rpath,/usr/local/lib/python3.9/dist-packages/maix/")
 
 
 # add_custom_command(

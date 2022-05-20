@@ -10,10 +10,12 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/freetype.hpp>
 
-void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location, double opacity = -1.0)
+void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location, double opacity)
 {
-  background.copyTo(output);
+  bool allow_mix = false; // By default no blending is allowed and black transparency is preserved
+  if (opacity >= 0. && opacity <= 1.) allow_mix = true;
 
+  if (background.data != background.data) background.copyTo(output);
   // start at the row indicated by location, or at row 0 if location.y is negative.
   for (int y = std::max(location.y, 0); y < background.rows; ++y)
   {
@@ -32,22 +34,28 @@ void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat 
       if (fX >= foreground.cols)
         break;
 
-      double opacity_level = 0.;
-      if (opacity < 0.) {
-        opacity_level = 1.0;
-      } else {
-        // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
-        opacity_level = ((double)foreground.data[fY * foreground.step + fX * foreground.channels() + 3]) / 255.;
-        if (opacity >= 0. && opacity < 1.)
-          opacity_level *= opacity;
-      }
+      uchar *pixels_fore = foreground.data + (fY * foreground.step + fX * foreground.channels());
+      uchar *pixels_back = background.data + (y * background.step + x * background.channels());
+      uchar *pixels_output = output.data + (y * output.step + output.channels() * x);
 
-      // and now combine the background and foreground pixel, using the opacity, but only if opacity > 0.
-      for (int c = 0; opacity_level > 0 && c < output.channels(); ++c)
-      {
-        unsigned char foregroundPx = foreground.data[fY * foreground.step + fX * foreground.channels() + c];
-        unsigned char backgroundPx = background.data[y * background.step + x * background.channels() + c];
-        output.data[y * output.step + output.channels() * x + c] = backgroundPx * (1. - opacity_level) + foregroundPx * opacity_level;
+      if (output.channels() == 3) {
+        // allow mix color and black is RGB's alpha == 0
+        double alpha = (allow_mix) ? ((pixels_fore[0] == 0 && pixels_fore[1] == 0 && pixels_fore[2] == 0) ? 0 : opacity) : 1;
+        double __alpha = (1. - alpha);
+        // printf("pos [%d %d] allow_mix %d alpha %f opacity %f\r\n", x, y, allow_mix, alpha, opacity);
+        pixels_output[0] = pixels_back[0] * __alpha + pixels_fore[0] * alpha;
+        pixels_output[1] = pixels_back[1] * __alpha + pixels_fore[1] * alpha;
+        pixels_output[2] = pixels_back[2] * __alpha + pixels_fore[2] * alpha;
+      } else if (output.channels() == 4) {
+        uchar *pixel = foreground.data + (fY * foreground.step + fX * foreground.channels());
+        // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
+        double alpha = (allow_mix) ? (pixel[3] / 255.) * opacity : 1.; // use alpha in foreground RGBA
+        // RGB need 3 pixel mix with alpha. and give up black color.
+        for (int c = 0; c != output.channels(); ++c) {
+            pixels_output[c] = pixels_back[c] * (1. - alpha) + pixels_fore[c] * alpha;
+        }
+      } else {
+        puts("[image.draw_image] Only supports RGB or RGBA");
       }
     }
   }

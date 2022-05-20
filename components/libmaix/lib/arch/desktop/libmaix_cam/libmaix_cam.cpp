@@ -81,7 +81,7 @@ libmaix_err_t vi_priv_capture_image(struct libmaix_cam *cam, struct libmaix_imag
             // cv::imwrite("dst.jpg", dst);
             if (priv->vi_h != priv->vcap->capH || priv->vi_w != priv->vcap->capW) {
               cv::Mat dst;
-              cv::cvtColor(src, dst, (priv->vi_f == 1) ? cv::COLOR_YUV2RGB_YUYV : cv::COLOR_YUV2BGR_YUYV); // opencv4 flip yuv bug
+              cv::cvtColor(src, dst, (priv->vi_f == 1) ? cv::COLOR_YUV2BGR_YUYV : cv::COLOR_YUV2RGB_YUYV); // opencv4 flip yuv bug
               cv::Mat tmp(priv->vi_h, priv->vi_w, CV_8UC3, priv->vi_img->data);
               if (priv->vi_w == priv->vcap->capW) {// 320x240 not 240x240
                 dst(cv::Rect(priv->vi_x, priv->vi_y, priv->vi_w, priv->vi_h)).copyTo(tmp);
@@ -97,7 +97,7 @@ libmaix_err_t vi_priv_capture_image(struct libmaix_cam *cam, struct libmaix_imag
               // printf("[vi_priv_capture] %d %d %d %d\r\n", t.cols, t.rows, priv->vcap->capW, priv->vcap->capH);
             } else {
               cv::Mat dst(priv->vi_h, priv->vi_w, CV_8UC3, priv->vi_img->data);
-              cv::cvtColor(src, dst, (priv->vi_f == 1) ? cv::COLOR_YUV2RGB_YUYV : cv::COLOR_YUV2BGR_YUYV); // opencv4 flip yuv bug
+              cv::cvtColor(src, dst, (priv->vi_f == 1) ? cv::COLOR_YUV2BGR_YUYV : cv::COLOR_YUV2RGB_YUYV); // opencv4 flip yuv bug
             }
             priv->vcap->backFrame();
             *img = priv->vi_img;
@@ -117,7 +117,7 @@ libmaix_err_t vi_priv_capture(struct libmaix_cam *cam, unsigned char *buf)
             cv::Mat src(priv->vcap->capH, priv->vcap->capW, CV_8UC2, (void*)yuv422frame);
             // cv::imwrite("src.jpg", src);
             cv::Mat dst;
-            cv::cvtColor(src, dst, cv::COLOR_YUV2RGB_YUYV);
+            cv::cvtColor(src, dst, cv::COLOR_YUV2BGR_YUYV);
 
             // monkey patch 2021
             cv::Mat patch;

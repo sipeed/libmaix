@@ -41,7 +41,7 @@ static libmaix_err_t disp_draw_image(struct libmaix_disp *disp, struct libmaix_i
 
   if (img->mode == LIBMAIX_IMAGE_MODE_RGB888){
       cv::Mat frame(img->height, img->width, CV_8UC3, img->data);
-      // cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
+      cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
       cv::imshow("[maixpy3]", frame);
   }
 

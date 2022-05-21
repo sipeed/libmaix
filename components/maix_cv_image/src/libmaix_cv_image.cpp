@@ -40,12 +40,19 @@ void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat 
 
       if (output.channels() == 3) {
         // allow mix color and black is RGB's alpha == 0
-        double alpha = (allow_mix) ? ((pixels_fore[0] == 0 && pixels_fore[1] == 0 && pixels_fore[2] == 0) ? 0 : opacity) : 1;
-        double __alpha = (1. - alpha);
-        // printf("pos [%d %d] allow_mix %d alpha %f opacity %f\r\n", x, y, allow_mix, alpha, opacity);
-        pixels_output[0] = pixels_back[0] * __alpha + pixels_fore[0] * alpha;
-        pixels_output[1] = pixels_back[1] * __alpha + pixels_fore[1] * alpha;
-        pixels_output[2] = pixels_back[2] * __alpha + pixels_fore[2] * alpha;
+        double alpha = (allow_mix) ? ((pixels_fore[0] == 0 && pixels_fore[1] == 0 && pixels_fore[2] == 0) ? 0 : opacity) : 1.;
+        if (alpha == 1.) {
+            // printf("pos [%d %d] allow_mix %d alpha %f opacity %f\r\n", x, y, allow_mix, alpha, opacity);
+            pixels_output[0] = pixels_fore[0];
+            pixels_output[1] = pixels_fore[1];
+            pixels_output[2] = pixels_fore[2];
+        } else {
+            double __alpha = (1. - alpha);
+            // printf("pos [%d %d] allow_mix %d alpha %f opacity %f\r\n", x, y, allow_mix, alpha, opacity);
+            pixels_output[0] = pixels_back[0] * __alpha + pixels_fore[0] * alpha;
+            pixels_output[1] = pixels_back[1] * __alpha + pixels_fore[1] * alpha;
+            pixels_output[2] = pixels_back[2] * __alpha + pixels_fore[2] * alpha;
+        }
       } else if (output.channels() == 4) {
         uchar *pixel = foreground.data + (fY * foreground.step + fX * foreground.channels());
         // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.

@@ -14,7 +14,7 @@ extern "C" {
 
 #define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
-char mud_sorce_dir_full_path [1024]; //mud 所在路径
+char *mud_sorce_dir_full_path ; //mud 所在路径
 
 char *get_dirpath_from_str(char * path)
 {
@@ -52,6 +52,7 @@ FILE *load_file(char *mud_path)
     FILE *fp;
     if(*mud_path ==  '/')
     {
+        mud_sorce_dir_full_path = (char *)malloc(sizeof(char) * 1024);
         char * dirpath = get_dirpath_from_str(mud_path);
         strcpy(mud_sorce_dir_full_path , dirpath);
         if (NULL == (fp = fopen(mud_path, "r")))
@@ -62,17 +63,13 @@ FILE *load_file(char *mud_path)
     }
     else
     {
-        char *mud_sorce_dir_full_path;
         if((mud_sorce_dir_full_path = getcwd(NULL,0))==NULL){
             perror("getcwd error");
         }
         strcat(mud_sorce_dir_full_path , "/");
-        char * dirpath = get_dirpath_from_str(mud_path);
-        strcat(mud_sorce_dir_full_path,dirpath);
-        char * filename = get_filename_from_str(mud_path);
+        strcat(mud_sorce_dir_full_path,mud_path);
         char * full_path = (char *)malloc(sizeof(char) * 1024);
         strcpy(full_path , mud_sorce_dir_full_path);
-        strcat(full_path,filename);
         if (NULL == (fp = fopen(full_path, "r")))
         {
             perror("fopen");
@@ -404,9 +401,10 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
                     else
                     {
                         char * full_path = (char *)malloc(sizeof(char) * 1024);
-                        strcpy(full_path, mud_sorce_dir_full_path);
+                        strcpy(full_path, get_dirpath_from_str(mud_sorce_dir_full_path));
                         strcat(full_path,value);
                         ini_info->bin_path = full_path;
+
                     }
                 }
                 if (0 == strcmp(key, "param"))
@@ -419,9 +417,10 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
                     else
                     {
                         char * full_path = (char *)malloc(sizeof(char) * 1024);
-                        strcpy(full_path, mud_sorce_dir_full_path);
+                        strcpy(full_path, get_dirpath_from_str(mud_sorce_dir_full_path));
                         strcat(full_path,value);
                         ini_info->param_path = full_path;
+
                     }
                 }
             }
@@ -451,11 +450,11 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
             {
                 char *key = get_key(string_lines);
                 float *value = get_float_value(string_lines);
-                debug_line;
+
                 int count = 0;
                 if ( 0 == strcmp( key ,  "inputs_scale"))  // input scale
                 {
-                    debug_line;
+
                     for(int i = 0 ; i != ini_info->input_num ; i++)
                     {
                         ini_info->inputs_scale[i]  =value[i];
@@ -463,7 +462,7 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
                 }
                 else
                 {
-                    debug_line;
+
                     for(int j = 0 ; j != ini_info->output_num ; j++)
                     {
                         ini_info->ouputs_scale[j] = value[j];
@@ -527,7 +526,7 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
     else if (strcmp(info_ptr->model_type , "awnn") == 0)
     {
         printf("v831\n");
-        debug_line;
+
         if(strlen(info_ptr->bin_path) == 0  ||  strlen(info_ptr->param_path)==0)
         {
             printf("this path is empty ! \n");
@@ -541,7 +540,6 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
         //path
         // path->awnn.bin_path = info_ptr->bin_path;
         // path->awnn.param_path = info_ptr->param_path;
-        debug_line;
         int bin_len = strlen(info_ptr->bin_path);
         char *bin_src = info_ptr->bin_path;
         char *bin_dst = (char *)malloc(bin_len +1);

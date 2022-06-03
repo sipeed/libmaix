@@ -93,7 +93,7 @@ typedef union
 
 typedef struct libmaix_nn
 {
-    void* _config;
+    void* config;
     libmaix_err_t (*init)(struct libmaix_nn *obj);
     libmaix_err_t (*deinit)(struct libmaix_nn *obj);
     libmaix_err_t (*load)(struct libmaix_nn *obj, const libmaix_nn_model_path_t* path, libmaix_nn_opt_param_t* opt_param);

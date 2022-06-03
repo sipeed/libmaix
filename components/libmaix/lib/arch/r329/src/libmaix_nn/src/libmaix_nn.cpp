@@ -29,8 +29,8 @@ typedef struct obj_config
 
 libmaix_err_t libmaix_nn_obj_init(struct libmaix_nn *obj)
 {
-    ((obj_config_t *)(obj->_config))->status = LIBMAIX_ERR_NONE;
-    libmaix_err_t * status = &( ((obj_config_t *)(obj->_config))->status);
+    ((obj_config_t *)(obj->config))->status = LIBMAIX_ERR_NONE;
+    libmaix_err_t * status = &( ((obj_config_t *)(obj->config))->status);
     // libmaix_err_t status =  LIBMAIX_ERR_NONE;
     if (obj == NULL)
     {
@@ -38,21 +38,21 @@ libmaix_err_t libmaix_nn_obj_init(struct libmaix_nn *obj)
         printf("initing a nn object is faild\n");
         return *status;
     }
-    ((obj_config_t *)(obj->_config))->status = LIBMAIX_ERR_NONE;
-    // ((obj_config_t *)(obj->_config))->job_id = 0;
-    ((obj_config_t *)(obj->_config))->time_out = -1;
-    ((obj_config_t *)(obj->_config))->ctx  = NULL;
-    ((obj_config_t *)(obj->_config))->status_msg = NULL;
-    ((obj_config_t *)(obj->_config))->opt = NULL;
+    ((obj_config_t *)(obj->config))->status = LIBMAIX_ERR_NONE;
+    // ((obj_config_t *)(obj->config))->job_id = 0;
+    ((obj_config_t *)(obj->config))->time_out = -1;
+    ((obj_config_t *)(obj->config))->ctx  = NULL;
+    ((obj_config_t *)(obj->config))->status_msg = NULL;
+    ((obj_config_t *)(obj->config))->opt = NULL;
     aipu_status_t ret;
 
-    ret = AIPU_init_ctx(&((obj_config_t *)(obj->_config))->ctx);
+    ret = AIPU_init_ctx(&((obj_config_t *)(obj->config))->ctx);
     if (ret != AIPU_STATUS_SUCCESS)
     {
         *status = LIBMAIX_ERR_NOT_INIT;
-        // const char *status_msg =  ((obj_config_t *)(obj->_config))->status_msg;
-        AIPU_get_status_msg(ret, &((obj_config_t *)(obj->_config))->status_msg);
-        fprintf(stderr, "[TEST ERROR] AIPU_init_ctx: %s\n", ((obj_config_t *)(obj->_config))->status_msg);
+        // const char *status_msg =  ((obj_config_t *)(obj->config))->status_msg;
+        AIPU_get_status_msg(ret, &((obj_config_t *)(obj->config))->status_msg);
+        fprintf(stderr, "[TEST ERROR] AIPU_init_ctx: %s\n", ((obj_config_t *)(obj->config))->status_msg);
         printf("nn module init is faild\n");
         return *status;
     }
@@ -62,18 +62,18 @@ libmaix_err_t libmaix_nn_obj_init(struct libmaix_nn *obj)
 libmaix_err_t libmaix_nn_obj_deinit(struct libmaix_nn *obj)
 {
 
-    if ( ((obj_config_t *)(obj->_config))->status != LIBMAIX_ERR_NONE)
+    if ( ((obj_config_t *)(obj->config))->status != LIBMAIX_ERR_NONE)
     {
         return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
     else
     {
-        // aipu_ctx_handle_t *ctx  = ((obj_config_t *)(obj->_config))->ctx;
-        // const char *status_msg =  ((obj_config_t *)(obj->_config))->status_msg;
+        // aipu_ctx_handle_t *ctx  = ((obj_config_t *)(obj->config))->ctx;
+        // const char *status_msg =  ((obj_config_t *)(obj->config))->status_msg;
         aipu_status_t ret;
-        libmaix_err_t *status = & ((obj_config_t *)(obj->_config))->status;
-        aipu_ctx_handle_t ** ctx = &(((obj_config_t *)(obj->_config))->ctx);
-        const char ** status_msg = &(((obj_config_t *)(obj->_config))->status_msg);
+        libmaix_err_t *status = & ((obj_config_t *)(obj->config))->status;
+        aipu_ctx_handle_t ** ctx = &(((obj_config_t *)(obj->config))->ctx);
+        const char ** status_msg = &(((obj_config_t *)(obj->config))->status_msg);
 
         ret = AIPU_deinit_ctx(*ctx);
         if (ret != AIPU_STATUS_SUCCESS)
@@ -90,20 +90,20 @@ libmaix_err_t libmaix_nn_obj_deinit(struct libmaix_nn *obj)
 
 libmaix_err_t libmaix_nn_obj_load(struct libmaix_nn *obj, const libmaix_nn_model_path_t *path, libmaix_nn_opt_param_t *opt_param)
 {
-    libmaix_err_t *status = &(((obj_config_t *)(obj->_config))->status);
-    aipu_graph_desc_t *gdesc_ptr = &(((obj_config_t *)(obj->_config))->gdesc);
-    aipu_buffer_alloc_info_t * buffer_ptr =  &(((obj_config_t *)(obj->_config))->buffer);
+    libmaix_err_t *status = &(((obj_config_t *)(obj->config))->status);
+    aipu_graph_desc_t *gdesc_ptr = &(((obj_config_t *)(obj->config))->gdesc);
+    aipu_buffer_alloc_info_t * buffer_ptr =  &(((obj_config_t *)(obj->config))->buffer);
 
-    aipu_ctx_handle_t ** ctx = &(((obj_config_t *)(obj->_config))->ctx);
-    const char ** status_msg = &(((obj_config_t *)(obj->_config))->status_msg);
+    aipu_ctx_handle_t ** ctx = &(((obj_config_t *)(obj->config))->ctx);
+    const char ** status_msg = &(((obj_config_t *)(obj->config))->status_msg);
 
     aipu_status_t ret;
 
-    // aipu_ctx_handle_t *ctx  = ((obj_config_t *)(obj->_config))->ctx;
-    // const char *status_msg =  ((obj_config_t *)(obj->_config))->status_msg;
-    ((obj_config_t *)(obj->_config))->opt = opt_param;
-    ((obj_config_t *)(obj->_config))->opt = (libmaix_nn_opt_param_t *) malloc( sizeof(libmaix_nn_opt_param_t));
-    *((obj_config_t *)(obj->_config))->opt   = * opt_param;
+    // aipu_ctx_handle_t *ctx  = ((obj_config_t *)(obj->config))->ctx;
+    // const char *status_msg =  ((obj_config_t *)(obj->config))->status_msg;
+    ((obj_config_t *)(obj->config))->opt = opt_param;
+    ((obj_config_t *)(obj->config))->opt = (libmaix_nn_opt_param_t *) malloc( sizeof(libmaix_nn_opt_param_t));
+    *((obj_config_t *)(obj->config))->opt   = * opt_param;
     if (path->aipu.model_path == NULL)
     {
         *status = LIBMAIX_ERR_NOT_IMPLEMENT;
@@ -163,28 +163,28 @@ libmaix_err_t libmaix_nn_obj_load(struct libmaix_nn *obj, const libmaix_nn_model
 libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t *inputs, libmaix_nn_layer_t *outputs)
 {
     // printf("[libmaix nn ]  forward\n");
-    libmaix_err_t *status = &(((obj_config_t *)(obj->_config))->status);
+    libmaix_err_t *status = &(((obj_config_t *)(obj->config))->status);
     aipu_status_t ret;
 
-    aipu_graph_desc_t *gdesc_ptr = &(((obj_config_t *)(obj->_config))->gdesc);
-    aipu_buffer_alloc_info_t *buffer_ptr = &(((obj_config_t *)(obj->_config))->buffer);
-    aipu_ctx_handle_t ** ctx = &(((obj_config_t *)(obj->_config))->ctx);
-    const char ** status_msg = &(((obj_config_t *)(obj->_config))->status_msg);
+    aipu_graph_desc_t *gdesc_ptr = &(((obj_config_t *)(obj->config))->gdesc);
+    aipu_buffer_alloc_info_t *buffer_ptr = &(((obj_config_t *)(obj->config))->buffer);
+    aipu_ctx_handle_t ** ctx = &(((obj_config_t *)(obj->config))->ctx);
+    const char ** status_msg = &(((obj_config_t *)(obj->config))->status_msg);
 
-    // aipu_ctx_handle_t *ctx  = ((obj_config_t *)(obj->_config))->ctx;
-    // const char *status_msg =  ((obj_config_t *)(obj->_config))->status_msg;
+    // aipu_ctx_handle_t *ctx  = ((obj_config_t *)(obj->config))->ctx;
+    // const char *status_msg =  ((obj_config_t *)(obj->config))->status_msg;
 
     int model_inw = gdesc_ptr->inputs.desc[0].fmt.shape.W;
     int model_inh = gdesc_ptr->inputs.desc[0].fmt.shape.H;
     int model_inch = gdesc_ptr->inputs.desc[0].fmt.shape.C;
     // printf("[libmaix_nn]--   Model input:  W=%3d, H=%3d, C =%d, size=%d\r\n", model_inw, model_inh, model_inch, (*buffer_ptr).inputs.tensors[0].size);
     int size = inputs->h * inputs->w;
-    float R = ((obj_config_t *)(obj->_config))->opt->aipu.mean[0];
-    float G = ((obj_config_t *)(obj->_config))->opt->aipu.mean[1];
-    float B = ((obj_config_t *)(obj->_config))->opt->aipu.mean[2];
-    float norm_R = ((obj_config_t *)(obj->_config))->opt->aipu.norm[0];
-    float norm_G = ((obj_config_t *)(obj->_config))->opt->aipu.norm[1];
-    float norm_B = ((obj_config_t *)(obj->_config))->opt->aipu.norm[2];
+    float R = ((obj_config_t *)(obj->config))->opt->aipu.mean[0];
+    float G = ((obj_config_t *)(obj->config))->opt->aipu.mean[1];
+    float B = ((obj_config_t *)(obj->config))->opt->aipu.mean[2];
+    float norm_R = ((obj_config_t *)(obj->config))->opt->aipu.norm[0];
+    float norm_G = ((obj_config_t *)(obj->config))->opt->aipu.norm[1];
+    float norm_B = ((obj_config_t *)(obj->config))->opt->aipu.norm[2];
     uint8_t * pixels = (uint8_t *) inputs->data;
     if(inputs->need_quantization == true)
     {
@@ -244,8 +244,8 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         free(temp_float_buffer);
     }
     debug_line;
-    uint32_t * job_id = &(((obj_config_t *)(obj->_config))->job_id);
-    // ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(((obj_config_t *)(obj->_config))->job_id));
+    uint32_t * job_id = &(((obj_config_t *)(obj->config))->job_id);
+    // ret = AIPU_create_job(ctx, gdesc_ptr, (*buffer_ptr).handle, &(((obj_config_t *)(obj->config))->job_id));
     // printf("[libmaix_nn] --  ready create job\n");
 
     ret = AIPU_create_job(*ctx, gdesc_ptr, (*buffer_ptr).handle, job_id);
@@ -289,11 +289,11 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
             return *status;
         }
     }
-    // printf("[libmaix_nn]-- the job id is %d \n",&(((obj_config_t *)(obj->_config))->job_id));
-    // ret = AIPU_finish_job(ctx, ((obj_config_t *)(obj->_config))->job_id, ((obj_config_t *)(obj->_config))->time_out);
+    // printf("[libmaix_nn]-- the job id is %d \n",&(((obj_config_t *)(obj->config))->job_id));
+    // ret = AIPU_finish_job(ctx, ((obj_config_t *)(obj->config))->job_id, ((obj_config_t *)(obj->config))->time_out);
     // printf("[libmaix_nn] --  ready finish job \n");
     debug_line;
-    ret = AIPU_finish_job(*ctx, *job_id, ((obj_config_t *)(obj->_config))->time_out);
+    ret = AIPU_finish_job(*ctx, *job_id, ((obj_config_t *)(obj->config))->time_out);
     debug_line;
     // printf("[libmaix_nn] --  ready finish job  is done\n");
 
@@ -338,7 +338,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
 
     }
 
-    uint8_t output_num = ((obj_config_t *)(obj->_config))->opt->aipu.output_num;
+    uint8_t output_num = ((obj_config_t *)(obj->config))->opt->aipu.output_num;
     for (int out_id = 0 ; out_id < output_num ; out_id++)
     {
 
@@ -346,7 +346,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
 
         if(outputs[out_id].dtype == LIBMAIX_NN_DTYPE_FLOAT)
         {
-            float scale = ((obj_config_t *)(obj->_config))->opt->aipu.scale[out_id];
+            float scale = ((obj_config_t *)(obj->config))->opt->aipu.scale[out_id];
 
             // printf("[libmaix_nn ]dequantize scale :%f\n",scale);
 
@@ -375,9 +375,9 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         }
     }
 
-    // // printf("[libmaix_nn]-- the job id is %d \n",&(((obj_config_t *)(obj->_config))->job_id));
+    // // printf("[libmaix_nn]-- the job id is %d \n",&(((obj_config_t *)(obj->config))->job_id));
 
-    // // ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->_config))->job_id);
+    // // ret = AIPU_clean_job(ctx, ((obj_config_t *)(obj->config))->job_id);
     ret = AIPU_clean_job(*ctx, *job_id);
     if (ret != AIPU_STATUS_SUCCESS)
     {
@@ -402,7 +402,7 @@ libmaix_nn_t *libmaix_nn_create()
     // made a struct to add
     obj_config_t *obj_config_ptr = (obj_config_t *)malloc(1 * sizeof(obj_config_t));
 
-    nn_obj_ptr->_config = obj_config_ptr;
+    nn_obj_ptr->config = obj_config_ptr;
     return nn_obj_ptr;
 }
 
@@ -410,7 +410,7 @@ void libmaix_nn_destroy(libmaix_nn_t **obj)
 {
     if(*obj!= NULL)
     {
-        free((*obj)->_config);
+        free((*obj)->config);
         free(*obj);
     }
     *obj = NULL;

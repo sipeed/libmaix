@@ -77,13 +77,13 @@ void nn_test(struct libmaix_disp *disp)
     libmaix_camera_module_init();
 
     #ifdef CONFIG_ARCH_R329
-    char *mdsc_path = "/root/mud/r329_retinaface.mud";
+    char *mud_path = "/root/mud/r329_retinaface.mud";
     int res_w = 320;
     int res_h = 320;
     #endif
 
     #ifdef CONFIG_ARCH_V831
-    char *mdsc_path = "/root/mud/v831_retinaface.mud";
+    char *mud_path = "/root/mud/v831_retinaface.mud";
     int res_w = 224;
     int res_h = 224;
     #endif
@@ -207,11 +207,7 @@ void nn_test(struct libmaix_disp *disp)
         goto end;
     }
     input.buff_quantization = quantize_buffer;
-    ini_info_t * ini_info_ptr = (ini_info_t * )malloc(sizeof(ini_info_t));
-    read_file(mdsc_path , ini_info_ptr);
-    libmaix_nn_model_path_t  path ;
-    libmaix_nn_opt_param_t  opt;
-    nn = build_model(ini_info_ptr,&path , &opt);
+    nn = libmaix_mud_load_model(mud_path);
     printf("-- start loop\n");
     while (!program_exit)
     {

@@ -111,7 +111,7 @@ void nn_test(struct libmaix_disp* disp)
     char* labels[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "mouse", "microbit", "ruler", "cat", "peer", "ship", "apple", "car", "pan", "dog", "umbrella", "airplane", "clock", "grape", "cup", "left", "right", "front", "stop", "back"};
     int class_num = 35;
     float anchors [10] =  {2.44, 2.25, 5.03, 4.91, 3.5, 3.53, 4.16, 3.94, 2.97, 2.84};
-    char * mdsc_path = "/root/mud/r329_yolo_card.mud";
+    char * mud_path = "/root/mud/r329_yolo_card.mud";
 
 
 
@@ -238,11 +238,7 @@ void nn_test(struct libmaix_disp* disp)
     img->mode = LIBMAIX_IMAGE_MODE_RGB888;`
 #endif
     // nn model init
-    ini_info_t * ini_info_ptr = (ini_info_t * )malloc(sizeof(ini_info_t));
-    read_file(mdsc_path , ini_info_ptr);
-    libmaix_nn_model_path_t  path ;
-    libmaix_nn_opt_param_t  opt;
-    nn = build_model(ini_info_ptr,&path , &opt);
+    nn = libmaix_mud_load_model(mud_path);
     // decoder init
     printf("-- yolo2 decoder create\n");
     yolo2_decoder = libmaix_nn_decoder_yolo2_create(libmaix_nn_decoder_yolo2_init,

@@ -19,12 +19,13 @@ int main(int argc, char **argv)
   struct libmaix_disp *disp = libmaix_disp_create(0);
   if (disp)
   {
-    libmaix_image_t *rgb888 = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    int w = 320, h = 240;
+    libmaix_image_t *rgb888 = libmaix_image_create(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     if (rgb888)
     {
       printf("w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
 
-      libmaix_cv_image_draw_rectangle(rgb888, 0, 0, 240, 240, MaixColor(255, 127, 255), -1);
+      libmaix_cv_image_draw_rectangle(rgb888, 0, 0, w, h, MaixColor(255, 127, 255), -1);
 
       libmaix_cv_image_draw_image_open(rgb888, 20, 20, "/home/res/logo.png", 1.0);
 
@@ -74,8 +75,12 @@ int main(int argc, char **argv)
 
       libmaix_cv_image_draw_string(rgb888, 60, 120, u8"123你好鸭asdにほんご", 2.8, MaixColor(55, 55, 55), 1);
 
-      disp->draw_image(disp, rgb888);
-
+      libmaix_image_t *rs = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+      if (rs) {
+          libmaix_cv_image_resize_padding(rgb888, disp->width, disp->height, &rs);
+          disp->draw_image(disp, rs);
+          libmaix_image_destroy(&rs);
+      }
       libmaix_image_destroy(&rgb888);
     }
     libmaix_disp_destroy(&disp);

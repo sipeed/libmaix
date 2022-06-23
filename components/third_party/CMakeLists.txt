@@ -1,5 +1,7 @@
 if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
 
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -Wno-strict-aliasing")
+
     list(APPEND ADD_INCLUDE "./include/")
 
     list(APPEND ADD_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -10,6 +12,8 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
 
     aux_source_directory("libjpeg/source"  LIBJPEG_SRCS)
     aux_source_directory("libjpeg"  LIBJPEG_SRCS)
+
+    aux_source_directory("quirc"   ZBAR_SRCS)
 
     aux_source_directory("zbar"   ZBAR_SRCS)
 

@@ -32,6 +32,8 @@ list(APPEND ADD_REQUIREMENTS third_party maix_cv_image libmaix)
 #                             -DAAAAA333=1)
 ###############################################
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -Wno-strict-aliasing")
+
 set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -lm -g" PARENT_SCOPE)
 
 register_component()

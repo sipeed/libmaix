@@ -71,11 +71,13 @@ void test_init() {
   test.w0 = 240, test.h0 = 240;
 
   test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 0);
-  if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  if (NULL == test.cam0) return ;
 
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-  test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 0, 0);
-  if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 1, 0);
+  if (NULL == test.cam1) return ;
+  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  if (test.rgb888 == NULL) return ;
   #endif
 
   test.disp = libmaix_disp_create(0);
@@ -361,8 +363,8 @@ void test_work() {
     if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
     {
         // printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
-        qrcode_loop(tmp);
-        // apriltag_loop(tmp);
+        // qrcode_loop(tmp);
+        apriltag_loop(tmp);
 
         if (tmp->width == test.disp->width && test.disp->height == tmp->height) {
             test.disp->draw_image(test.disp, tmp);
@@ -397,11 +399,11 @@ int main(int argc, char **argv)
   libmaix_image_module_init();
 
   test_init();
-  qrcode_init();
-  // apriltag_init();
+//   qrcode_init();
+  apriltag_init();
   test_work();
-  // apriltag_exit();
-  qrcode_exit();
+  apriltag_exit();
+//   qrcode_exit();
   test_exit();
 
 

@@ -81,7 +81,7 @@ void test_init()
   // test.w0 = 320, test.h0 = 240; // 4:3
   test.w0 = 240, test.h0 = 180; // 1:1
 
-  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 0);
+  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 1);
   if (NULL == test.cam0) return ;
 
   test.yuv_buf = malloc(test.w0 * test.h0 * 3 / 2);
@@ -89,7 +89,7 @@ void test_init()
     return;
 
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-  test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 1, 0);
+  test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 1, 1);
   if (NULL == test.cam1) return ;
   test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
   if (test.rgb888 == NULL) return ;
@@ -467,8 +467,7 @@ static void apriltag_yuv_loop(uint8_t *data, uint32_t width, uint32_t height)
 }
 
 
-// /*
-
+/*
 static void apriltag_loop(libmaix_image_t *img)
 {
   if (gray)
@@ -666,7 +665,7 @@ static void qrcode_yuv_loop(uint8_t *raw, uint32_t width, uint32_t height)
 //     }
 // }
 
-// */
+*/
 
 void test_work()
 {
@@ -701,7 +700,7 @@ void test_work()
   }
 }
 
-// /*
+/*
 
 #include "lvgl/lvgl.h"
 #include "lv_examples/lv_examples.h"
@@ -902,7 +901,7 @@ void _gui_loop_clr_timer()
 
 // ==================
 
-// */
+*/
 
 int main(int argc, char **argv)
 {
@@ -913,19 +912,19 @@ int main(int argc, char **argv)
 
   test_init();
 
-  // apriltag_init();
+  apriltag_init();
 
-  gui_init(test.w_vo, test.h_vo);
+  // gui_init(test.w_vo, test.h_vo);
 
-  _gui_loop_set_timer(50*1000);
+  // _gui_loop_set_timer(50*1000);
 
   test_work();
 
-  _gui_loop_clr_timer();
+  // _gui_loop_clr_timer();
 
-  gui_exit();
+  // gui_exit();
 
-  // apriltag_exit();
+  apriltag_exit();
 
   test_exit();
 

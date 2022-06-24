@@ -77,7 +77,7 @@ int main(int argc, char **argv)
 
       libmaix_image_t *rs = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
       if (rs) {
-          libmaix_cv_image_resize_padding(rgb888, disp->width, disp->height, &rs);
+          libmaix_cv_image_resize_with_padding(rgb888, disp->width, disp->height, &rs);
           disp->draw_image(disp, rs);
           libmaix_image_destroy(&rs);
       }

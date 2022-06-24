@@ -49,14 +49,14 @@ struct
 #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   struct libmaix_cam *cam1;
 #endif
-  uint8_t *rgb888;
+  // uint8_t *rgb888;
 
   uint8_t *yuv_buf;
 
   int w_vo, h_vo;
   struct libmaix_vo *vo;
   void *argb_vo;
-  libmaix_image_t *argb_img;
+  // libmaix_image_t *argb_img;
 
   // struct libmaix_disp *disp;
 
@@ -81,7 +81,7 @@ void test_init()
   // test.w0 = 320, test.h0 = 240; // 4:3
   test.w0 = 240, test.h0 = 180; // 1:1
 
-  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 1);
+  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 0, 0);
   if (NULL == test.cam0) return ;
 
   test.yuv_buf = malloc(test.w0 * test.h0 * 3 / 2);
@@ -89,10 +89,10 @@ void test_init()
     return;
 
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-  test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 1, 1);
-  if (NULL == test.cam1) return ;
-  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
-  if (test.rgb888 == NULL) return ;
+  // test.cam1 = libmaix_cam_create(1, test.w_vo, test.h_vo, 0, 0);
+  // if (NULL == test.cam1) return ;
+  // test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  // if (test.rgb888 == NULL) return ;
   #endif
 
   test.w_vo = 240, test.h_vo = 180;
@@ -106,7 +106,7 @@ void test_init()
 
   // test.argb_img = libmaix_image_create(test.w_vo, test.h_vo, LIBMAIX_IMAGE_MODE_RGBA8888, LIBMAIX_IMAGE_LAYOUT_HWC, test.argb_vo, false);
 
-  test.argb_img = libmaix_image_create(test.w_vo, test.h_vo, LIBMAIX_IMAGE_MODE_RGBA8888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, false);
+  // test.argb_img = libmaix_image_create(test.w_vo, test.h_vo, LIBMAIX_IMAGE_MODE_RGBA8888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, false);
 
   test.is_run = 1;
 
@@ -123,12 +123,12 @@ void test_exit()
     free(test.yuv_buf), test.yuv_buf = NULL;
 
 #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-  if (NULL != test.cam1)
-    libmaix_cam_destroy(&test.cam1);
+  // if (NULL != test.cam1)
+  //   libmaix_cam_destroy(&test.cam1);
 #endif
 
-  if (NULL != test.rgb888)
-    free(test.rgb888), test.rgb888 = NULL;
+  // if (NULL != test.rgb888)
+  //   free(test.rgb888), test.rgb888 = NULL;
   // if (NULL != test.disp) libmaix_disp_destroy(&test.disp), test.disp = NULL;
 
   if (NULL != test.vo)
@@ -137,8 +137,8 @@ void test_exit()
   // if (NULL != test.argb_vo)
   //   g2d_freeMem(test.argb_vo), test.argb_vo = NULL;
 
-  if (test.argb_img)
-    libmaix_image_destroy(&test.argb_img);
+  // if (test.argb_img)
+  //   libmaix_image_destroy(&test.argb_img);
 
   libmaix_camera_module_deinit();
 
@@ -165,7 +165,7 @@ static void apriltag_init()
 {
   if (gray == NULL)
   {
-    gray = libmaix_image_create(test.w0, test.h0, LIBMAIX_IMAGE_MODE_GRAY, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    gray = libmaix_image_create(test.w0, test.h0, LIBMAIX_IMAGE_MODE_GRAY, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, false);
     if (gray)
     {
       // Initialize tag detector with options
@@ -206,6 +206,8 @@ static void apriltag_init()
         printf("Unrecognized tag family name. Use e.g. \"tag36h11\".\n");
         exit(-1);
       }
+
+      printf("test_work\r\n");
 
       td = apriltag_detector_create();
 
@@ -364,7 +366,13 @@ static void apriltag_yuv_loop(uint8_t *data, uint32_t width, uint32_t height)
       apriltag_detection_t *det;
       zarray_get(detections, i, &det);
 
-      gray->data = data, libmaix_cv_image_draw_rectangle(gray, (int)det->c[0] - 10, (int)det->c[1] - 10, (int)det->c[0] + 10, (int)det->c[1] + 10, MaixColorBGRA(0xff, 0, 0, 0xff), 1);
+      gray->data = data;
+
+      libmaix_cv_image_draw_rectangle(gray, (int)det->c[0] - 10, (int)det->c[1] - 10, (int)det->c[0] + 10, (int)det->c[1] + 10, MaixColorBGRA(0xff, 0, 0, 0xff), 1);
+
+      printf("\r\n[(%d,%.0f),(%d,%d)]\r\n",
+          det->id, det->decision_margin, (int)det->c[0], (int)det->c[1]
+      );
 
       // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1], , 2);
       // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[0][0], (int)det->p[0][1], (int)det->p[3][0], (int)det->p[3][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
@@ -394,13 +402,14 @@ static void apriltag_yuv_loop(uint8_t *data, uint32_t width, uint32_t height)
       // libmaix_cv_image_get_string_size(&w, &h, det_id, 1.5, 1);
       // libmaix_cv_image_draw_string(test.argb_img, (int)(det->c[0]), (int)(det->c[1]) - (h / 2), det_id, 1.5, MaixColorBGRA(0xff, 255, 0, 0), 1);
 
-      printf("\r\n[(%d,%.02f):(%d,%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]\r\n",
-          det->id, det->decision_margin, (int)det->c[0], (int)det->c[1],
-          (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1],
-          (int)det->p[1][0], (int)det->p[1][1], (int)det->p[3][0], (int)det->p[3][1],
-          (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1],
-          (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1]
-      );
+      // printf("\r\n[(%d,%.02f):(%d,%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]\r\n",
+      //     det->id, det->decision_margin, (int)det->c[0], (int)det->c[1]
+      //     // (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1],
+      //     // (int)det->p[1][0], (int)det->p[1][1], (int)det->p[3][0], (int)det->p[3][1],
+      //     // (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1],
+      //     // (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1]
+      // );
+
     }
 
     // void *frame = test.vo->get_frame(test.vo, 9);
@@ -673,7 +682,7 @@ void test_work()
   test.cam0->start_capture(test.cam0);
 
 #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-  test.cam1->start_capture(test.cam1);
+  // test.cam1->start_capture(test.cam1);
 #endif
 
   while (test.is_run)
@@ -690,13 +699,13 @@ void test_work()
       }
     }
 
-    libmaix_image_t *tmp = NULL;
-    if (LIBMAIX_ERR_NONE == test.cam1->capture_image(test.cam1, &tmp))
-    {
-      ;
-    }
+    // libmaix_image_t *tmp = NULL;
+    // if (LIBMAIX_ERR_NONE == test.cam1->capture_image(test.cam1, &tmp))
+    // {
+    //   ;
+    // }
 
-    CALC_FPS("test_vivo");
+    // CALC_FPS("test_vivo");
   }
 }
 
@@ -912,7 +921,11 @@ int main(int argc, char **argv)
 
   test_init();
 
+  // printf("1 test_work\r\n");
+
   apriltag_init();
+
+  // printf("2 test_work\r\n");
 
   // gui_init(test.w_vo, test.h_vo);
 

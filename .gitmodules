@@ -6,7 +6,7 @@
 	url = https://github.com/AprilRobotics/apriltag
 [submodule "components/third_party/imlib"]
 	path = components/third_party/imlib
-	url = https://github.com/sipeed/minicv2.git
+	url = https://github.com/sipeed/libomv
 [submodule "components/third_party/mfcc-with-vad"]
 	path = components/maix_speech/mfcc-with-vad
 	url = https://github.com/junhuanchen/mfcc-with-vad

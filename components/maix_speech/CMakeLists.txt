@@ -1,13 +1,12 @@
 
 if(CONFIG_COMPONENT_LIBMS_ENABLE)
 
-    list(APPEND ADD_INCLUDE "include")
-
     list(APPEND ADD_REQUIREMENTS pthread m)
 
-    append_srcs_dir(ADD_SRCS "src")
-
     if(CONFIG_ASR_ENABLE)
+
+        list(APPEND ADD_INCLUDE "speech")
+        append_srcs_dir(ADD_SRCS "speech")
 
         list(APPEND ADD_INCLUDE "Maix-Speech/components/asr_lib/include")
         list(APPEND ADD_INCLUDE "Maix-Speech/components/utils/include")
@@ -52,6 +51,9 @@ if(CONFIG_COMPONENT_LIBMS_ENABLE)
     endif()
 
     if(CONFIG_MFCC_ENABLE)
+
+        list(APPEND ADD_INCLUDE "mfcc")
+        append_srcs_dir(ADD_SRCS "mfcc")
 
         # aux_source_directory("mfcc-with-vad/main"   MFCC_SRCS)
         aux_source_directory("mfcc-with-vad/src"   MFCC_SRCS)

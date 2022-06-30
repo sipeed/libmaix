@@ -5,10 +5,6 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
     list(APPEND ADD_INCLUDE "./include/")
 
     list(APPEND ADD_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-    add_definitions(-DIMLIB_CONFIG_H_FILE="costom_imlib_config.h")
-
-    aux_source_directory("apriltag/common"  APRILTAG_SRCS)
-    aux_source_directory("apriltag"  APRILTAG_SRCS)
 
     aux_source_directory("libjpeg/source"  LIBJPEG_SRCS)
     aux_source_directory("libjpeg"  LIBJPEG_SRCS)
@@ -17,7 +13,13 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
 
     aux_source_directory("zbar"   ZBAR_SRCS)
 
-    aux_source_directory("imlib/src"   IMLIB_SRCS)
+    if(CONFIG_IMLIB_ENABLE)
+        add_definitions(-DIMLIB_CONFIG_H_FILE="costom_imlib_config.h")
+        aux_source_directory("imlib/src"   IMLIB_SRCS)
+    elseif(CONFIG_APRILTAG_ENABLE)
+        aux_source_directory("apriltag/common"  APRILTAG_SRCS)
+        aux_source_directory("apriltag"  APRILTAG_SRCS)
+    endif()
 
     if(CONFIG_LVGL_ENABLE)
         list(APPEND ADD_INCLUDE
@@ -80,9 +82,7 @@ if(CONFIG_COMPONENT_3RD_PARTY_ENABLE)
                 ${IMLIB_SRCS}
             )
         list(REMOVE_ITEM ADD_SRCS "apriltag/apriltag.c")
-    endif()
-
-    if(CONFIG_APRILTAG_ENABLE)
+    elseif(CONFIG_APRILTAG_ENABLE)
         list(APPEND ADD_INCLUDE
                 "apriltag/common"
                 "apriltag"

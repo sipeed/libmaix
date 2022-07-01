@@ -868,7 +868,9 @@ extern "C"
         }
         else
         {
+            // printf("mud_info_obj->model_type %s is not support \n", mud_info_obj->model_type);
             LIBMAIX_DEBUG_PRINTF("this type value is empty or the type is unsupport !\n");
+            return NULL;
         }
 
         // nn create

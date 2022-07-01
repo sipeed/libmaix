@@ -16,17 +16,17 @@
 #include "libmaix_cv_image.h"
 #include <sys/time.h>
 
-#define CALC_FPS(tips)                                                                                         \
-	{                                                                                                          \
+#define CALC_FPS(tips)                                                                                     \
+	{                                                                                                        \
 		static int fcnt = 0;                                                                                   \
 		fcnt++;                                                                                                \
 		static struct timespec ts1, ts2;                                                                       \
 		clock_gettime(CLOCK_MONOTONIC, &ts2);                                                                  \
 		if ((ts2.tv_sec * 1000 + ts2.tv_nsec / 1000000) - (ts1.tv_sec * 1000 + ts1.tv_nsec / 1000000) >= 1000) \
 		{                                                                                                      \
-			printf("%s => H26X FPS:%d\n", tips, fcnt);                                                         \
-			ts1 = ts2;                                                                                         \
-			fcnt = 0;                                                                                          \
+			printf("%s => H26X FPS:%d\n", tips, fcnt);                                                           \
+			ts1 = ts2;                                                                                           \
+			fcnt = 0;                                                                                            \
 		}                                                                                                      \
 	}
 
@@ -34,14 +34,14 @@ static struct timeval old, now;
 
 void cap_set()
 {
-  gettimeofday(&old, NULL);
+	gettimeofday(&old, NULL);
 }
 
 void cap_get(const char *tips)
 {
-  gettimeofday(&now, NULL);
-  if (now.tv_usec > old.tv_usec)
-    printf("%20s - %5ld us\r\n", tips, (now.tv_usec - old.tv_usec));
+	gettimeofday(&now, NULL);
+	if (now.tv_usec > old.tv_usec)
+		printf("%20s - %5ld us\r\n", tips, (now.tv_usec - old.tv_usec));
 }
 
 // run flage
@@ -134,6 +134,94 @@ void find_blobs(image_t *img_ts);
 void find_lines(image_t *img_ts);
 void find_cricle(image_t *img_ts);
 
+void find_keypoints()
+{
+
+}
+
+void find_template(libmaix_image_t *img)
+{
+	int err = 0;
+	libmaix_image_t *gray = libmaix_image_create(img->width, img->height, LIBMAIX_IMAGE_MODE_GRAY, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+	if (gray)
+	{
+		err = libmaix_cv_image_convert(img, LIBMAIX_IMAGE_MODE_GRAY, &gray);
+		if (err == LIBMAIX_ERR_NONE)
+		{
+			image_t _arg_img = {
+									.w = gray->width,
+									.h = gray->height,
+							},
+							*arg_img = &_arg_img;
+			arg_img->size = gray->width * gray->height;
+			arg_img->data = gray->data;
+			arg_img->pixfmt = PIXFORMAT_GRAYSCALE;
+
+			printf("arg_img->w:%d, arg_img->h:%d, arg_img->size:%d, arg_img->pixfmt:%d\n", arg_img->w, arg_img->h, arg_img->size, arg_img->pixfmt);
+
+			libmaix_image_t *template = NULL;
+			err = libmaix_cv_image_open_file(&template, "./template.png");
+			if (err == LIBMAIX_ERR_NONE)
+			{
+				libmaix_image_t *gray_template = libmaix_image_create(template->width, template->height, LIBMAIX_IMAGE_MODE_GRAY, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+				if (gray_template)
+				{
+					err = libmaix_cv_image_convert(template, LIBMAIX_IMAGE_MODE_GRAY, &gray_template);
+					if (err == LIBMAIX_ERR_NONE)
+					{
+						image_t _arg_template = {
+												.w = gray_template->width,
+												.h = gray_template->height,
+										},
+										*arg_template = &_arg_template;
+						arg_template->size = gray_template->width * gray_template->height;
+						arg_template->data = gray_template->data;
+						arg_template->pixfmt = PIXFORMAT_GRAYSCALE;
+
+						printf("arg_template->w:%d, arg_template->h:%d, arg_template->size:%d, arg_template->pixfmt:%d\n", arg_template->w, arg_template->h, arg_template->size, arg_template->pixfmt);
+
+						float arg_thresh = 0.70; // corr gate
+						int step = 2;
+						int search = SEARCH_EX; // SEARCH_DS
+
+						rectangle_t roi = {0, 0, arg_img->w, arg_img->h};
+
+						if (roi.w >= arg_template->w && roi.h >= arg_template->h)
+						{
+							printf("roi.w:%d, roi.h:%d, arg_template->w:%d, arg_template->h:%d\n", roi.w, roi.h, arg_template->w, arg_template->h);
+							if ((roi.x + roi.w) <= arg_img->w && (roi.y + roi.h) <= arg_img->h)
+							{
+								printf("roi.x:%d, roi.y:%d, roi.w:%d, roi.h:%d\n", roi.x, roi.y, roi.w, roi.h);
+								rectangle_t r;
+								float corr;
+								fb_alloc_mark();
+								if (search == SEARCH_DS)
+								{
+									corr = imlib_template_match_ds(arg_img, arg_template, &r);
+								}
+								else
+								{
+									corr = imlib_template_match_ex(arg_img, arg_template, &roi, step, &r);
+								}
+								fb_alloc_free_till_mark();
+								if (corr > arg_thresh)
+								{
+									printf("r.x:%d, r.y:%d, r.w:%d, r.h:%d\n", r.x, r.y, r.w, r.h);
+									libmaix_cv_image_draw_rectangle(img, r.x, r.y, r.x + r.w, r.y + r.h, MaixColor(255,0,0), 2);
+								}
+							}
+						}
+					}
+					libmaix_image_destroy(&gray_template);
+				}
+				libmaix_image_destroy(&template);
+			}
+		}
+		libmaix_image_destroy(&gray);
+	}
+	disp->draw_image(disp, img);
+}
+
 void test_even()
 {
 	// Detect running flags
@@ -144,6 +232,8 @@ void test_even()
 		// printf("ret %d\r\n", ret);
 		if (LIBMAIX_ERR_NONE == ret)
 		{
+			find_template(img);
+			continue;
 			// image_t *imlib_img = MAIX_2_IMLIB(img);
 
 			image_t *imlib_img = imlib_image_create(img->width, img->height, PIXFORMAT_RGB888, img->width * img->height * PIXFORMAT_BPP_RGB888, img->data, false);
@@ -188,7 +278,7 @@ void test_even()
                 // 在三维空间中，较大的值会使窗口更靠近图像，从而导致更多的透视畸变，
                 // 有时会导致三维图像与场景窗口相交。
 				imlib_rotation_corr(resize_img, 0.3, 0, 0, 0, 0, ZOOM_AMOUNT, FOV_WINDOW, NULL);
-			
+
 				libmaix_cv_image_save_file(libmaix_img, "./imlib_rotation_corr.jpg");
 
 				libmaix_image_t *libmaix_tmp = libmaix_image_create(255, 255, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
@@ -260,8 +350,8 @@ void find_blobs(image_t *img_ts)
 	fb_alloc_mark();
 
 	imlib_find_blobs(&out, arg_img, &roi, x_stride, y_stride, &thresholds, invert,
-					 area_threshold, pixels_threshold, merge, margin,
-					 NULL, NULL, NULL, NULL, x_hist_bins_max, y_hist_bins_max);
+									 area_threshold, pixels_threshold, merge, margin,
+									 NULL, NULL, NULL, NULL, x_hist_bins_max, y_hist_bins_max);
 	fb_alloc_free_till_mark();
 
 	list_free(&thresholds);
@@ -350,7 +440,7 @@ void find_cricle(image_t *img_ts)
 	list_t out;
 	fb_alloc_mark();
 	imlib_find_circles(&out, arg_img, &roi, x_stride, y_stride, threshold, x_margin, y_margin, r_margin,
-					   r_min, r_max, r_step);
+										 r_min, r_max, r_step);
 	fb_alloc_free_till_mark();
 
 	for (size_t i = 0; list_size(&out); i++)

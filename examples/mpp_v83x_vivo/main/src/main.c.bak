@@ -148,6 +148,7 @@ void test_exit()
 static libmaix_image_t *gray = NULL;
 
 #include "apriltag.h"
+#include "apriltag_pose.h"
 #include "tag36h11.h"
 #include "tag25h9.h"
 #include "tag16h5.h"
@@ -220,7 +221,7 @@ static void apriltag_init()
 
       td->quad_decimate = 2.0; // "Decimate input image by this factor"
       td->quad_sigma = 0.0;    // Apply low-pass blur to input
-      td->nthreads = 1;
+      td->nthreads = 4;
       td->debug = 0;
       td->refine_edges = 1; // Spend more time trying to align edges of tags
     }
@@ -327,6 +328,16 @@ static inline float fast_atanf(float xx)
     return( y );
 }
 
+float fast_sqrtf(float x)
+{
+    float xhalf = 0.5f * x;
+    int i = *(int*)&x;
+    i = 0x5f3759df - (i >> 1);
+    x = *(float*)&i;
+    x = x * (1.5f - xhalf * x * x);
+    return x;
+}
+
 static float fast_atan2f(float y, float x)
 {
   if(x > 0 && y >= 0)
@@ -370,106 +381,41 @@ static void apriltag_yuv_loop(uint8_t *data, uint32_t width, uint32_t height)
 
       libmaix_cv_image_draw_rectangle(gray, (int)det->c[0] - 10, (int)det->c[1] - 10, (int)det->c[0] + 10, (int)det->c[1] + 10, MaixColorBGRA(0xff, 0, 0, 0xff), 1);
 
-      printf("\r\n[(%d,%.0f),(%d,%d)]\r\n",
-          det->id, det->decision_margin, (int)det->c[0], (int)det->c[1]
+      const int fx = (6 / 5.76) * 240; // 镜头的焦距是6MM，感光cmos的长是5.76mm，240像素是屏幕的长
+      const int fy = (6 / 3.24) * 180; // 镜头的焦距是6MM，感光cmos的宽是3.24mm，240像素是屏幕的宽
+
+      const int cx = 240 * 0.5; // 屏幕分辨率的一半
+      const int cy = 180 * 0.5; // 屏幕分辨率的一半
+
+      apriltag_detection_info_t info = {
+          .det = det,
+          .tagsize = 0.25,
+          .fx = fx,
+          .fy = fy,
+          .cx = cx,
+          .cy = cy,
+      };
+
+      apriltag_pose_t pose;
+      double err = estimate_tag_pose(&info, &pose);
+
+      float x_rotation = fast_atan2f(MATD_EL(pose.R, 2, 1), MATD_EL(pose.R, 2, 2));
+      float y_rotation = fast_atan2f(-MATD_EL(pose.R, 2, 0), fast_sqrtf(sq(MATD_EL(pose.R, 2, 1)) + sq(MATD_EL(pose.R, 2, 2))));
+      float z_rotation = fast_atan2f(MATD_EL(pose.R, 1, 0), MATD_EL(pose.R, 0, 0));
+      char tmp[64] = {0};
+      sprintf(tmp, "x: %01.2f, y: %01.2f, z: %01.2f", x_rotation, y_rotation, z_rotation);
+
+      libmaix_cv_image_draw_string(gray, 0, 0, tmp, 1.0, MaixColor(127, 0, 0), 1);
+
+      printf("\r\n[(%d,%.0f),(%d,%d),(%01.2f,%01.2f,%01.2f)]\r\n",
+          det->id, det->decision_margin, (int)det->c[0], (int)det->c[1], x_rotation, y_rotation, z_rotation
       );
 
-      // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1], , 2);
-      // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[0][0], (int)det->p[0][1], (int)det->p[3][0], (int)det->p[3][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
-      // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
-      // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
-
-      // const int fx = (6 / 5.76) * 240; // 镜头的焦距是6MM，感光cmos的长是5.76mm，240像素是屏幕的长
-      // const int fy = (6 / 3.24) * 240; // 镜头的焦距是6MM，感光cmos的宽是3.24mm，240像素是屏幕的宽
-
-      // const int cx = 240 * 0.5; // 屏幕分辨率的一半
-      // const int cy = 240 * 0.5; // 屏幕分辨率的一半
-
-      // matd_t *pose = homography_to_pose(det->H, -fx, fy, cx, cy);
-      // int x_translation = MATD_EL(pose, 0, 3);
-      // int y_translation = MATD_EL(pose, 1, 3);
-      // int z_translation = MATD_EL(pose, 2, 3);
-      // int x_rotation = fast_atan2f(MATD_EL(pose, 2, 1), MATD_EL(pose, 2, 2));
-      // int y_rotation = fast_atan2f(-MATD_EL(pose, 2, 0), fast_sqrtf(sq(MATD_EL(pose, 2, 1)) + sq(MATD_EL(pose, 2, 2))));
-      // int z_rotation = fast_atan2f(MATD_EL(pose, 1, 0), MATD_EL(pose, 0, 0));
-      // printf("x_translation: %d, y_translation: %d, z_translation: %d, x_rotation: %d, y_rotation: %d, z_rotation: %d\n", x_translation, y_translation, z_translation, x_rotation, y_rotation, z_rotation);
-
-      // matd_destroy(pose);
-
-      // char det_id[8] = {0};
-      // sprintf(det_id, "%d", det->id);
-      // int w, h;
-      // libmaix_cv_image_get_string_size(&w, &h, det_id, 1.5, 1);
-      // libmaix_cv_image_draw_string(test.argb_img, (int)(det->c[0]), (int)(det->c[1]) - (h / 2), det_id, 1.5, MaixColorBGRA(0xff, 255, 0, 0), 1);
-
-      // printf("\r\n[(%d,%.02f):(%d,%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]\r\n",
-      //     det->id, det->decision_margin, (int)det->c[0], (int)det->c[1]
-      //     // (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1],
-      //     // (int)det->p[1][0], (int)det->p[1][1], (int)det->p[3][0], (int)det->p[3][1],
-      //     // (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1],
-      //     // (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1]
-      // );
+      matd_destroy(pose.t);
+      matd_destroy(pose.R);
+      break;
 
     }
-
-    // void *frame = test.vo->get_frame(test.vo, 9);
-
-    // if (frame)
-    // {
-    //   uint32_t *vir = NULL, *phy = NULL;
-    //   test.vo->frame_addr(test.vo, frame, &vir, &phy);
-
-    //   test.argb_img->data = vir[0];
-    //   memset(test.argb_img->data, 0, test.argb_img->width * test.argb_img->height * 4);
-
-    //   // Draw detection outlines
-    //   for (int i = 0; i < zarray_size(detections); i++)
-    //   {
-    //     apriltag_detection_t *det;
-    //     zarray_get(detections, i, &det);
-
-    //     libmaix_cv_image_draw_rectangle(test.argb_img, (int)det->c[0] - 10, (int)det->c[1] - 10, (int)det->c[0] + 10, (int)det->c[1] + 10, MaixColorBGRA(0xff, 0, 0, 0xff), 1);
-
-    //     // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1], , 2);
-    //     // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[0][0], (int)det->p[0][1], (int)det->p[3][0], (int)det->p[3][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
-    //     // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
-    //     // libmaix_cv_image_draw_line(test.argb_img, (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1], MaixColorBGRA(0xff, 0, 0, 0xff), 2);
-
-    //     // const int fx = (6 / 5.76) * 240; // 镜头的焦距是6MM，感光cmos的长是5.76mm，240像素是屏幕的长
-    //     // const int fy = (6 / 3.24) * 240; // 镜头的焦距是6MM，感光cmos的宽是3.24mm，240像素是屏幕的宽
-
-    //     // const int cx = 240 * 0.5; // 屏幕分辨率的一半
-    //     // const int cy = 240 * 0.5; // 屏幕分辨率的一半
-
-    //     // matd_t *pose = homography_to_pose(det->H, -fx, fy, cx, cy);
-    //     // int x_translation = MATD_EL(pose, 0, 3);
-    //     // int y_translation = MATD_EL(pose, 1, 3);
-    //     // int z_translation = MATD_EL(pose, 2, 3);
-    //     // int x_rotation = fast_atan2f(MATD_EL(pose, 2, 1), MATD_EL(pose, 2, 2));
-    //     // int y_rotation = fast_atan2f(-MATD_EL(pose, 2, 0), sqrtf(sq(MATD_EL(pose, 2, 1)) + sq(MATD_EL(pose, 2, 2))));
-    //     // int z_rotation = fast_atan2f(MATD_EL(pose, 1, 0), MATD_EL(pose, 0, 0));
-    //     // printf("x_translation: %d, y_translation: %d, z_translation: %d, x_rotation: %d, y_rotation: %d, z_rotation: %d\n", x_translation, y_translation, z_translation, x_rotation, y_rotation, z_rotation);
-
-    //     // matd_destroy(pose);
-
-    //     // char det_id[8] = {0};
-    //     // sprintf(det_id, "%d", det->id);
-    //     // int w, h;
-    //     // libmaix_cv_image_get_string_size(&w, &h, det_id, 1.5, 1);
-    //     // libmaix_cv_image_draw_string(test.argb_img, (int)(det->c[0]), (int)(det->c[1]) - (h / 2), det_id, 1.5, MaixColorBGRA(0xff, 255, 0, 0), 1);
-
-    //     printf("\r\n[(%d,%.02f):(%d,%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]:[(%d:%d),(%d:%d)]\r\n",
-    //         det->id, det->decision_margin, (int)det->c[0], (int)det->c[1],
-    //         (int)det->p[0][0], (int)det->p[0][1], (int)det->p[1][0], (int)det->p[1][1],
-    //         (int)det->p[1][0], (int)det->p[1][1], (int)det->p[3][0], (int)det->p[3][1],
-    //         (int)det->p[1][0], (int)det->p[1][1], (int)det->p[2][0], (int)det->p[2][1],
-    //         (int)det->p[2][0], (int)det->p[2][1], (int)det->p[3][0], (int)det->p[3][1]
-    //     );
-
-    //   }
-
-    //   test.vo->set_frame(test.vo, frame, 9);
-    // }
 
     apriltag_detections_destroy(detections);
   }

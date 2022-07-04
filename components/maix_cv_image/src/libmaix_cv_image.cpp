@@ -155,6 +155,8 @@ extern "C"
 #include <fcntl.h>
   libmaix_err_t libmaix_cv_image_open_file(libmaix_image_t **src, const char *path)
   {
+    // printf("libmaix_cv_image_open_file %s\r\n", path);
+    if (src == NULL) return LIBMAIX_ERR_PARAM;
     if (access(path, F_OK) < 0)
       return LIBMAIX_ERR_NOT_EXEC;
     if (access(path, R_OK) < 0)

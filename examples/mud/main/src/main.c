@@ -9,7 +9,6 @@
 #include "libmaix_debug.h"
 #include "libmaix_err.h"
 #include "mud.h"
-#include "libmaix_nn.h"
 
 mud_info * mud_obj = NULL;
 char* mud_path = "/root/mud/gender.mud";
@@ -22,6 +21,7 @@ void test_init()
 }
 void test_working()
 {
+
     libmaix_nn_module_init();
     libmaix_nn_model_path_t model_path;
     libmaix_nn_opt_param_t opt_param;
@@ -39,15 +39,17 @@ void test_deinit()
 
 int main(int argc, char *argv[])
 {
-  printf("start init\n");
-  test_init();
-  printf("finish init\n");
+  // printf("start init\n");
+  // test_init();
+  // printf("finish init\n");
 
-  printf("start loading\n");
-  test_working();
-  printf("finish loading\n");
+  // printf("start working  \n");
+  // test_working();
+  // printf("finish working\n");
 
-  printf("start deinit\n");
-  test_deinit();
-  printf("finish deinit\n");
+  // printf("start deinit \n");
+  // test_deinit();
+  // printf("finish deinit \n");
+  libmaix_nn_module_init();
+  nn = libmaix_mud_load_model(mud_path);
 }

@@ -1,6 +1,8 @@
 #ifndef __MUD_H__
 #define __MUD_H__
 #include "libmaix_nn.h"
+#include "libmaix_err.h"
+
 #define INI_VERSION "0.1.1"
 #define MAX_LEN 5
 #ifdef __cplusplus

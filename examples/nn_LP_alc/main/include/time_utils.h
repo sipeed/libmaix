@@ -1,5 +1,5 @@
 
-#define DISPLAY_TIME 0
+#define DISPLAY_TIME 1
 
 #if DISPLAY_TIME
     #include "stdio.h"

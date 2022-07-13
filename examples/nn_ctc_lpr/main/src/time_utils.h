@@ -1,5 +1,5 @@
 
-#define DISPLAY_TIME 0
+#define DISPLAY_TIME 1
 
 #if DISPLAY_TIME
     #include "stdio.h"
@@ -12,7 +12,7 @@
                                 printf("%s use time: %lld us\n", name, interval_s + end.tv_usec - start.tv_usec);\
             }while(0)
 #else
-    #define CALC_TIME_START() 
+    #define CALC_TIME_START()
     #define CALC_TIME_END(name)
 #endif
 

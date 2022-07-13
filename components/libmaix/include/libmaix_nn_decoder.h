@@ -22,6 +22,7 @@ typedef struct libmaix_nn_decoder
     libmaix_err_t (*deinit)(struct libmaix_nn_decoder *obj);
     libmaix_err_t (*decode)(struct libmaix_nn_decoder *obj, libmaix_nn_layer_t* feature_map, void* result);
 
+    // private
     void* data;
 } libmaix_nn_decoder_t;
 

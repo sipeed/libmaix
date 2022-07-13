@@ -65,7 +65,7 @@ libmaix_err_t libmaix_nn_decoder_license_plate_location_deinit(struct libmaix_nn
  */
 libmaix_err_t libmaix_nn_decoder_license_plate_location_decode(struct libmaix_nn_decoder* obj, libmaix_nn_layer_t* feature_map, void* result);
 
-libmaix_nn_decoder_t* libmaix_nn_decoder_license_plate_location_create();
+libmaix_nn_decoder_t* libmaix_nn_decoder_licenselibmaix_nn_decoder_t_plate_location_create();
 void libmaix_nn_decoder_license_plate_location_destroy(libmaix_nn_decoder_t** obj);
 
 #ifdef __cplusplus

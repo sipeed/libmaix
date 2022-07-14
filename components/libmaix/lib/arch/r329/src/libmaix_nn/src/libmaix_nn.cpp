@@ -12,7 +12,7 @@
 #include <string.h>
 #include "standard_api.h"
 
-#define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
+#define debug_line printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
 typedef struct obj_config
 {
@@ -410,8 +410,11 @@ void libmaix_nn_destroy(libmaix_nn_t **obj)
 {
     if(*obj!= NULL)
     {
+        debug_line;
         free((*obj)->config);
+        debug_line;
         free(*obj);
+        debug_line;
     }
     *obj = NULL;
 

@@ -10,23 +10,25 @@ extern "C"
 #include "libmaix_err.h"
 #include "libmaix_nn_decoder.h"
 
+#define debug_line  printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
 //result
 typedef struct
 {
-    char * converted_string;
     int *label_idxs;
-    int *no_repeat_idx [8];
+    int *no_repeat_idx;
+    char *converted_string;
     int length;
 }libmaix_nn_decoder_ctc_result_t;
 
 typedef struct
 {
-    char *labels;
+    char **labels;
     int classes_num;
     int T;
     int N;
     int C;
+    int lpr_max_lenght;
 }libmaix_nn_decoder_ctc_config_t;
 
 typedef struct

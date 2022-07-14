@@ -208,37 +208,34 @@ void nn_test(struct libmaix_disp* disp)
     }
 
 
-    //start loop
-    while (! program_exit)
+    //load image
+    printf("-- load input bin file\n");
+    libmaix_image_t *template = NULL;
+    err = libmaix_cv_image_open_file(&template, "./template.png");
+    if (err == LIBMAIX_ERR_NONE) return;
+
+    //nn model forward
+    input.data = (uint8_t *)template->data;
+    CALC_TIME_START();
+    err = nn->forward(nn , &input ,&output);
+    CALC_TIME_END("forward");
+    if(err != LIBMAIX_ERR_NONE)
     {
-        //load image
-        printf("-- load input bin file\n");
-        libmaix_cv_image_open_file(&img , "/root/imgs/30.jpg");
-
-        //nn model forward
-        input.data = (uint8_t *)img->data;
-        CALC_TIME_START();
-        err = nn->forward(nn , &input ,&output);
-        CALC_TIME_END("forward");
-        if(err != LIBMAIX_ERR_NONE)
-        {
-            printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(err));
-            goto end;
-        }
-
-        // save output feature map
-        #if SAVE_NETOUT
-        printf("saveing dump\n");
-        save_bin("string_lpr.bin" , output.c * output.h * output.w *sizeof(float) , output.data);
-        #endif
-
-        //doing ctc decode
-        CALC_TIME_START();
-        decoder->decode(decoder,&output,result);
-        CALC_TIME_END("decode");
-        printf("result:%s", result);
-        break;
+        printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
     }
+
+    // save output feature map
+    #if SAVE_NETOUT
+    printf("saveing dump\n");
+    save_bin("string_lpr.bin" , output.c * output.h * output.w *sizeof(float) , output.data);
+    #endif
+
+    //doing ctc decode
+    CALC_TIME_START();
+    decoder->decode(decoder,&output,result);
+    CALC_TIME_END("decode");
+    printf("result:%s", result);
 
 end:
     if(output_buffer)
@@ -255,6 +252,7 @@ end:
         libmaix_nn_decoder_destroy(&decoder);
     }
     printf("--image module deinit\n");
+    libmaix_camera_module_deinit();
     libmaix_nn_module_deinit();
     libmaix_image_module_deinit();
 }

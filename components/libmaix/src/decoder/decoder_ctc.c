@@ -147,35 +147,23 @@ libmaix_err_t libmaix_nn_decoder_ctc_decode(struct libmaix_nn_decoder* obj, libm
     }
     params->result->length = char_count;
     result_object->length = char_count;
-    printf("%d\n" ,result_object->length);
-    for(int i = 0 ; i!=char_count ;i++)
-    {
-        printf("%d ", params->result->no_repeat_idx[i] );
-        // result->no_repeat_idx[i] = (int)params->result->no_repeat_idx[i];
-    }
-    printf("\n");
+    // printf("%d\n" ,result_object->length);
+    // for(int i = 0 ; i!=char_count ;i++)
+    // {
+    //     printf("%d ", params->result->no_repeat_idx[i] );
+    //     // result->no_repeat_idx[i] = (int)params->result->no_repeat_idx[i];
+    // }
+    // printf("\n");
     memcpy(result_object->no_repeat_idx , params->result->no_repeat_idx , sizeof(int) * char_count);
 
-    for(int i = 0 ; i!=char_count ;i++)
-        printf("%d ", result_object->no_repeat_idx[i]);
-    printf("\n");
+    // for(int i = 0 ; i!=char_count ;i++)
+    //     printf("%d ", result_object->no_repeat_idx[i]);
+    // printf("\n");
 
 
     return LIBMAIX_ERR_NONE ;
 
-    // convert to string
-//     params->result->converted_string = (char *)malloc(sizeof(char) * params->result->length);
-//     if (! params->result->converted_string)
-//     {
-//         return LIBMAIX_ERR_NO_MEM;
-//     }
-//     for(int idx=0 ; idx < params->result->length ; idx++)
-//     {
-//         int id  = params->result->no_repeat_idx[idx];
-//         params->result->converted_string[idx] = params->config->labels[id];
-//     }
-//     strcpy(result_object->converted_string ,params->result->converted_string);
-//     return LIBMAIX_ERR_NONE ;
+
 }
 
 #ifdef __cplusplus

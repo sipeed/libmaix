@@ -1,6 +1,6 @@
 /**
  * maix lib, debug header
- * 
+ *
  * @copyright © 2020-2021 Sipeed Ltd, All rights reserved
  * @author neucrack
  * @update --2021.1.7--neucrack: create lib
@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 #ifndef DEBUG
-    #define DEBUG 0
+    #define DEBUG 1
 #endif
 
 #if DEBUG // from makefile environment variable

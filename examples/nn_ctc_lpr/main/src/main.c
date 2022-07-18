@@ -225,7 +225,6 @@ void nn_test(struct libmaix_disp* disp)
         printf("no memory!!!\n");
         goto end;
     }
-    result.converted_string = (char*)malloc(sizeof(char) * config.lpr_max_lenght);
 
     printf("-- nn create\n");
     nn = libmaix_nn_create();

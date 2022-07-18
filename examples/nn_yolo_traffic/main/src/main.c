@@ -16,6 +16,21 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
+#include <time.h>
+
+#define CALC_FPS(tips)                                                                                         \
+{                                                                                                          \
+    static int fcnt = 0;                                                                                   \
+    fcnt++;                                                                                                \
+    static struct timespec ts1, ts2;                                                                       \
+    clock_gettime(CLOCK_MONOTONIC, &ts2);                                                                  \
+    if ((ts2.tv_sec * 1000 + ts2.tv_nsec / 1000000) - (ts1.tv_sec * 1000 + ts1.tv_nsec / 1000000) >= 1000) \
+    {                                                                                                      \
+        printf("%s => H26X FPS:%d     \r\n", tips, fcnt);                                                  \
+        ts1 = ts2;                                                                                         \
+        fcnt = 0;                                                                                          \
+    }                                                                                                      \
+}
 
 /*a struct to config the carmera display and image settings*/
 typedef struct
@@ -211,8 +226,8 @@ void nn_test(struct libmaix_disp* disp)
 
     #ifdef CONFIG_ARCH_V831
     libmaix_nn_model_path_t model_path = {
-        .awnn.bin_path = "/root/models/traffic_awnn.bin",
-        .awnn.param_path ="/root/models/traffic_awnn.param",
+        .awnn.bin_path = "./traffic_awnn.bin",
+        .awnn.param_path ="./traffic_awnn.param",
     };
     #endif
 
@@ -347,44 +362,45 @@ void nn_test(struct libmaix_disp* disp)
             printf("libmaix_nn forward fail: %s\n", libmaix_get_err_msg(err));
             break;
         }
-        err = yolo2_decoder->decode(yolo2_decoder, &out_fmap, (void*)&yolo2_result);
+        // err = yolo2_decoder->decode(yolo2_decoder, &out_fmap, (void*)&yolo2_result);
 
-        if(err != LIBMAIX_ERR_NONE)
-        {
-            printf("yolo2 decode fail: %s\n", libmaix_get_err_msg(err));
-            goto end;
-        }
+        // if(err != LIBMAIX_ERR_NONE)
+        // {
+        //     printf("yolo2 decode fail: %s\n", libmaix_get_err_msg(err));
+        //     goto end;
+        // }
 
-        #ifdef CONFIG_ARCH_R329
-        callback_arg.disp = disp;
-        callback_arg.img = img;
-        if(yolo2_result.boxes_num > 0)
-        {
-            printf("yolo2_result_boxes_num is %d \n",yolo2_result.boxes_num);
+        // #ifdef CONFIG_ARCH_R329
+        // callback_arg.disp = disp;
+        // callback_arg.img = img;
+        // if(yolo2_result.boxes_num > 0)
+        // {
+        //     printf("yolo2_result_boxes_num is %d \n",yolo2_result.boxes_num);
 
-            libmaix_nn_decoder_yolo2_draw_result(yolo2_decoder, &yolo2_result, count++, labels, on_draw_box, (void*)&callback_arg);
-        }
-        err = libmaix_cv_image_resize(img, disp->width, disp->height, &show);
-        disp->draw_image(disp,show);
-        CALC_TIME_END("one image");
-        #endif
+        //     libmaix_nn_decoder_yolo2_draw_result(yolo2_decoder, &yolo2_result, count++, labels, on_draw_box, (void*)&callback_arg);
+        // }
+        // err = libmaix_cv_image_resize(img, disp->width, disp->height, &show);
+        // disp->draw_image(disp,show);
+        // CALC_TIME_END("one image");
+        // #endif
 
-        #ifdef CONFIG_ARCH_V831
-        callback_arg.disp = disp;
-        callback_arg.img = show;
-        if(yolo2_result.boxes_num > 0)
-        {
-            printf("yolo2_result_boxes_num is %d \n",yolo2_result.boxes_num);
+        // #ifdef CONFIG_ARCH_V831
+        // callback_arg.disp = disp;
+        // callback_arg.img = show;
+        // if(yolo2_result.boxes_num > 0)
+        // {
+        //     // printf("yolo2_result_boxes_num is %d \n",yolo2_result.boxes_num);
 
-            libmaix_nn_decoder_yolo2_draw_result(yolo2_decoder, &yolo2_result, count++, labels, on_draw_box, (void*)&callback_arg);
-        }
-        disp->draw_image(disp,show);
-        #endif
-        disp->draw_image(disp,show);
+        //     libmaix_nn_decoder_yolo2_draw_result(yolo2_decoder, &yolo2_result, count++, labels, on_draw_box, (void*)&callback_arg);
+        // }
+        // disp->draw_image(disp,show);
+        // #endif
+        // disp->draw_image(disp,show);
 
 #if TEST_IMAGE
         break;
 #endif
+        CALC_FPS("test");
     }
 end:
     if(yolo2_decoder)

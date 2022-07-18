@@ -213,8 +213,8 @@ void nn_test(struct libmaix_disp* disp)
         .awnn.input_num               = 1,
         .awnn.output_num              = 3,
         .awnn.mean                    = {127.5, 127.5, 127.5},
-        // .awnn.norm                    = {0.0078125,0.0078125,0.0078125},
-        .awnn.norm                    = {127.5, 127.5, 127.5},
+        .awnn.norm                    = {0.0078125,0.0078125,0.0078125},
+        // .awnn.norm                    = {127.5, 127.5, 127.5},
     };
     #endif
 
@@ -346,13 +346,7 @@ void nn_test(struct libmaix_disp* disp)
                 int x2 = x1 + result.plates[i].box.w * disp->width;
                 int y2 = y1 + result.plates[i].box.h * disp->height;
 
-                // int x1 = result.faces[i].box.x * img->width;
-                // int y1 = result.faces[i].box.y * img->height;
-                // int x2 = x1 + result.faces[i].box.w * img->width;
-                // int y2 = y1 + result.faces[i].box.h * img->height;
-
-                // printf("x1:%d  y1:%d  x2:%d  y2:%d , (%d,%d)\n",x1 ,y1, x2 , y2 , img->width,img->height);
-                libmaix_cv_image_draw_rectangle(show, x1, y1, x2, y2, MaixColor(255, 0, 0), 2);
+                libmaix_cv_image_draw_rectangle(show, x1, y1, x2, y2, MaixColor(255, 0, 0), 0.5);
 
                 for (int j = 0; j < 4; ++j)
                 {

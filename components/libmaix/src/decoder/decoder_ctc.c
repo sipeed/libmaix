@@ -27,7 +27,7 @@ libmaix_nn_decoder_t * libmaix_nn_decoder_ctc_create()
     return obj;
 }
 
-void libmaix_nn_decoder_destroy(libmaix_nn_decoder_t** obj)
+void libmaix_nn_decoder_ctc_destroy(libmaix_nn_decoder_t** obj)
 {
     if(*obj)
     {

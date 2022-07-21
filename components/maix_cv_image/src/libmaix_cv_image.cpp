@@ -1058,4 +1058,50 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     }
     return LIBMAIX_ERR_NONE;
   }
+
+
+  libmaix_err_t libmaix_cv_image_affine(libmaix_image_t *src, int*pts_src, int*pts_dst , int dst_h , int dst_w , struct libmaix_image **dst)
+  {
+    libmaix_err_t err = LIBMAIX_ERR_NONE;
+    if(src == NULL)
+    {
+      return LIBMAIX_ERR_PARAM;
+    }
+    if (dst == NULL)
+    {
+      return LIBMAIX_ERR_PARAM;
+    }
+    if (src->width == 0 || src->height == 0 || src->data == NULL)
+    {
+      return LIBMAIX_ERR_PARAM;
+    }
+
+    if(src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    {
+      cv::Mat cv_src(src->height , src->width ,CV_8UC3 ,src->data);
+      cv::Mat cv_dst(dst_h, dst_w, CV_8UC3, (*dst)->data);
+
+
+      cv::Point2f src_p[3];
+      cv::Point2f dst_p[3];
+
+      for(int i =0 ; i!=3 ;i++)
+      {
+        src_p[i] = cv::Point2f(pts_src[i * 2] ,pts_src[i * 2 +1]);
+        dst_p[i] = cv::Point2f(pts_dst[i *2] ,pts_dst[i *2 +1]);
+      }
+      cv::Mat warpMat ;
+      warpMat = cv::getAffineTransform(src_p ,dst_p);
+      cv::warpAffine(cv_src , cv_dst , warpMat , cv::Size(dst_w, dst_h));
+      if (*dst)
+      {
+        return LIBMAIX_ERR_NONE;
+      }
+      else
+      {
+        return LIBMAIX_ERR_PARAM;
+      }
+    }
+  }
 }
+

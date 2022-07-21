@@ -37,6 +37,7 @@ libmaix_err_t libmaix_cv_image_resize_with_padding(struct libmaix_image *src, in
 libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, int adjust, libmaix_image_t **dst);
 libmaix_err_t libmaix_cv_image_flip(libmaix_image_t *src, int flipCode);
 libmaix_err_t libmaix_cv_image_convert(libmaix_image_t *src, libmaix_image_mode_t type, libmaix_image_t **dst);
+libmaix_err_t libmaix_cv_image_affine(libmaix_image_t *src, int*pts_src, int*pts_dst , int dst_h , int dst_w , libmaix_image_t **dst);
 
 libmaix_image_color_t libmaix_cv_image_get_pixel(libmaix_image_t *src, int x, int y);
 libmaix_err_t libmaix_cv_image_set_pixel(libmaix_image_t *src, int x, int y, libmaix_image_color_t color);

@@ -85,6 +85,8 @@ typedef struct libmaix_image
      *                          data memory of object will automatically created.
      */
     libmaix_err_t (*crop)(struct libmaix_image* obj, int x, int y, int w, int h, struct libmaix_image** new_img);
+    libmaix_err_t (*affine)(struct libmaix_image *src, int*pts_src, int*pts_dst , int dst_h , int dst_w , struct libmaix_image **dst);
+
 }libmaix_image_t;
 
 

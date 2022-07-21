@@ -354,69 +354,78 @@ void nn_test(struct libmaix_disp* disp)
             goto end;
         }
 
-        // loc_decoder->decode(loc_decoder,loc_out_fmap, &loc_result);
-        // for (int i = 0; i < loc_result.num; ++i)
-        // {
+        loc_decoder->decode(loc_decoder,loc_out_fmap, &loc_result);
+        for (int i = 0; i < loc_result.num; ++i)
+        {
+            int affine_src_pts [6];
+            int affine_dst_pts[6] = {reg_w , reg_h , 0 , reg_h , 0,0};
 
+            if (loc_result.plates[i].score > loc_docoder_config.score_thresh)
+            {
+                int x1 = loc_result.plates[i].box.x * disp->width;
+                int y1 = loc_result.plates[i].box.y * disp->height ;
+                int x2 = x1 + loc_result.plates[i].box.w * disp->width ;
+                int y2 = y1 + loc_result.plates[i].box.h * disp->height;
+                int w = loc_result.plates[i].box.w * disp->width ;
+                int h = loc_result.plates[i].box.h * disp->height ;
 
-        //     if (loc_result.plates[i].score > loc_docoder_config.score_thresh)
-        //     {
-        //         int x1 = loc_result.plates[i].box.x * disp->width;
-        //         int y1 = loc_result.plates[i].box.y * disp->height;
-        //         int x2 = x1 + loc_result.plates[i].box.w * disp->width;
-        //         int y2 = y1 + loc_result.plates[i].box.h * disp->height;
-        //         libmaix_cv_image_draw_rectangle(show, x1, y1, x2, y2, MaixColor(255, 0, 0), 1);
+                for (int j = 0; j < 3; ++j)
+                {
+                    affine_src_pts[j*2] = loc_result.plates[i].points[j * 2] * show->width;
+                    affine_src_pts[j*2+1] = loc_result.plates[i].points[j * 2 + 1] * show->height;
+                }
 
-        //         for (int j = 0; j < 4; ++j)
-        //         {
-        //             int x = loc_result.plates[i].points[j * 2] * show->width;
-        //             int y = loc_result.plates[i].points[j * 2 + 1] * show->height;
-        //             libmaix_cv_image_draw_rectangle(show, x - 2, y - 2, x + 2, y + 2, MaixColor(0, 255, 23), -1);
-        //         }
-        //     }
-        // }
-        //    //decode the licence palate
-        //  for (int i = 0; i < loc_result.num; ++i)
-        // {
-        //      if (loc_result.plates[i].score > loc_docoder_config.score_thresh)
-        //     {
-        //         int x1 = loc_result.plates[i].box.x * disp->width -5;
-        //         int y1 = loc_result.plates[i].box.y * disp->height -5;
-        //         int w = loc_result.plates[i].box.w * disp->width +10;
-        //         int h = loc_result.plates[i].box.h * disp->height +10;
-        //         libmaix_image_t* tmp = libmaix_image_create(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-        //         // check image edge
-        //         if( x1< 0 || y1 < 0 || w < 0 || h<0 ||  x1+w > disp->width ||  y1+h > disp->height)
-        //             continue;
-        //         err = libmaix_cv_image_crop(show , x1 , y1 , w , h , &tmp);
-        //         if(err != LIBMAIX_ERR_NONE)
-        //         {
-        //             LIBMAIX_DEBUG_PRINTF("crop image fail: %s\n", libmaix_get_err_msg(err));
-        //             goto end;
-        //         }
-        //         err =libmaix_cv_image_resize(tmp , reg_w ,reg_h ,&reg_img);
-        //         reg_input.data = (uint8_t *)reg_img->data;
-        //         err = reg_nn->forward(reg_nn ,&reg_input, &reg_out_fmap);
-        //         if(err != LIBMAIX_ERR_NONE)
-        //         {
-        //             LIBMAIX_DEBUG_PRINTF("libmaix loc model  forward fail: %s\n", libmaix_get_err_msg(err));
-        //             goto end;
-        //         }
-        //         CALC_TIME_START();
-        //         reg_decoder->decode(reg_decoder, &reg_out_fmap, &reg_result);
-        //         CALC_TIME_END("decode LP info");
-        //         char *string = (char *)malloc(20);
-        //         memset(string, 0 ,20);
-        //         for(int i=0 ;i!=reg_result.length ;i++)
-        //         {
-        //             int idx = (int)reg_result.no_repeat_idx[i];
-        //             strcat(string , labels[idx]);
-        //         }
-        //         libmaix_cv_image_draw_string(show, x1,y1,string,1.2, MaixColor(255, 0, 0 ), 2.5);
-        //         free(string);
-        //         libmaix_image_destroy(&tmp);
-        //     }
-        // }
+                // affine_src_pts[0]  = x2;
+                // affine_src_pts[1] =  y2;
+                // affine_src_pts[2] = x1;
+                // affine_src_pts[3] = y2;
+                // affine_src_pts[4] = x1;
+                // affine_src_pts[5]  = y1;
+
+                if(x1 < 0 ||  y1 < 0 ||  x1 + w > disp->width || y1 + h > disp->height )
+                {
+                    continue;
+                }
+
+                // libmaix_image_t* crop_temp = libmaix_image_create(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+                // err = libmaix_cv_image_crop(show , x1, y1 , w , h , &crop_temp);
+                // err = libmaix_cv_image_resize(crop_temp,  reg_w , reg_h ,&reg_img);
+
+                err =  libmaix_cv_image_affine(show , affine_src_pts , affine_dst_pts ,reg_h ,reg_w ,&reg_img);
+                reg_input.data = (uint8_t *)reg_img->data;
+                err = reg_nn->forward(reg_nn ,&reg_input, &reg_out_fmap);
+                if(err != LIBMAIX_ERR_NONE)
+                {
+                    LIBMAIX_DEBUG_PRINTF("libmaix loc model  forward fail: %s\n", libmaix_get_err_msg(err));
+                    goto end;
+                }
+
+                CALC_TIME_START();
+                reg_decoder->decode(reg_decoder, &reg_out_fmap, &reg_result);
+                CALC_TIME_END("decode LP info");
+                char *string = (char *)malloc(20);
+                memset(string, 0 ,20);
+                for(int i=0 ;i!=reg_result.length ;i++)
+                {
+                    int idx = (int)reg_result.no_repeat_idx[i];
+                    strcat(string , labels[idx]);
+                }
+
+                // draw
+                for (int j = 0; j < 4; ++j)
+                {
+                    int x = loc_result.plates[i].points[j * 2] * show->width;
+                    int y = loc_result.plates[i].points[j * 2 + 1] * show->height;
+                    libmaix_cv_image_draw_rectangle(show, x, y , x, y , MaixColor(0, 255, 23), -1);
+                }
+                libmaix_cv_image_draw_rectangle(show, x1, y1, x2, y2, MaixColor(255, 0, 0), 1);
+                libmaix_cv_image_draw_string(show, x1, y1 , string, 1.5 , MaixColor(255, 0, 0 ), 2);
+                 libmaix_cv_image_draw_image(show, 0, 0, reg_img, 1.0);
+                free(string);
+                // libmaix_image_destroy(&crop_temp);
+
+            }
+        }
         disp->draw_image(disp, show);
     }
 

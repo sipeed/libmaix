@@ -1,8 +1,6 @@
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,75 +9,10 @@ extern "C" {
 #include <unistd.h>
 #include "mud.h"
 #include "libmaix_nn.h"
+#define MAX_LEN 5
+#define debug_line printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
-#define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
-
-char *mud_sorce_dir_full_path ; //mud 所在路径
-
-char *get_dirpath_from_str(char * path)
-{
-    char *string = (char *)malloc(sizeof(char) * 1024);
-    char *tmp = (char *)malloc(sizeof(char) * 1024);
-    char *string_head = string;
-    char *tmp_head = tmp;
-    strcpy(tmp, path);
-    char *ptr = strrchr(tmp , '/');
-    while(tmp != ptr +1)
-    {
-        *string = *tmp;
-        string ++ ;
-        tmp ++;
-    }
-    *string = '\0';
-    free(tmp_head);
-    return string_head;
-}
-
-char *get_filename_from_str(char * path)
-{
-    char *tmp = (char *)malloc(sizeof(char) * 1024);
-    char *string = (char *)malloc(sizeof(char) * 1024);
-    strcpy(tmp, path);
-    char *ptr = strrchr(tmp , '/');
-    stpcpy(string , ptr+1);
-    free(tmp);
-    return string;
-}
-
-FILE *load_file(char *mud_path)
-{
-    //TODO:  should judge whether the file is legal or not
-    FILE *fp;
-    if(*mud_path ==  '/')
-    {
-        mud_sorce_dir_full_path = (char *)malloc(sizeof(char) * 1024);
-        char * dirpath = get_dirpath_from_str(mud_path);
-        strcpy(mud_sorce_dir_full_path , dirpath);
-        if (NULL == (fp = fopen(mud_path, "r")))
-        {
-            perror("fopen");
-            return NULL;
-        }
-    }
-    else
-    {
-        if((mud_sorce_dir_full_path = getcwd(NULL,0))==NULL){
-            perror("getcwd error");
-        }
-        strcat(mud_sorce_dir_full_path , "/");
-        strcat(mud_sorce_dir_full_path,mud_path);
-        char * full_path = (char *)malloc(sizeof(char) * 1024);
-        strcpy(full_path , mud_sorce_dir_full_path);
-        if (NULL == (fp = fopen(full_path, "r")))
-        {
-            perror("fopen");
-            return NULL;
-        }
-    }
-    return fp;
-}
-
-char *get_key(char *line)
+char *libmaix_mud_get_key(char *line)
 {
     char *strline = (char *)malloc(sizeof(char) * 1024);
     memcpy(strline, line, 1024);
@@ -103,10 +36,13 @@ char *get_key(char *line)
         }
     }
     key =  '\0';
+    free(strline);
+    start = NULL;
+    end = NULL;
     return key_head;
 }
 
-float *get_float_value(char *line)
+float *libmaix_mud_get_float_value(char *line)
 {
     float *value = (float *)malloc(sizeof(float) * 10);
     float *value_head = value;
@@ -126,15 +62,17 @@ float *get_float_value(char *line)
                 *single_value = *start;
                 single_value++;
             }
+            *single_value = '\0';
+
             start++;
-            *value = atof(single_value_head);
+
+            sscanf(single_value_head , "%f", value);
             value++;
             free(single_value_head);
             tmp = strchr(start, ',');
         }
         else
         {
-
             while(*start != '\n')
             {
                 if (*start == ' ')
@@ -146,7 +84,8 @@ float *get_float_value(char *line)
                 single_value++;
                 start++;
             }
-            *value = atof(single_value_head);
+            * single_value = '\0';
+            sscanf(single_value_head , "%f",value);
             value++;
             free(single_value_head);
         }
@@ -154,20 +93,21 @@ float *get_float_value(char *line)
     return value_head;
 }
 
-char *get_sting_value(char *line)
+char *libmaix_mud_get_sting_value(char *line)
 {
-
     char *strline = (char *)malloc(sizeof(char) * 1024);
     memset(strline,0,1024);
     if(strline == NULL)
     {
-        printf("malloc strine buffer is faild\n");
+        printf("libmaix mud src : malloc strine buffer is faild\n");
+        exit(0);
     }
-    memcpy(strline, line, 1024);
+    strcpy(strline , line);
     char *string_value = (char *)malloc(sizeof(char) * 1024);
     if(string_value ==  NULL)
     {
-        printf("malloc strlinr value buffer is faild\n");
+        printf("libmaix mud src : malloc strlinr value buffer is faild\n");
+        exit(0);
     }
     memset(string_value , 0 ,1024);
     char *string_value_head = string_value;
@@ -184,17 +124,18 @@ char *get_sting_value(char *line)
         start++;
     }
     string_value = '\0';
+    free(strline);
     return string_value_head;
 }
 
-void set_inputs_value(float **values, ini_info_t *ini_info) // float**指向二维数组
+void libmaix_mud_set_inputs_value(float **values, mud_info * mud_info_obj) // float**指向二维数组
 {
-    int input_num = ini_info->input_num;
-    for (int i = 0; i != ini_info->input_num; i++)
+    int input_num = mud_info_obj->input_num;
+    for (int i = 0; i != mud_info_obj->input_num; i++)
     {
         for (int j = 0; j != 3; j++)
         {
-            ini_info->inputs_shape[i][j] = (int)values[i][j];
+            mud_info_obj->inputs_shape[i][j] = (int)values[i][j];
         }
         int h = (int)values[i][0];
         int w = (int)values[i][1];
@@ -202,70 +143,70 @@ void set_inputs_value(float **values, ini_info_t *ini_info) // float**指向二�
         if (h != 1 && w != 1 && c == 3)
         {
             // mean
-            ini_info->mean[i][0] = values[i][3];
-            ini_info->mean[i][1] = values[i][4];
-            ini_info->mean[i][2] = values[i][5];
+            mud_info_obj->mean[i][0] = values[i][3];
+            mud_info_obj->mean[i][1] = values[i][4];
+            mud_info_obj->mean[i][2] = values[i][5];
 
             // norm,
-            ini_info->norm[i][0] = values[i][6];
-            ini_info->norm[i][1] = values[i][7];
-            ini_info->norm[i][2] = values[i][8];
+            mud_info_obj->norm[i][0] = values[i][6];
+            mud_info_obj->norm[i][1] = values[i][7];
+            mud_info_obj->norm[i][2] = values[i][8];
         }
         else if (h != 1 && w != 1 && c == 1)
         {
             // mean
-            ini_info->mean[i][0] = values[i][3];
-            ini_info->mean[i][1] = ini_info->mean[i][0];
-            ini_info->mean[i][2] = ini_info->mean[i][0];
+            mud_info_obj->mean[i][0] = values[i][3];
+            mud_info_obj->mean[i][1] = mud_info_obj->mean[i][0];
+            mud_info_obj->mean[i][2] = mud_info_obj->mean[i][0];
 
             // norm
-            ini_info->norm[i][0] = values[i][4];
-            ini_info->norm[i][1] = ini_info->norm[i][0];
-            ini_info->norm[i][2] = ini_info->norm[i][0];
+            mud_info_obj->norm[i][0] = values[i][4];
+            mud_info_obj->norm[i][1] = mud_info_obj->norm[i][0];
+            mud_info_obj->norm[i][2] = mud_info_obj->norm[i][0];
         }
         else if (h == 1 && w == 1 && c != 1)
         {
             // mean
-            ini_info->mean[i][0] = values[i][3];
-            ini_info->mean[i][1] = ini_info->mean[i][0];
-            ini_info->mean[i][2] = ini_info->mean[i][0];
+            mud_info_obj->mean[i][0] = values[i][3];
+            mud_info_obj->mean[i][1] = mud_info_obj->mean[i][0];
+            mud_info_obj->mean[i][2] = mud_info_obj->mean[i][0];
 
             // norm
-            ini_info->norm[i][0] = values[i][4];
-            ini_info->norm[i][1] = ini_info->norm[i][0];
-            ini_info->norm[i][2] = ini_info->norm[i][0];
+            mud_info_obj->norm[i][0] = values[i][4];
+            mud_info_obj->norm[i][1] = mud_info_obj->norm[i][0];
+            mud_info_obj->norm[i][2] = mud_info_obj->norm[i][0];
         }
     }
 }
 
-void set_outputs_value(float **values, ini_info_t *ini_info)
+void libmaix_mud_set_outputs_value(float **values, mud_info * mud_info_obj)
 {
-    for (int i = 0; i != ini_info->output_num; i++)
+    for (int i = 0; i != mud_info_obj->output_num; i++)
     {
         for (int j = 0; j != 3; j++)
         {
-            ini_info->outputs_shape[i][j] = (int)values[i][j];
+            mud_info_obj->outputs_shape[i][j] = (int)values[i][j];
         }
     }
 }
 
-void set_inputs_scale(float *values, ini_info_t *ini_info)
+void libmaix_mud_set_inputs_scale(float *values, mud_info * mud_info_obj)
 {
-    for (int i = 0; i != ini_info->input_num; i++)
+    for (int i = 0; i != mud_info_obj->input_num; i++)
     {
-        ini_info->inputs_scale[i] = values[i];
+        mud_info_obj->inputs_scale[i] = values[i];
     }
 }
 
-void set_outputs_scale(float *values, ini_info_t *ini_info)
+void libmaix_mud_set_outputs_scale(float *values, mud_info * mud_info_obj)
 {
-    for (int i = 0; i != ini_info->output_num; i++)
+    for (int i = 0; i != mud_info_obj->output_num; i++)
     {
-        ini_info->ouputs_scale[i] = values[i];
+        mud_info_obj->ouputs_scale[i] = values[i];
     }
 }
 
-int get_section(FILE *fp, char *title, ini_info_t *ini_info)
+int libmaix_mud_get_section(FILE *fp, char *title, mud_info *mud_info_obj)
 {
     int flag = 0;
     char string_title[64], string_lines[1024];
@@ -273,18 +214,22 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
     // input
     if (0 == strcmp(title, "inputs"))
     {
-
         int input_num = 0;
+        //input names buffer
         char **inputs_name = (char **)malloc(sizeof(char *) * MAX_LEN);
         if(inputs_name == NULL)
         {
-            printf("malloc inputs_name names  buffer  is faild\n");
+            printf("libmaix mud src : malloc inputs names  buffer  is faild\n");
+            exit(0);
         }
         char **inputs_name_head = inputs_name;
+
+        //input values buffer
         float **value = (float **)malloc(sizeof(float *) * MAX_LEN);
         if(value == NULL)
         {
-            printf("malloc input valuse  buffer  is faild\n");
+            printf("libmaix mud src : malloc inputs values  buffer  is faild\n");
+            exit(0);
         }
         float **value_head = value;
 
@@ -293,63 +238,101 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
             fgets(string_lines, 1024, fp);
             if (0 == strncmp(string_title, string_lines, strlen(string_title)))
             {
-
                 flag = 1;
                 continue;
             }
             else if (flag == 1 && (NULL != strchr(string_lines, '=')))
             {
-                *inputs_name = get_key(string_lines);
-                *value = get_float_value(string_lines);
+                *inputs_name = (char *)malloc(sizeof(char) * 1024);
+                if(! *inputs_name)
+                {
+                    printf("libmaix mud src : malloc input name  buffer  is faild\n");
+                    exit(0);
+                }
+                memset( *inputs_name,0,1024);
+                char * name = libmaix_mud_get_key(string_lines);
+                printf("name : %s \n",name);
+                strcpy(* inputs_name , name);
+                free(name);
+
+
+                *value = (float *)malloc(sizeof(float) * 10);
+                if(! *value)
+                {
+                    printf("libmaix mud src : malloc input values  buffer  is faild\n");
+                    exit(0);
+                }
+                *value = libmaix_mud_get_float_value(string_lines);
+
                 inputs_name++;
                 value++;
                 input_num++;
             }
             else if (strspn(string_lines, "\t\n") == strlen(string_lines))
             {
-
                 flag = 0;
                 continue;
             }
         }
-        ini_info->input_num = input_num;
-        ini_info->inputs = inputs_name_head;
-
-        set_inputs_value(value_head , ini_info);
+        mud_info_obj->input_num = input_num;
+        mud_info_obj->inputs = inputs_name_head;
+        libmaix_mud_set_inputs_value(value_head , mud_info_obj);
         rewind(fp);
     }
     // output
     else if (0 == strcmp(title, "outputs"))
     {
-
         int output_num = 0;
+        //outputs names buffer
         char **outputs_name = (char **)malloc(sizeof(char *) * MAX_LEN);
         if(outputs_name == NULL)
         {
-            printf("malloc output names  buffer  is faild\n");
+            printf("libmaix mud src : malloc outputs names  buffer  is faild\n");
+            exit(0);
         }
         char **outputs_name_head = outputs_name;
+
+        // outputs values buffer
         float **value = (float **)malloc(sizeof(float *) * MAX_LEN);
         if(value == NULL)
         {
-            printf("malloc output valuse  buffer  is faild\n");
+            printf("libmaix mud src : malloc outputs valuse  buffer  is faild\n");
+            exit(0);
         }
         float **value_head = value;
 
         while (!feof(fp))
         {
             fgets(string_lines, 1024, fp);
-
             if (0 == strncmp(string_title, string_lines, strlen(string_title)))
             {
-
                 flag = 1;
                 continue;
             }
             else if (flag == 1 && (NULL != strchr(string_lines, '=')))
             {
-                *outputs_name = get_key(string_lines);
-                *value = get_float_value(string_lines);
+                *outputs_name = (char *)malloc(sizeof(char) *1024);
+                if(! *outputs_name)
+                {
+                    printf("libmaix mud src : malloc output name  buffer  is faild\n");
+                    exit(0);
+                }
+                char * name = libmaix_mud_get_key(string_lines);
+                strcpy(* outputs_name , name);
+                free(name);
+
+
+                *value = (float *) malloc(sizeof(float)*10);
+                if(! *value)
+                {
+                    printf("libmaix mud src : malloc output values  buffer  is faild\n");
+                    exit(0);
+                }
+                float * tmp_value = libmaix_mud_get_float_value(string_lines);
+                memset( *value , 0 ,10);
+                memcpy( *value , tmp_value ,10 * sizeof(float));
+                free(tmp_value);
+
                 outputs_name++;
                 value++;
                 output_num++;
@@ -360,15 +343,14 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
                 continue;
             }
         }
-        ini_info->output_num = output_num;
-        ini_info->outpus = outputs_name_head;
-        set_outputs_value(value_head , ini_info);
+        mud_info_obj->output_num = output_num;
+        mud_info_obj->outpus = outputs_name_head;
+        libmaix_mud_set_outputs_value(value_head , mud_info_obj);
         rewind(fp);
     }
     // basic extra and decoder
     else if (0 == strcmp(title, "basic"))
     {
-
         while (!feof(fp))
         {
             fgets(string_lines, 1024, fp);
@@ -381,30 +363,36 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
             }
             else if (flag == 1 && (NULL != strchr(string_lines, '=')))
             {
-                char *key = get_key(string_lines);
-
-                char *value = get_sting_value(string_lines);
+                char *key = libmaix_mud_get_key(string_lines);
+                char *value = libmaix_mud_get_sting_value(string_lines);
 
                 if (0 == strcmp(key, "type")) // input scale
                 {
                     // value is a buffer
                     printf("type len:%d, type:%s\n",strlen(value), value);
-                    ini_info->model_type = value;
+                    mud_info_obj->model_type = value;
                 }
                 if (0 == strcmp(key, "bin"))
                 {
                     printf("bin len :%d , bin:%s\n",strlen(value), value);
                     if(*value == '/')
                     {
-                        ini_info->bin_path = value;
+                        mud_info_obj->bin_path = value;
                     }
                     else
                     {
                         char * full_path = (char *)malloc(sizeof(char) * 1024);
-                        strcpy(full_path, get_dirpath_from_str(mud_sorce_dir_full_path));
-                        strcat(full_path,value);
-                        ini_info->bin_path = full_path;
-
+                        memset(full_path , 0, 1024);
+                        char * pre = full_path;
+                        char * end = strrchr(mud_info_obj->mud_file_path ,'/');
+                        char * start = mud_info_obj->mud_file_path;
+                        while( start <= end)
+                        {
+                            *pre ++ = *start++;
+                        }
+                        *pre =  '\0';
+                        strcat(full_path , value);
+                        mud_info_obj->bin_path = full_path;
                     }
                 }
                 if (0 == strcmp(key, "param"))
@@ -412,15 +400,24 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
                     printf("param len:%d, param:%s\n",strlen(value),value);
                     if(*value == '/')
                     {
-                        ini_info->param_path = value;
+                        mud_info_obj->param_path = value;
                     }
                     else
                     {
                         char * full_path = (char *)malloc(sizeof(char) * 1024);
-                        strcpy(full_path, get_dirpath_from_str(mud_sorce_dir_full_path));
-                        strcat(full_path,value);
-                        ini_info->param_path = full_path;
-
+                        char * pre = full_path;
+                        char * mud_workspace = (char *)malloc(sizeof(char) * 1024);
+                        memset(full_path , 0, 1024);
+                        memset(mud_workspace , 0, 1024);
+                        char * end = strrchr(mud_info_obj->mud_file_path ,'/');
+                        char * start = mud_info_obj->mud_file_path;
+                        while( start <= end)
+                        {
+                            *pre ++ = *start++;
+                        }
+                        *pre =  '\0';
+                        strcat(full_path , value);
+                        mud_info_obj->param_path = full_path;
                     }
                 }
             }
@@ -430,14 +427,11 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
                 continue;
             }
         }
-
         rewind(fp);
     }
-
     // sacle
     else if (0 == strcmp(title, "extra"))
     {
-
         while (!feof(fp))
         {
             fgets(string_lines, 1024, fp);
@@ -448,24 +442,24 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
             }
             else if (flag == 1 && (NULL != strchr(string_lines, '=')))
             {
-                char *key = get_key(string_lines);
-                float *value = get_float_value(string_lines);
+                char *key = libmaix_mud_get_key(string_lines);
+                float *value = libmaix_mud_get_float_value(string_lines);
 
                 int count = 0;
                 if ( 0 == strcmp( key ,  "inputs_scale"))  // input scale
                 {
 
-                    for(int i = 0 ; i != ini_info->input_num ; i++)
+                    for(int i = 0 ; i != mud_info_obj->input_num ; i++)
                     {
-                        ini_info->inputs_scale[i]  =value[i];
+                        mud_info_obj->inputs_scale[i]  =value[i];
                     }
                 }
                 else
                 {
 
-                    for(int j = 0 ; j != ini_info->output_num ; j++)
+                    for(int j = 0 ; j != mud_info_obj->output_num ; j++)
                     {
-                        ini_info->ouputs_scale[j] = value[j];
+                        mud_info_obj->ouputs_scale[j] = value[j];
                     }
                 }
             }
@@ -479,69 +473,117 @@ int get_section(FILE *fp, char *title, ini_info_t *ini_info)
     }
 }
 
-void read_file(char * mdsc_path , ini_info_t * ini_info_ptr)
+void libmaix_mud_read_mud_file(char * mud_path ,  mud_info * mud_info_obj)
 {
-    FILE *fp = load_file(mdsc_path);
-    if(fp == NULL)
+    FILE * fp;
+    if(* mud_path == '/')
     {
-        printf("open %s is faild\n",mdsc_path);
-        exit(0);
+        mud_info_obj->mud_file_path = (char *) malloc(sizeof(char) * 1024);
+        if(! mud_info_obj->mud_file_path)
+        {
+            printf("libmaix mud src : init mud file path is faild\n");
+            exit(0);
+        }
+        strcpy(mud_info_obj->mud_file_path , mud_path);
+        if(NULL == ( (fp = fopen(mud_info_obj->mud_file_path, "r"))))
+        {
+            perror("libmaix mud src : can't open the specifically mud file\n ");
+            exit(0);
+        }
     }
-    get_section(fp , "basic", ini_info_ptr);
-    get_section(fp, "inputs", ini_info_ptr);
-    get_section(fp , "outputs", ini_info_ptr);
-    get_section(fp , "extra", ini_info_ptr);
+    else
+    {
+        if((mud_info_obj->mud_file_path = getcwd(NULL,0))==NULL){
+            perror("libmaix mud src : getcwd error\n");
+            exit(0);
+        }
+        strcat(mud_info_obj->mud_file_path , "/");
+        strcat(mud_info_obj->mud_file_path,mud_path);
+        if (NULL == (fp = fopen(mud_info_obj->mud_file_path, "r")))
+        {
+            perror("libmaix mud src : can't open the specifically mud file\n");
+            exit(0);
+        }
+    }
+    libmaix_mud_get_section(fp , "basic", mud_info_obj);
+    libmaix_mud_get_section(fp, "inputs", mud_info_obj);
+    libmaix_mud_get_section(fp , "outputs", mud_info_obj);
+    libmaix_mud_get_section(fp , "extra", mud_info_obj);
+    fclose(fp);
+
 }
 
-libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt)
+mud_info * libmaix_mud_load_mud(char *mud_path)
+{
+    //new a mud info object
+    mud_info * mud_info_obj = (mud_info *)malloc(sizeof(mud_info));
+    if(! mud_info_obj)
+    {
+        printf("libmaix mud src : init mud object is faild\n");
+        exit(0);
+    }
+
+    // check mud path is usable
+    if ( 0 != access(mud_path , 0))
+    {
+        printf("libmaix mud src : the mud file path is not exist\n");
+        exit(0);
+    }
+
+    //read mud file
+    libmaix_mud_read_mud_file(mud_path , mud_info_obj);
+
+    mud_info_obj->is_init = true;
+    return mud_info_obj;
+}
+
+libmaix_nn_t* libmaix_mud_build_model(mud_info * mud_info_obj ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt)
 {
     libmaix_nn_t* nn = NULL;
     libmaix_err_t err =LIBMAIX_ERR_NONE;
 
-    if(strcmp(info_ptr->model_type , "aipu") == 0)
+    if(strcmp(mud_info_obj->model_type , "aipu") == 0)
     {
         printf("r329\n");
-        if(strlen(info_ptr->bin_path) == 0)
+        if(strlen(mud_info_obj->bin_path) == 0)
         {
             printf("this path is empty ! \n");
         }
         //path
-        path->aipu.model_path = info_ptr->bin_path;
+        path->aipu.model_path = mud_info_obj->bin_path;
         // opt
-        opt->aipu.input_names = info_ptr->inputs;
-        opt->aipu.output_names = info_ptr->outpus;
-        opt->aipu.input_num = info_ptr->input_num;
-        opt->aipu.output_num = info_ptr->output_num;
+        opt->aipu.input_names = mud_info_obj->inputs;
+        opt->aipu.output_names = mud_info_obj->outpus;
+        opt->aipu.input_num = mud_info_obj->input_num;
+        opt->aipu.output_num = mud_info_obj->output_num;
         for(int i=0 ; i !=3 ; i++ )
         {
-            opt->aipu.mean[i] = info_ptr->mean[0][i];
-            opt->aipu.norm[i] = info_ptr->norm[0][i];
+            opt->aipu.mean[i] = mud_info_obj->mean[0][i];
+            opt->aipu.norm[i] = mud_info_obj->norm[0][i];
         }
-        for (int i =0 ; i != info_ptr->output_num ; i++)
+        for (int i =0 ; i != mud_info_obj->output_num ; i++)
         {
-            opt->aipu.scale[i] = info_ptr->ouputs_scale[i];
+            opt->aipu.scale[i] = mud_info_obj->ouputs_scale[i];
         }
 
     }
-    else if (strcmp(info_ptr->model_type , "awnn") == 0)
+    else if (strcmp(mud_info_obj->model_type , "awnn") == 0)
     {
         printf("v831\n");
 
-        if(strlen(info_ptr->bin_path) == 0  ||  strlen(info_ptr->param_path)==0)
+        if(strlen(mud_info_obj->bin_path) == 0  ||  strlen(mud_info_obj->param_path)==0)
         {
             printf("this path is empty ! \n");
 
         }
         //input && output num && enrypt
 
-        opt->awnn.input_num = info_ptr->input_num;
-        opt->awnn.output_num = info_ptr->output_num;
+        opt->awnn.input_num = mud_info_obj->input_num;
+        opt->awnn.output_num = mud_info_obj->output_num;
         opt->awnn.encrypt = false;
         //path
-        // path->awnn.bin_path = info_ptr->bin_path;
-        // path->awnn.param_path = info_ptr->param_path;
-        int bin_len = strlen(info_ptr->bin_path);
-        char *bin_src = info_ptr->bin_path;
+        int bin_len = strlen(mud_info_obj->bin_path);
+        char *bin_src = mud_info_obj->bin_path;
         char *bin_dst = (char *)malloc(bin_len +1);
         if(bin_dst)
         {
@@ -550,8 +592,8 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
             path->awnn.bin_path = bin_dst;
         }
 
-        int param_len = strlen(info_ptr->param_path);
-        char *param_src = info_ptr->param_path;
+        int param_len = strlen(mud_info_obj->param_path);
+        char *param_src = mud_info_obj->param_path;
         char *param_dst = (char *)malloc(param_len +1);
         if(param_dst)
         {
@@ -560,24 +602,24 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
             path->awnn.param_path = param_dst;
         }
 
-        opt->awnn.input_names = (char **)malloc(sizeof(char*) * info_ptr->input_num);
+        opt->awnn.input_names = (char **)malloc(sizeof(char*) * mud_info_obj->input_num);
         for(int i=0 ; i !=opt->awnn.input_num;i++)
         {
-            int len = strlen(info_ptr->inputs[i])+1;
-            char *src = info_ptr->inputs[i];
-            printf("i:%d len:%d inputs:%s\n", i,  len, src);
+            int len = strlen(mud_info_obj->inputs[i])+1;
+            char *src = mud_info_obj->inputs[i];
+            printf("input id:%d  len:%d  inputs:%s\n", i,  len, src);
             char *dst =  (char*)malloc(len);
             if (dst) {
                 strcpy(dst, src);
                 opt->awnn.input_names[i] = dst;
             }
         }
-        opt->awnn.output_names = (char **)malloc(sizeof(char*) *info_ptr->output_num);
+        opt->awnn.output_names = (char **)malloc(sizeof(char*) *mud_info_obj->output_num);
         for(int i=0 ; i !=opt->awnn.output_num;i++)
         {
-            int len = strlen(info_ptr->outpus[i]) +1;
-            char * src = info_ptr->outpus[i];
-            printf("i:%d len:%d outputs:%s\n", i , len, src);
+            int len = strlen(mud_info_obj->outpus[i]) +1;
+            char * src = mud_info_obj->outpus[i];
+            printf("output id:%d  len:%d  outputs:%s\n", i , len, src);
             char *dst = (char *)malloc(len);
             if(dst)
             {
@@ -589,8 +631,8 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
         //mean & norm
         for(int i=0 ; i !=3 ; i++ )
         {
-            opt->awnn.mean[i] = info_ptr->mean[0][i];
-            opt->awnn.norm[i] = info_ptr->norm[0][i];
+            opt->awnn.mean[i] = mud_info_obj->mean[0][i];
+            opt->awnn.norm[i] = mud_info_obj->norm[0][i];
         }
         for (int i =0 ; i != 3 ; i++)
         {
@@ -615,10 +657,7 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
     {
         printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
     }
-    printf("-- mud nn object load model\n");
-
     err = nn->load(nn, path, opt);
-    printf("--mud nn object load model is done\n");
     if(err != LIBMAIX_ERR_NONE)
     {
         printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
@@ -626,53 +665,39 @@ libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path,
     return nn;
 }
 
+void libmaix_mud_deinit_mud(mud_info * mud_info_obj)
+{
+    if(mud_info_obj->is_init)
+    {
+        printf("init \n");
+        debug_line;
+        free(mud_info_obj->inputs);
+        debug_line;
+        free(mud_info_obj->outpus);
+        debug_line;
+        mud_info_obj->inputs = NULL;
+        mud_info_obj->outpus = NULL;
+        free(mud_info_obj->model_type);
+        debug_line;
+        free(mud_info_obj->bin_path);
+        debug_line;
+        if(mud_info_obj->param_path)
+        {
+            free(mud_info_obj->param_path);
+            debug_line;
+        }
+        free(mud_info_obj->mud_file_path);
+    }
+}
 
-// int main(int argc, char const *argv[])
-// {
-//     int i = 0;
-//     if (argc == 1)
-//     {
-//         printf("there is not ini file path to read\n'");
-//         return -1;
-//     }
-
-//     char *file_path = argv[1];
-//     // get information from ini file
-//     FILE *fp = load_file(file_path);
-//     // set a object to save  information
-//     ini_info_t ini_info;
-//     // section basic
-//     get_section(fp , "basic", &ini_info);
-//     get_section(fp, "inputs", &ini_info);
-//     get_section(fp , "outputs", &ini_info);
-//     debug_line;
-//     get_section(fp , "extra", &ini_info);
-//     printf("____________________\n");
-//     printf("type :%s \n", ini_info.model_type);
-//     printf("bin:%s\n", ini_info.bin_path);
-//     printf("param:%s\n", ini_info.param_path);
-//     printf("input num:%d\n", ini_info.input_num);
-//     for(int i =0 ; i != ini_info.input_num;i++)
-//     {
-//         printf("this is innput%d \n ",i+1);
-//         // printf("name:%s\n",ini_info.inputs[i]);
-//         printf("C:%d   H:%d   W:%d\n",ini_info.inputs_shape[i][0] , ini_info.inputs_shape[i][1] , ini_info.inputs_shape[i][2]);
-//         printf("norm_R: %f ,norm_G : %f  ,norm_B :%f\n",ini_info.norm[i][0],ini_info.norm[i][1],ini_info.norm[i][2]);
-//         printf("mean_R: %f ,mean_G : %f  ,mean_B :%f\n",ini_info.mean[i][0],ini_info.mean[i][1],ini_info.mean[i][2]);
-//         printf("input scale :%f \n",ini_info.inputs_scale[i] );
-
-//     }
-//     printf("____________________\n");
-//     for(int i=0 ; i != ini_info.output_num ;i++)
-//     {
-//         printf("this is output%d \n ",i+1);
-//         // printf("'name : %s \n", ini_info.outpus[i]);
-//         printf("C:%d   H:%d   W:%d\n",ini_info.outputs_shape[i][0] , ini_info.outputs_shape[i][1] , ini_info.outputs_shape[i][2]);
-//         printf("output scale :%f \n",ini_info.ouputs_scale[i]);
-//     }
-//     printf("____________________\n");
-
-// }
+libmaix_nn_t * libmaix_mud_load_model(char *mud_path)
+{
+    mud_info * mud_info_obj  = libmaix_mud_load_mud(mud_path);
+    libmaix_nn_model_path_t model_path;
+    libmaix_nn_opt_param_t opt_param;
+    libmaix_nn_t * nn  = libmaix_mud_build_model(mud_info_obj, &model_path,&opt_param);
+    return nn;
+}
 
 #ifdef __cplusplus
 }

@@ -1,12 +1,13 @@
-#ifndef __INI_H__
-#define __INI_H__
+#ifndef __MUD_H__
+#define __MUD_H__
 #include "libmaix_nn.h"
 #define INI_VERSION "0.1.1"
 #define MAX_LEN 5
 #ifdef __cplusplus
 extern "C" {
 #endif
-typedef struct ini_info
+
+typedef struct mud_info
 {
     /* data */
     char**inputs;
@@ -14,6 +15,7 @@ typedef struct ini_info
     char *model_type;
     char *bin_path;
     char *param_path;
+    char *mud_file_path;
     float mean[MAX_LEN][3];
     float norm[MAX_LEN][3];
     float inputs_scale[MAX_LEN];
@@ -22,22 +24,24 @@ typedef struct ini_info
     int output_num;
     int  outputs_shape[MAX_LEN][3];
     int inputs_shape[MAX_LEN][3];
-}ini_info_t;
+    bool is_init;
+}mud_info;
 
-FILE * load_file(char *mud_path);
-char * get_key(char * line);
-float * get_float_value(char *line);
-char * get_sting_value(char *line);
-void set_inputs_value(float ** values, ini_info_t * ini_info);
-void set_outputs_value(float **values, ini_info_t *ini_info);
-void set_inputs_scale(float * values , ini_info_t * ini_info);
-void set_outputs_scale(float * values , ini_info_t * ini_info);
-int get_section(FILE * fp , char *title , ini_info_t * ini_info);
-void read_file(char * mdsc_path , ini_info_t * ini_info_ptr);
-libmaix_nn_t* load_mdsc(char * path , ini_info_t * info_ptr);
-libmaix_nn_t* build_model(ini_info_t * info_ptr ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt);
-char *get_dirpath_from_str(char * path);
-char *get_filename_from_str(char * path);
+void libmaix_mud_deinit_mud(mud_info * mud_info_obj);
+mud_info * libmaix_mud_load_mud(char * mud_path);
+libmaix_nn_t * libmaix_mud_load_model(char *mud_path);
+libmaix_nn_t* libmaix_mud_build_model(mud_info * mud_info_obj ,libmaix_nn_model_path_t * path, libmaix_nn_opt_param_t *opt);
+void libmaix_mud_read_mud_file(char * mud_path ,  mud_info * mud_info_obj);
+int libmaix_mud_get_section(FILE *fp, char *title, mud_info *mud_info_obj);
+void libmaix_mud_set_inputs_scale(float *values, mud_info * mud_info_obj);
+void libmaix_mud_set_outputs_scale(float *values, mud_info * mud_info_obj);
+void libmaix_mud_set_inputs_value(float **values, mud_info * mud_info_obj);
+void libmaix_mud_set_outputs_value(float **values, mud_info * mud_info_obj);
+char *libmaix_mud_get_sting_value(char *line);
+float *libmaix_mud_get_float_value(char *line);
+char *libmaix_mud_get_key(char *line);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -10,7 +10,7 @@ extern "C" {
 #include "mud.h"
 #include "libmaix_nn.h"
 #define MAX_LEN 5
-#define debug_line printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
+#define debug_line //printf("%s:%d %s %s %s \r\n", __FILE__, __LINE__, __FUNCTION__, __DATE__, __TIME__)
 
 char *libmaix_mud_get_key(char *line)
 {
@@ -251,7 +251,6 @@ int libmaix_mud_get_section(FILE *fp, char *title, mud_info *mud_info_obj)
                 }
                 memset( *inputs_name,0,1024);
                 char * name = libmaix_mud_get_key(string_lines);
-                printf("name : %s \n",name);
                 strcpy(* inputs_name , name);
                 free(name);
 
@@ -369,12 +368,12 @@ int libmaix_mud_get_section(FILE *fp, char *title, mud_info *mud_info_obj)
                 if (0 == strcmp(key, "type")) // input scale
                 {
                     // value is a buffer
-                    printf("type len:%d, type:%s\n",strlen(value), value);
+                    printf("type:%s\n", value);
                     mud_info_obj->model_type = value;
                 }
                 if (0 == strcmp(key, "bin"))
                 {
-                    printf("bin len :%d , bin:%s\n",strlen(value), value);
+                    printf("bin:%s\n", value);
                     if(*value == '/')
                     {
                         mud_info_obj->bin_path = value;
@@ -397,7 +396,7 @@ int libmaix_mud_get_section(FILE *fp, char *title, mud_info *mud_info_obj)
                 }
                 if (0 == strcmp(key, "param"))
                 {
-                    printf("param len:%d, param:%s\n",strlen(value),value);
+                    printf("param:%s\n",value);
                     if(*value == '/')
                     {
                         mud_info_obj->param_path = value;
@@ -544,7 +543,6 @@ libmaix_nn_t* libmaix_mud_build_model(mud_info * mud_info_obj ,libmaix_nn_model_
 
     if(strcmp(mud_info_obj->model_type , "aipu") == 0)
     {
-        printf("r329\n");
         if(strlen(mud_info_obj->bin_path) == 0)
         {
             printf("this path is empty ! \n");
@@ -569,8 +567,6 @@ libmaix_nn_t* libmaix_mud_build_model(mud_info * mud_info_obj ,libmaix_nn_model_
     }
     else if (strcmp(mud_info_obj->model_type , "awnn") == 0)
     {
-        printf("v831\n");
-
         if(strlen(mud_info_obj->bin_path) == 0  ||  strlen(mud_info_obj->param_path)==0)
         {
             printf("this path is empty ! \n");
@@ -607,7 +603,7 @@ libmaix_nn_t* libmaix_mud_build_model(mud_info * mud_info_obj ,libmaix_nn_model_
         {
             int len = strlen(mud_info_obj->inputs[i])+1;
             char *src = mud_info_obj->inputs[i];
-            printf("input id:%d  len:%d  inputs:%s\n", i,  len, src);
+            printf("input id:%d  inputs:%s\n", i, src);
             char *dst =  (char*)malloc(len);
             if (dst) {
                 strcpy(dst, src);
@@ -619,7 +615,7 @@ libmaix_nn_t* libmaix_mud_build_model(mud_info * mud_info_obj ,libmaix_nn_model_
         {
             int len = strlen(mud_info_obj->outpus[i]) +1;
             char * src = mud_info_obj->outpus[i];
-            printf("output id:%d  len:%d  outputs:%s\n", i , len, src);
+            printf("output id:%d outputs:%s\n", i , src);
             char *dst = (char *)malloc(len);
             if(dst)
             {
@@ -669,22 +665,16 @@ void libmaix_mud_deinit_mud(mud_info * mud_info_obj)
 {
     if(mud_info_obj->is_init)
     {
-        printf("init \n");
-        debug_line;
+
         free(mud_info_obj->inputs);
-        debug_line;
         free(mud_info_obj->outpus);
-        debug_line;
         mud_info_obj->inputs = NULL;
         mud_info_obj->outpus = NULL;
         free(mud_info_obj->model_type);
-        debug_line;
         free(mud_info_obj->bin_path);
-        debug_line;
         if(mud_info_obj->param_path)
         {
             free(mud_info_obj->param_path);
-            debug_line;
         }
         free(mud_info_obj->mud_file_path);
     }

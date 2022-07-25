@@ -13,9 +13,11 @@
 void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat &output, cv::Point2i location, double opacity)
 {
   bool allow_mix = false; // By default no blending is allowed and black transparency is preserved
-  if (opacity >= 0. && opacity <= 1.) allow_mix = true;
+  if (opacity >= 0. && opacity <= 1.)
+    allow_mix = true;
 
-  if (background.data != background.data) background.copyTo(output);
+  if (background.data != background.data)
+    background.copyTo(output);
   // start at the row indicated by location, or at row 0 if location.y is negative.
   for (int y = std::max(location.y, 0); y < background.rows; ++y)
   {
@@ -38,30 +40,39 @@ void overlayImage(const cv::Mat &background, const cv::Mat &foreground, cv::Mat 
       uchar *pixels_back = background.data + (y * background.step + x * background.channels());
       uchar *pixels_output = output.data + (y * output.step + output.channels() * x);
 
-      if (output.channels() == 3) {
+      if (output.channels() == 3)
+      {
         // allow mix color and black is RGB's alpha == 0
         double alpha = (allow_mix) ? ((pixels_fore[0] == 0 && pixels_fore[1] == 0 && pixels_fore[2] == 0) ? 0 : opacity) : 1.;
-        if (alpha == 1.) {
-            // printf("pos [%d %d] allow_mix %d alpha %f opacity %f\r\n", x, y, allow_mix, alpha, opacity);
-            pixels_output[0] = pixels_fore[0];
-            pixels_output[1] = pixels_fore[1];
-            pixels_output[2] = pixels_fore[2];
-        } else {
-            double __alpha = (1. - alpha);
-            // printf("pos [%d %d] allow_mix %d alpha %f opacity %f\r\n", x, y, allow_mix, alpha, opacity);
-            pixels_output[0] = pixels_back[0] * __alpha + pixels_fore[0] * alpha;
-            pixels_output[1] = pixels_back[1] * __alpha + pixels_fore[1] * alpha;
-            pixels_output[2] = pixels_back[2] * __alpha + pixels_fore[2] * alpha;
+        if (alpha == 1.)
+        {
+          // printf("pos [%d %d] allow_mix %d alpha %f opacity %f\r\n", x, y, allow_mix, alpha, opacity);
+          pixels_output[0] = pixels_fore[0];
+          pixels_output[1] = pixels_fore[1];
+          pixels_output[2] = pixels_fore[2];
         }
-      } else if (output.channels() == 4) {
+        else
+        {
+          double __alpha = (1. - alpha);
+          // printf("pos [%d %d] allow_mix %d alpha %f opacity %f\r\n", x, y, allow_mix, alpha, opacity);
+          pixels_output[0] = pixels_back[0] * __alpha + pixels_fore[0] * alpha;
+          pixels_output[1] = pixels_back[1] * __alpha + pixels_fore[1] * alpha;
+          pixels_output[2] = pixels_back[2] * __alpha + pixels_fore[2] * alpha;
+        }
+      }
+      else if (output.channels() == 4)
+      {
         uchar *pixel = foreground.data + (fY * foreground.step + fX * foreground.channels());
         // determine the opacity of the foregrond pixel, using its fourth (alpha) channel.
         double alpha = (allow_mix) ? (pixel[3] / 255.) * opacity : 1.; // use alpha in foreground RGBA
         // RGB need 3 pixel mix with alpha. and give up black color.
-        for (int c = 0; c != output.channels(); ++c) {
-            pixels_output[c] = pixels_back[c] * (1. - alpha) + pixels_fore[c] * alpha;
+        for (int c = 0; c != output.channels(); ++c)
+        {
+          pixels_output[c] = pixels_back[c] * (1. - alpha) + pixels_fore[c] * alpha;
         }
-      } else {
+      }
+      else
+      {
         puts("[image.draw_image] Only supports RGB or RGBA");
       }
     }
@@ -95,7 +106,7 @@ bool mergeImage(cv::Mat &srcImage, cv::Mat mixImage, cv::Point startPoint)
   // cv::rectangle(srcImage, startPoint, cv::Point(startPoint.x + mixImage.cols - 1, startPoint.y + mixImage.rows - 1), cv::Scalar(0, 0, 0), -1);
   // }
 
-  //ROI 混合区域
+  // ROI 混合区域
   cv::Mat roiImage = srcImage(cv::Rect(startPoint.x, startPoint.y, addCols, addRows));
 
   // printf("MixImage %d %d\r\n", srcImage.type() == CV_8UC3, mixImage.type() == CV_8UC4);
@@ -182,16 +193,16 @@ extern "C"
     int type = CV_8UC3;
     switch (src->mode)
     {
-      case LIBMAIX_IMAGE_MODE_RGB888:
-        break;
-      case LIBMAIX_IMAGE_MODE_RGBA8888:
-        type = CV_8UC4;
-        break;
-      case LIBMAIX_IMAGE_MODE_GRAY:
-        type = CV_8UC1;
-        break;
-      default:
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    case LIBMAIX_IMAGE_MODE_RGB888:
+      break;
+    case LIBMAIX_IMAGE_MODE_RGBA8888:
+      type = CV_8UC4;
+      break;
+    case LIBMAIX_IMAGE_MODE_GRAY:
+      type = CV_8UC1;
+      break;
+    default:
+      return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
     {
       cv::Mat input(src->height, src->width, type, const_cast<char *>((char *)src->data));
@@ -212,16 +223,16 @@ extern "C"
     int type = CV_8UC3;
     switch (src->mode)
     {
-      case LIBMAIX_IMAGE_MODE_RGB888:
-        break;
-      case LIBMAIX_IMAGE_MODE_RGBA8888:
-        type = CV_8UC4;
-        break;
-      case LIBMAIX_IMAGE_MODE_GRAY:
-        type = CV_8UC1;
-        break;
-      default:
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    case LIBMAIX_IMAGE_MODE_RGB888:
+      break;
+    case LIBMAIX_IMAGE_MODE_RGBA8888:
+      type = CV_8UC4;
+      break;
+    case LIBMAIX_IMAGE_MODE_GRAY:
+      type = CV_8UC1;
+      break;
+    default:
+      return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
     {
       cv::Mat input(src->height, src->width, type, src->data);
@@ -242,16 +253,16 @@ extern "C"
     int type = CV_8UC3;
     switch (src->mode)
     {
-      case LIBMAIX_IMAGE_MODE_RGB888:
-        break;
-      case LIBMAIX_IMAGE_MODE_RGBA8888:
-        type = CV_8UC4;
-        break;
-      case LIBMAIX_IMAGE_MODE_GRAY:
-        type = CV_8UC1;
-        break;
-      default:
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    case LIBMAIX_IMAGE_MODE_RGB888:
+      break;
+    case LIBMAIX_IMAGE_MODE_RGBA8888:
+      type = CV_8UC4;
+      break;
+    case LIBMAIX_IMAGE_MODE_GRAY:
+      type = CV_8UC1;
+      break;
+    default:
+      return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
     {
       cv::Mat input(src->height, src->width, type, src->data);
@@ -271,16 +282,16 @@ extern "C"
     int type = CV_8UC3;
     switch (src->mode)
     {
-      case LIBMAIX_IMAGE_MODE_RGB888:
-        break;
-      case LIBMAIX_IMAGE_MODE_RGBA8888:
-        type = CV_8UC4;
-        break;
-      case LIBMAIX_IMAGE_MODE_GRAY:
-        type = CV_8UC1;
-        break;
-      default:
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    case LIBMAIX_IMAGE_MODE_RGB888:
+      break;
+    case LIBMAIX_IMAGE_MODE_RGBA8888:
+      type = CV_8UC4;
+      break;
+    case LIBMAIX_IMAGE_MODE_GRAY:
+      type = CV_8UC1;
+      break;
+    default:
+      return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
     // if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
     {
@@ -369,28 +380,28 @@ extern "C"
 
   libmaix_err_t libmaix_cv_image_free_freetype()
   {
-      if (libmaix_font::is_load)
-        delete libmaix_font::ft;
-        libmaix_font::is_load = false;
-      return LIBMAIX_ERR_NONE;
+    if (libmaix_font::is_load)
+      delete libmaix_font::ft;
+    libmaix_font::is_load = false;
+    return LIBMAIX_ERR_NONE;
   }
 
   void libmaix_cv_image_get_string_size(int *width, int *height, const char *str, double scale, int thickness)
   {
-      int baseline = 0;
-      cv::String text(str);
-      if (!libmaix_font::is_load)
-      {
-        cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, scale, thickness, &baseline);
-        *width = textSize.width * scale, *height = textSize.height + baseline - (scale * thickness);
-        // printf("old textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
-      }
-      else
-      {
-        cv::Size textSize = libmaix_font::ft->getTextSize(text, libmaix_font::fontHeight, thickness, &baseline);
-        *width = textSize.width * scale, *height = libmaix_font::fontHeight * scale + thickness;
-        // printf("new textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
-      }
+    int baseline = 0;
+    cv::String text(str);
+    if (!libmaix_font::is_load)
+    {
+      cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, scale, thickness, &baseline);
+      *width = textSize.width * scale, *height = textSize.height + baseline - (scale * thickness);
+      // printf("old textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
+    }
+    else
+    {
+      cv::Size textSize = libmaix_font::ft->getTextSize(text, libmaix_font::fontHeight, thickness, &baseline);
+      *width = textSize.width * scale, *height = libmaix_font::fontHeight * scale + thickness;
+      // printf("new textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
+    }
   }
 
   libmaix_err_t libmaix_cv_image_draw_string(libmaix_image_t *src, int x, int y, const char *str, double scale, libmaix_image_color_t color, int thickness)
@@ -402,16 +413,16 @@ extern "C"
     int type = CV_8UC3;
     switch (src->mode)
     {
-      case LIBMAIX_IMAGE_MODE_RGB888:
-        break;
-      case LIBMAIX_IMAGE_MODE_RGBA8888:
-        type = CV_8UC4;
-        break;
-      case LIBMAIX_IMAGE_MODE_GRAY:
-        type = CV_8UC1;
-        break;
-      default:
-        return LIBMAIX_ERR_NOT_IMPLEMENT;
+    case LIBMAIX_IMAGE_MODE_RGB888:
+      break;
+    case LIBMAIX_IMAGE_MODE_RGBA8888:
+      type = CV_8UC4;
+      break;
+    case LIBMAIX_IMAGE_MODE_GRAY:
+      type = CV_8UC1;
+      break;
+    default:
+      return LIBMAIX_ERR_NOT_IMPLEMENT;
     }
     cv::Mat input(src->height, src->width, type, src->data);
     cv::String text(str);
@@ -421,14 +432,14 @@ extern "C"
       cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, scale, thickness, &baseline);
       // printf("old textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
       cv::putText(input, text, cv::Point(x, y + textSize.height + baseline - (scale * thickness)), cv::FONT_HERSHEY_PLAIN, scale,
-          cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), thickness);
+                  cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), thickness);
     }
     else
     {
       // cv::Size textSize = libmaix_font::ft->getTextSize(text, libmaix_font::fontHeight, thickness, &baseline);
       // printf("new textSize w %d h %d b %d\r\n", textSize.width, textSize.height, baseline);
       libmaix_font::ft->putText(input, text, cv::Point(x, y), libmaix_font::fontHeight * scale,
-          cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), -1, 16, false);
+                                cv::Scalar(color.rgb888.r, color.rgb888.g, color.rgb888.b, color.rgb888.a), -1, 16, false);
     }
     return LIBMAIX_ERR_NONE;
   }
@@ -609,7 +620,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     // {
     //     break;
     // }
-    case (772): //RGB888 -> RGB565
+    case (772): // RGB888 -> RGB565
     {
       if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
         return LIBMAIX_ERR_PARAM;
@@ -623,7 +634,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       (*dst)->mode = mode;
       break;
     }
-    case (776): //RGB888 -> BGR888
+    case (776): // RGB888 -> BGR888
     {
       // printf("libmaix_image_hal_convert src->mode %d mode %d \r\n", src->mode, mode);
       uint8_t *rgb = (uint8_t *)(src->data), *bgr = (uint8_t *)(*dst)->data;
@@ -634,7 +645,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       (*dst)->mode = mode;
       break;
     }
-    case (770): //RGB888 -> GRAY
+    case (770): // RGB888 -> GRAY
     {
       if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
         return LIBMAIX_ERR_PARAM;
@@ -647,7 +658,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       }
       break;
     }
-    case (515): //GRAY -> RGB888
+    case (515): // GRAY -> RGB888
     {
       if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
         return LIBMAIX_ERR_PARAM;
@@ -661,7 +672,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       }
       break;
     }
-    case (516): //GRAY -> RGB565
+    case (516): // GRAY -> RGB565
     {
       if (src == *dst || src->width != (*dst)->width || src->height != (*dst)->height)
         return LIBMAIX_ERR_PARAM;
@@ -817,7 +828,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       {
         cv::Point2f center((cv_src.cols - 1) / 2.0, (cv_src.rows - 1) / 2.0);
         cv::Mat rot = cv::getRotationMatrix2D(center, rotate, 1.0);
-        cv::warpAffine(cv_src, cv_dist, rot, cv_src.size()); //the original size
+        cv::warpAffine(cv_src, cv_dist, rot, cv_src.size()); // the original size
         if (*dst == NULL)
         {
           *dst = libmaix_image_create(cv_dist.cols, cv_dist.rows, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
@@ -834,13 +845,13 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       }
       else
       {
-        double alpha = -rotate * CV_PI / 180.0; //convert angle to radian format
+        double alpha = -rotate * CV_PI / 180.0; // convert angle to radian format
         cv::Point2f srcP[3];
         cv::Point2f dstP[3];
         srcP[0] = cv::Point2f(0, cv_src.rows);
         srcP[1] = cv::Point2f(cv_src.cols, 0);
         srcP[2] = cv::Point2f(cv_src.cols, cv_src.rows);
-        //rotate the pixels
+        // rotate the pixels
         for (int i = 0; i < 3; i++)
           dstP[i] = cv::Point2f(srcP[i].x * cos(alpha) - srcP[i].y * sin(alpha), srcP[i].y * cos(alpha) + srcP[i].x * sin(alpha));
         double minx, miny, maxx, maxy;
@@ -850,7 +861,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         maxy = std::max(std::max(std::max(dstP[0].y, dstP[1].y), dstP[2].y), float(0.0));
         int w = maxx - minx;
         int h = maxy - miny;
-        //translation
+        // translation
         for (int i = 0; i < 3; i++)
         {
           if (minx < 0)
@@ -859,7 +870,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
             dstP[i].y -= miny;
         }
         cv::Mat warpMat = cv::getAffineTransform(srcP, dstP);
-        cv::warpAffine(cv_src, cv_dist, warpMat, cv::Size(w, h)); //extend size
+        cv::warpAffine(cv_src, cv_dist, warpMat, cv::Size(w, h)); // extend size
         if (*dst != NULL)
           libmaix_image_destroy(dst);
         *dst = libmaix_image_create(cv_dist.cols, cv_dist.rows, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
@@ -872,7 +883,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         {
           return LIBMAIX_ERR_PARAM;
         }
-      } //end else
+      } // end else
     }
     else
     {
@@ -989,10 +1000,10 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     return LIBMAIX_ERR_NONE;
   }
 
-  libmaix_err_t libmaix_cv_image_affine(libmaix_image_t *src, int*pts_src, int*pts_dst , int dst_h , int dst_w , struct libmaix_image **dst)
+  libmaix_err_t libmaix_cv_image_affine(libmaix_image_t *src, int *pts_src, int *pts_dst, int dst_h, int dst_w, struct libmaix_image **dst)
   {
     libmaix_err_t err = LIBMAIX_ERR_NONE;
-    if(src == NULL)
+    if (src == NULL)
     {
       return LIBMAIX_ERR_PARAM;
     }
@@ -1005,31 +1016,25 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       return LIBMAIX_ERR_PARAM;
     }
 
-    if(src->mode == LIBMAIX_IMAGE_MODE_RGB888)
+    if (src->mode == LIBMAIX_IMAGE_MODE_RGB888)
     {
-      cv::Mat cv_src(src->height , src->width ,CV_8UC3 ,src->data);
+      cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
       cv::Mat cv_dst(dst_h, dst_w, CV_8UC3, (*dst)->data);
 
-
-      cv::Point2f src_p[3];
-      cv::Point2f dst_p[3];
-
-      for(int i =0 ; i!=3 ;i++)
-      {
-        src_p[i] = cv::Point2f(pts_src[i * 2] ,pts_src[i * 2 +1]);
-        dst_p[i] = cv::Point2f(pts_dst[i *2] ,pts_dst[i *2 +1]);
-      }
-      cv::Mat warpMat ;
-      warpMat = cv::getAffineTransform(src_p ,dst_p);
-      cv::warpAffine(cv_src , cv_dst , warpMat , cv::Size(dst_w, dst_h));
-      if (*dst)
-      {
-        return LIBMAIX_ERR_NONE;
-      }
-      else
-      {
-        return LIBMAIX_ERR_PARAM;
-      }
+      cv::Point2f src_p[3] = {
+        cv::Point2f(pts_src[0], pts_src[1]),
+        cv::Point2f(pts_src[2], pts_src[3]),
+        cv::Point2f(pts_src[4], pts_src[5]),
+      };
+      cv::Point2f dst_p[3] = {
+        cv::Point2f(pts_dst[0], pts_dst[1]),
+        cv::Point2f(pts_dst[2], pts_dst[3]),
+        cv::Point2f(pts_dst[4], pts_dst[5]),
+      };
+      cv::Mat warpMat;
+      warpMat = cv::getAffineTransform(src_p, dst_p);
+      cv::warpAffine(cv_src, cv_dst, warpMat, cv::Size(dst_w, dst_h));
+      return LIBMAIX_ERR_NONE;
     }
   }
 }

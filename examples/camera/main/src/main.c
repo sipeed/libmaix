@@ -12,8 +12,6 @@
 #include "libmaix_image.h"
 #include "libmaix_disp.h"
 
-// #include "rotate.h"
-
 #define CALC_FPS(tips)                                                                                     \
   {                                                                                                        \
     static int fcnt = 0;                                                                                   \
@@ -28,66 +26,24 @@
     }                                                                                                      \
   }
 
-// static struct timeval old, now;
+#include "sys/time.h"
 
-// void cap_set()
-// {
-//   gettimeofday(&old, NULL);
-// }
+static struct timeval old, now;
 
-// void cap_get(const char *tips)
-// {
-//   gettimeofday(&now, NULL);
-//   if (now.tv_usec > old.tv_usec)
-//     printf("%20s - %5ld us\r\n", tips, (now.tv_usec - old.tv_usec));
-// }
-
-/******************************************************
- *YUV422：Y：U：V=2:1:1
- *RGB24 ：B G R
-******************************************************/
-int YUV422PToRGB24(void *RGB24, void *YUV422P, int width, int height)
+static void cap_set()
 {
-  unsigned char *src_y = (unsigned char *)YUV422P;
-  unsigned char *src_u = (unsigned char *)YUV422P + width * height;
-  unsigned char *src_v = (unsigned char *)YUV422P + width * height * 3 / 2;
+  gettimeofday(&old, NULL);
+}
 
-  unsigned char *dst_RGB = (unsigned char *)RGB24;
-
-  int temp[3];
-
-  if (RGB24 == NULL || YUV422P == NULL || width <= 0 || height <= 0)
-  {
-    printf(" YUV422PToRGB24 incorrect input parameter!\n");
-    return -1;
-  }
-
-  for (int y = 0; y < height; y++)
-  {
-    for (int x = 0; x < width; x++)
-    {
-      int Y = y * width + x;
-      int U = Y >> 1;
-      int V = U;
-
-      temp[0] = src_y[Y] + ((7289 * src_u[U]) >> 12) - 228;                             //b
-      temp[1] = src_y[Y] - ((1415 * src_u[U]) >> 12) - ((2936 * src_v[V]) >> 12) + 136; //g
-      temp[2] = src_y[Y] + ((5765 * src_v[V]) >> 12) - 180;                             //r
-
-      dst_RGB[3 * Y] = (temp[0] < 0 ? 0 : temp[0] > 255 ? 255
-                                                        : temp[0]);
-      dst_RGB[3 * Y + 1] = (temp[1] < 0 ? 0 : temp[1] > 255 ? 255
-                                                            : temp[1]);
-      dst_RGB[3 * Y + 2] = (temp[2] < 0 ? 0 : temp[2] > 255 ? 255
-                                                            : temp[2]);
-    }
-  }
-
-  return 0;
+static void cap_get(const char *tips)
+{
+  gettimeofday(&now, NULL);
+  if (now.tv_usec > old.tv_usec)
+    printf("%20s - %5ld ms\r\n", tips, (now.tv_usec - old.tv_usec) / 1000);
 }
 
 struct {
-  int w0, h0;
+  int w0, h0, w1, h1;
   struct libmaix_cam *cam0;
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
   struct libmaix_cam *cam1;
@@ -97,92 +53,82 @@ struct {
   struct libmaix_disp *disp;
 
   int is_run;
-} test = { 0 };
+} app = { 0 };
 
-static void test_handlesig(int signo)
+static void app_handlesig(int signo)
 {
   if (SIGINT == signo || SIGTSTP == signo || SIGTERM == signo || SIGQUIT == signo || SIGPIPE == signo || SIGKILL == signo)
   {
-    test.is_run = 0;
+    app.is_run = 0;
   }
   // exit(0);
 }
 
-inline static unsigned char make8color(unsigned char r, unsigned char g, unsigned char b)
-{
-	return (
-	(((r >> 5) & 7) << 5) |
-	(((g >> 5) & 7) << 2) |
-	 ((b >> 6) & 3)	   );
-}
-
-inline static unsigned short make16color(unsigned char r, unsigned char g, unsigned char b)
-{
-	return (
-	(((r >> 3) & 31) << 11) |
-	(((g >> 2) & 63) << 5)  |
-	 ((b >> 3) & 31)		);
-}
-
-void test_init() {
+void app_init() {
 
   libmaix_camera_module_init();
 
-  test.w0 = 416, test.h0 = 416;
+  app.w0 = 224, app.h0 = 224;
 
-  test.cam0 = libmaix_cam_create(0, test.w0, test.h0, 1, 0);
-  if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  app.cam0 = libmaix_cam_create(0, app.w0, app.h0, 1, 0);
+  if (NULL == app.cam0) return ;
 
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-  test.cam1 = libmaix_cam_create(1, test.w0, test.h0, 0, 0);
-  if (NULL == test.cam0) return ;  test.rgb888 = (uint8_t *)malloc(test.w0 * test.h0 * 3);
+  app.w1 = 320, app.h1 = 240;
+  app.cam1 = libmaix_cam_create(1, app.w1, app.h1, 1, 0);
+  if (NULL == app.cam1) return ;
+  app.rgb888 = (uint8_t *)malloc(app.w0 * app.h0 * 3);
+  if (app.rgb888 == NULL) return ;
   #endif
 
-  test.disp = libmaix_disp_create(0);
-  if(NULL == test.disp) return ;
+  app.disp = libmaix_disp_create(0);
+  if(NULL == app.disp) return ;
+  if (app.disp->width == 0 || app.disp->height == 0) app.disp->width = app.w0, app.disp->height = app.h0;
 
-  test.is_run = 1;
+  app.is_run = 1;
 
   // ALOGE(__FUNCTION__);
 }
 
-void test_exit() {
+void app_exit() {
 
-  if (NULL != test.cam0) libmaix_cam_destroy(&test.cam0);
+  if (NULL != app.cam0) libmaix_cam_destroy(&app.cam0);
 
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-  if (NULL != test.cam1) libmaix_cam_destroy(&test.cam1);
+  if (NULL != app.cam1) libmaix_cam_destroy(&app.cam1);
   #endif
 
-  if (NULL != test.rgb888) free(test.rgb888), test.rgb888 = NULL;
-  if (NULL != test.disp) libmaix_disp_destroy(&test.disp), test.disp = NULL;
+  if (NULL != app.rgb888) free(app.rgb888), app.rgb888 = NULL;
+  if (NULL != app.disp) libmaix_disp_destroy(&app.disp), app.disp = NULL;
 
   libmaix_camera_module_deinit();
 
   // ALOGE(__FUNCTION__);
 }
 
-void test_work() {
+void app_work() {
 
-  test.cam0->start_capture(test.cam0);
+  app.cam0->start_capture(app.cam0);
 
   #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
-  test.cam1->start_capture(test.cam1);
+  app.cam1->start_capture(app.cam1);
   #endif
-  while (test.is_run)
+
+  while (app.is_run)
   {
     // goal code
     libmaix_image_t *tmp = NULL;
-    if (LIBMAIX_ERR_NONE == test.cam0->capture_image(test.cam0, &tmp))
+    if (LIBMAIX_ERR_NONE == app.cam0->capture_image(app.cam0, &tmp))
     {
         printf("w %d h %d p %d \r\n", tmp->width, tmp->height, tmp->mode);
-        if (tmp->width == test.disp->width && test.disp->height == tmp->height) {
-            test.disp->draw_image(test.disp, tmp);
+
+        if (tmp->width == app.disp->width && app.disp->height == tmp->height) {
+            app.disp->draw_image(app.disp, tmp);
         } else {
-            libmaix_image_t *rs = libmaix_image_create(test.disp->width, test.disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+            libmaix_image_t *rs = libmaix_image_create(app.disp->width, app.disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
             if (rs) {
-                libmaix_cv_image_resize(tmp, test.disp->width, test.disp->height, &rs);
-                test.disp->draw_image(test.disp, rs);
+                libmaix_cv_image_resize(tmp, app.disp->width, app.disp->height, &rs);
+                app.disp->draw_image(app.disp, rs);
                 libmaix_image_destroy(&rs);
             }
         }
@@ -190,7 +136,7 @@ void test_work() {
 
         #ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
         libmaix_image_t *t = NULL;
-        if (LIBMAIX_ERR_NONE == test.cam1->capture_image(test.cam1, &t))
+        if (LIBMAIX_ERR_NONE == app.cam1->capture_image(app.cam1, &t))
         {
             printf("w %d h %d p %d \r\n", t->width, t->height, t->mode);
             CALC_FPS("maix_cam 1");
@@ -198,18 +144,20 @@ void test_work() {
         #endif
     }
   }
+
 }
 
 int main(int argc, char **argv)
 {
-  signal(SIGINT, test_handlesig);
-  signal(SIGTERM, test_handlesig);
+  signal(SIGINT, app_handlesig);
+  signal(SIGTERM, app_handlesig);
 
   libmaix_image_module_init();
 
-  test_init();
-  test_work();
-  test_exit();
+  app_init();
+  app_work();
+  app_exit();
+
 
   libmaix_image_module_deinit();
 

@@ -700,7 +700,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     {
       return LIBMAIX_ERR_PARAM;
     }
-    if (src->width == 0 || src->height == 0 || src->data == NULL)
+    if (src->width == 0 || src->height == 0 || w == 0 || h == 0 || src->data == NULL)
     {
       return LIBMAIX_ERR_PARAM;
     }
@@ -717,6 +717,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       }
       cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
       cv::Mat dist(h, w, CV_8UC3, (*dst)->data);
+      printf("w %d h %d \r\n", w, h);
       cv::resize(cv_src, dist, cv::Size(w, h));
       // memcpy((*dst)->data, dist.data, w * h * 3);
       // (*dst)->width = w;
@@ -770,6 +771,74 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     return LIBMAIX_ERR_NONE;
   }
 
+  libmaix_err_t libmaix_cv_image_resize_with_padding(struct libmaix_image *src, int dst_w, int dst_h, struct libmaix_image **dst)
+  {
+    libmaix_err_t err = LIBMAIX_ERR_NONE;
+    if (dst == NULL)
+    {
+      return LIBMAIX_ERR_PARAM;
+    }
+    if (src->width == 0 || src->height == 0 || dst_w == 0 || dst_h == 0 || src->data == NULL)
+    {
+      return LIBMAIX_ERR_PARAM;
+    }
+    // int new_mem = libmaix_cv_image_load(src, dst);
+    // -------------------------------
+    switch (src->mode)
+    {
+    case LIBMAIX_IMAGE_MODE_RGB888:
+    {
+      if ((src->width == (*dst)->width) && (src->height == (*dst)->height))
+      {
+        memcpy((*dst)->data, src->data, src->width * src->height * 3);
+        return LIBMAIX_ERR_NONE;
+      }
+
+      int src_w = src->width, src_h = src->height;
+
+      cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
+      cv::Mat cv_dst(dst_h, dst_w, CV_8UC3, (*dst)->data);
+
+      float scale_src = ((float)src_w) / ((float)src_h), scale_dst = ((float)dst_w) / ((float)dst_h);
+      if (scale_dst == scale_src) {
+        // func == InterpolationFlags default 1 == cv::INTER_LINEAR
+        cv::resize(cv_src, cv_dst, cv::Size(dst_w, dst_h), cv::INTER_LINEAR);
+      } else {
+        // Scale to original image
+        int new_w = 0, new_h = 0, top = 0, bottom = 0, left = 0, right = 0;
+        if (scale_src > scale_dst) {
+          new_w = dst_w, new_h = new_w * src_h / src_w; // new_h / src_h = new_w / src_w => new_h = new_w * src_h / src_w
+          top = (dst_h - new_h) / 2, bottom = top;
+        } else { // Division loses precision
+          new_h = dst_h, new_w = new_h * src_w / src_h;
+          left = (dst_w - new_w) / 2, right = left;
+        }
+        // printf("_resize %d %d > %d %d > %d %d : %d %d %d %d \r\n", src_w, src_h, new_w, new_h, dst_w, dst_h, top, bottom, left, right);
+        // printf("[dls] 1 %p\n", cv_dst.data);
+        cv::resize(cv_src, cv_dst, cv::Size(new_w, new_h), cv::INTER_LINEAR);
+        // printf("[dls] 2 %p\n", cv_dst.data);
+        cv::copyMakeBorder(cv_dst, cv_dst, top, bottom, left, right, IPL_BORDER_CONSTANT);
+      }
+      if (cv_dst.data != (*dst)->data)
+      {
+        memcpy((*dst)->data, cv_dst.data, dst_h * dst_w * 3);
+      }
+      return LIBMAIX_ERR_NONE;
+    }
+    break;
+    default:
+    {
+      LIBMAIX_IMAGE_ERROR(LIBMAIX_ERR_NOT_IMPLEMENT);
+      // libmaix_cv_image_free(err, new_mem, dst);
+      return LIBMAIX_ERR_NOT_EXEC;
+    }
+    break;
+    }
+    // -------------------------------
+    // libmaix_cv_image_free(err, new_mem, dst);
+    return LIBMAIX_ERR_NONE;
+  }
+
   libmaix_err_t libmaix_cv_image_crop(struct libmaix_image *src, int x, int y, int w, int h, struct libmaix_image **dst)
   {
     libmaix_err_t err = LIBMAIX_ERR_NONE;
@@ -777,7 +846,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     {
       return LIBMAIX_ERR_PARAM;
     }
-    if (src->width == 0 || src->height == 0 || src->data == NULL)
+    if (src->width == 0 || src->height == 0 || w == 0 || h == 0 || src->data == NULL)
     {
       return LIBMAIX_ERR_PARAM;
     }
@@ -1011,7 +1080,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     {
       return LIBMAIX_ERR_PARAM;
     }
-    if (src->width == 0 || src->height == 0 || src->data == NULL)
+    if (src->width == 0 || src->height == 0 || dst_w == 0 || dst_h == 0 || src->data == NULL)
     {
       return LIBMAIX_ERR_PARAM;
     }

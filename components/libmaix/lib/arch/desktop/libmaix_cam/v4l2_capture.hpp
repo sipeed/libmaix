@@ -4,8 +4,8 @@ Blog:http://blog.csdn.net/c406495762
 Time:25 May 2017
 */
 #include <unistd.h>
-#include <error.h>
-#include <errno.h>
+// #include <error.h>
+// #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>

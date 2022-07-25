@@ -132,7 +132,7 @@ void nn_test(struct libmaix_disp *disp)
     libmaix_nn_module_init();
     libmaix_camera_module_init();
 
-    char *mdsc_path = "/root/mud/r329_resnet50.mud";
+    char *mud_path = "./resnet.mud";
     uint32_t res_w = 224;
     uint32_t res_h = 224;
     libmaix_nn_t *nn = NULL;
@@ -196,12 +196,7 @@ void nn_test(struct libmaix_disp *disp)
         goto end;
     }
     out_fmap.data = output_buffer;
-
-    ini_info_t * ini_info_ptr = (ini_info_t * )malloc(sizeof(ini_info_t));
-    read_file(mdsc_path , ini_info_ptr);
-    libmaix_nn_model_path_t  path ;
-    libmaix_nn_opt_param_t  opt;
-    nn = build_model(ini_info_ptr,&path , &opt);
+    nn = libmaix_mud_load_model(mud_path);
     printf("-- start loop\n");
     while (!program_exit)
     {

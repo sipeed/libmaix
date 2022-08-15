@@ -193,7 +193,7 @@ libmaix_err_t libmaix_nn_obj_forward(struct libmaix_nn *obj, libmaix_nn_layer_t 
         if(inputs->buff_quantization == NULL )
         {
             debug_line;
-             printf("[libmaix_nn] --  input has not init quantization buffer\n");
+            printf("[libmaix_nn] --  input has not init quantization buffer\n");
             int8_t *quant_data = (int8_t *)malloc(sizeof(int8_t) * size * 3);
             for(int i=0 ; i != size ;i ++)
             {

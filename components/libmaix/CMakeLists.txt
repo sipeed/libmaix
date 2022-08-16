@@ -76,6 +76,7 @@ if(CONFIG_LIBMAIX_ENABLED)
             "lib/arch/v831/libvencoder.so"
         )
         set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -lmaix_nn -Wl,--end-group" PARENT_SCOPE)
+        set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -lmaix_nn -Wl,--end-group" PARENT_SCOPE)
     elseif(CONFIG_ARCH_V833)
         list(APPEND ADD_DYNAMIC_LIB "lib/arch/v833/libmaix_nn.so"
             "lib/arch/v833/libz.so"
@@ -115,6 +116,7 @@ if(CONFIG_LIBMAIX_ENABLED)
             "lib/arch/v833/libvencoder.so"
         )
       set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -lmaix_nn -Wl,--end-group" PARENT_SCOPE)
+      set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -lmaix_nn -Wl,--end-group" PARENT_SCOPE)
     elseif(CONFIG_ARCH_R329)
       list(APPEND ADD_DYNAMIC_LIB
           "lib/arch/r329/libmaix_utils.so"
@@ -129,6 +131,7 @@ if(CONFIG_LIBMAIX_ENABLED)
 
       )
       set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -fuse-ld=gold -Wl,--start-group libmaix/liblibmaix.a -lm -Wl,--end-group" PARENT_SCOPE)
+      set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -fuse-ld=gold -Wl,--start-group libmaix/liblibmaix.a -lm -Wl,--end-group" PARENT_SCOPE)
 
       list(APPEND ADD_DEFINITIONS -DCONFIG_ARCH_R329=1)
 

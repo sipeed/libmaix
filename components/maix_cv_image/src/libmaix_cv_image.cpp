@@ -695,7 +695,6 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 
   libmaix_err_t libmaix_cv_image_resize(struct libmaix_image *src, int w, int h, struct libmaix_image **dst)
   {
-    libmaix_err_t err = LIBMAIX_ERR_NONE;
     if (dst == NULL)
     {
       return LIBMAIX_ERR_PARAM;
@@ -770,9 +769,8 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
     return LIBMAIX_ERR_NONE;
   }
 
-  libmaix_err_t libmaix_cv_image_resize_with_padding(struct libmaix_image *src, int dst_w, int dst_h, struct libmaix_image **dst)
+  libmaix_err_t libmaix_cv_image_resize_with_padding(struct libmaix_image *src, int dst_w, int dst_h, struct libmaix_image **dst, libmaix_image_color_t pad_color)
   {
-    libmaix_err_t err = LIBMAIX_ERR_NONE;
     if (dst == NULL)
     {
       return LIBMAIX_ERR_PARAM;
@@ -807,16 +805,16 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
         int new_w = 0, new_h = 0, top = 0, bottom = 0, left = 0, right = 0;
         if (scale_src > scale_dst) {
           new_w = dst_w, new_h = new_w * src_h / src_w; // new_h / src_h = new_w / src_w => new_h = new_w * src_h / src_w
-          top = (dst_h - new_h) / 2, bottom = top;
+          top = (dst_h - new_h) / 2, bottom = dst_h - new_h - top;
         } else { // Division loses precision
           new_h = dst_h, new_w = new_h * src_w / src_h;
-          left = (dst_w - new_w) / 2, right = left;
+          left = (dst_w - new_w) / 2, right = dst_w - new_w - left;
         }
         // printf("_resize %d %d > %d %d > %d %d : %d %d %d %d \r\n", src_w, src_h, new_w, new_h, dst_w, dst_h, top, bottom, left, right);
         // printf("[dls] 1 %p\n", cv_dst.data);
         cv::resize(cv_src, cv_dst, cv::Size(new_w, new_h), cv::INTER_LINEAR);
         // printf("[dls] 2 %p\n", cv_dst.data);
-        cv::copyMakeBorder(cv_dst, cv_dst, top, bottom, left, right, IPL_BORDER_CONSTANT);
+        cv::copyMakeBorder(cv_dst, cv_dst, top, bottom, left, right, IPL_BORDER_CONSTANT, cv::Scalar(pad_color.rgb888.r, pad_color.rgb888.b, pad_color.rgb888.b, pad_color.rgb888.a));
       }
       if (cv_dst.data != (*dst)->data)
       {
@@ -840,7 +838,6 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 
   libmaix_err_t libmaix_cv_image_crop(struct libmaix_image *src, int x, int y, int w, int h, struct libmaix_image **dst)
   {
-    libmaix_err_t err = LIBMAIX_ERR_NONE;
     if (dst == NULL)
     {
       return LIBMAIX_ERR_PARAM;
@@ -878,7 +875,6 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 
   libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, int adjust, libmaix_image_t **dst)
   {
-    libmaix_err_t err = LIBMAIX_ERR_NONE;
     if (dst == NULL)
     {
       return LIBMAIX_ERR_PARAM;
@@ -964,7 +960,6 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 
   libmaix_err_t libmaix_cv_image_flip(libmaix_image_t *src, int flipCode)
   {
-    libmaix_err_t err = LIBMAIX_ERR_NONE;
     if (src->width == 0 || src->height == 0 || src->data == NULL)
     {
       return LIBMAIX_ERR_PARAM;
@@ -1070,7 +1065,6 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
 
   libmaix_err_t libmaix_cv_image_affine(libmaix_image_t *src, int *pts_src, int *pts_dst, int dst_h, int dst_w, struct libmaix_image **dst)
   {
-    libmaix_err_t err = LIBMAIX_ERR_NONE;
     if (src == NULL)
     {
       return LIBMAIX_ERR_PARAM;

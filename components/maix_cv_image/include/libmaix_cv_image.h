@@ -23,6 +23,10 @@ libmaix_err_t libmaix_cv_image_draw_image_open(libmaix_image_t *src, int x, int 
 
 libmaix_err_t libmaix_cv_image_draw_ellipse(libmaix_image_t *src, int x, int y, int w, int h, double angle, double startAngle, double endAngle, libmaix_image_color_t color, int thickness);
 libmaix_err_t libmaix_cv_image_draw_circle(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness);
+/**
+ * 
+ * @param thickness -1: filled, >=0: line thickness
+ */
 libmaix_err_t libmaix_cv_image_draw_rectangle(libmaix_image_t *src, int x1, int y1, int x2, int y2, libmaix_image_color_t color, int thickness);
 libmaix_err_t libmaix_cv_image_draw_line(libmaix_image_t *src, int x1, int y1, int x2, int y2, libmaix_image_color_t color, int thickness);
 
@@ -33,7 +37,7 @@ libmaix_err_t libmaix_cv_image_draw_string(libmaix_image_t *src, int x, int y, c
 
 libmaix_err_t libmaix_cv_image_crop(libmaix_image_t *src, int x, int y, int w, int h, libmaix_image_t **dst);
 libmaix_err_t libmaix_cv_image_resize(libmaix_image_t *src, int w, int h, libmaix_image_t **dst);
-libmaix_err_t libmaix_cv_image_resize_with_padding(struct libmaix_image *src, int dst_w, int dst_h, struct libmaix_image **dst);
+libmaix_err_t libmaix_cv_image_resize_with_padding(struct libmaix_image *src, int dst_w, int dst_h, struct libmaix_image **dst, libmaix_image_color_t pad_color);
 libmaix_err_t libmaix_cv_image_rotate(libmaix_image_t *src, double rotate, int adjust, libmaix_image_t **dst);
 libmaix_err_t libmaix_cv_image_flip(libmaix_image_t *src, int flipCode);
 libmaix_err_t libmaix_cv_image_convert(libmaix_image_t *src, libmaix_image_mode_t type, libmaix_image_t **dst);

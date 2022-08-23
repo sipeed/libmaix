@@ -95,35 +95,24 @@ void nn_test(struct libmaix_disp *disp)
     }
 
     err = cam->start_capture(cam);
-#ifdef CONFIG_ARCH_V831
     err = cam2->start_capture(cam2);
-#endif
     if (err != LIBMAIX_ERR_NONE)
     {
         LIBMAIX_DEBUG_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
         goto end;
     }
 
-    // model config setting
-    #ifdef CONFIG_ARCH_V831
+
+
     libmaix_nn_model_path_t loc_model_path = {
-        .awnn.param_path = ".//slim_awnn.param",
+        .awnn.param_path = "./slim_awnn.param",
         .awnn.bin_path = "./slim_awnn.bin"
     };
     libmaix_nn_model_path_t reg_model_path = {
         .awnn.param_path = "./lpr_awnn.param",
         .awnn.bin_path = "./lpr_awnn.bin",
     };
-    #endif
 
-    #ifdef CONFIG_ARCH_R329
-    libmaix_nn_model_path_t loc_model_path = {
-        .aipu.model_path = "./aipu_slim.bin",
-    };
-    libmaix_nn_model_path_t reg_model_path = {
-        .aipu.model_path = "./aipu_lpr.bin",
-    };
-    #endif
 
 
     // model opt params
@@ -132,31 +121,7 @@ void nn_test(struct libmaix_disp *disp)
     char *loc_outputs_names[] = {"output0", "output1", "output2"};
     char *reg_inputs_names[] = {"input0"};
     char *reg_outputs_names[] = {"output0"};
-    #ifdef CONFIG_ARCH_R329
-    libmaix_nn_opt_param_t loc_opt_param = {
-        .aipu.input_names = loc_inputs_names,
-        .aipu.output_names = loc_outputs_names,
-        .aipu.encrypt = false,
-        .aipu.input_num = 1,
-        .aipu.output_num = 3,
-        .aipu.mean = {128, 128, 128},
-        .aipu.norm = {0.0078125, 0.0078125, 0.0078125},
-        .aipu.scale =120.00202 , 33.406948 , 59.578674,
-    };
-    // Reg
-    libmaix_nn_opt_param_t reg_opt_param = {
-        .aipu.input_names = reg_inputs_names,
-        .aipu.output_names = reg_outputs_names,
-        .aipu.encrypt = false,
-        .aipu.input_num = 1,
-        .aipu.output_num = 1,
-        .aipu.mean = {127.5, 127.5, 127.5},
-        .aipu.norm = {0.0078125, 0.0078125, 0.0078125},
-        .aipu.scale = 8.502118,
-    };
-    #endif
 
-    #ifdef CONFIG_ARCH_V831
     libmaix_nn_opt_param_t loc_opt_param = {
         .awnn.input_names = loc_inputs_names,
         .awnn.output_names = loc_outputs_names,
@@ -176,18 +141,17 @@ void nn_test(struct libmaix_disp *disp)
         .awnn.mean = {127.5, 127.5, 127.5},
         .awnn.norm = {0.0078125, 0.0078125, 0.0078125},
     };
-    #endif
 
     // decoder config
     // Loc
     libmaix_nn_decoder_license_plate_location_config_t loc_docoder_config = {
         .nms = 0.2,
-        .score_thresh = 0.9,
+        .score_thresh = 0.95,
         .input_w = loc_w,
         .input_h = loc_h,
         .variance = {0.1, 0.2},
         .steps = {8, 16, 32},
-        .min_sizes = {32, 48, 64, 96, 192, 320},
+        .min_sizes = {32, 48, 64, 96,240, 320},
     };
     // Reg
     libmaix_nn_decoder_ctc_config_t reg_decoder_config = {
@@ -373,6 +337,7 @@ void nn_test(struct libmaix_disp *disp)
     }
 
     LIBMAIX_DEBUG_PRINTF("start loop\n");
+    int save_count = 0;
     while (!program_exit)
     {
         CALC_FPS("test");
@@ -383,22 +348,19 @@ void nn_test(struct libmaix_disp *disp)
             LIBMAIX_DEBUG_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
-        #ifdef CONFIG_ARCH_R329
-        err = libmaix_cv_image_resize(loc_img , disp->width , disp->height , &show);
-        #endif
-        # ifdef CONFIG_ARCH_V831
+
+
         err = cam2->capture_image(cam2, &show);
         if (err != LIBMAIX_ERR_NONE)
         {
             LIBMAIX_DEBUG_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
-        #endif
+
 
         loc_input.data = (uint8_t *)loc_img->data;
-        // CALC_TIME_START();
+
         err = loc_nn->forward(loc_nn, &loc_input, loc_out_fmap);
-        // CALC_TIME_END("loc forward");
         if (err != LIBMAIX_ERR_NONE)
         {
             LIBMAIX_DEBUG_PRINTF("libmaix loc model  forward fail: %s\n", libmaix_get_err_msg(err));
@@ -421,29 +383,33 @@ void nn_test(struct libmaix_disp *disp)
                 int h = loc_result.plates[i].box.h * show->height;
 
                 //Affine
-                // for (int j = 0; j < 3; ++j)
-                // {
-                //     affine_src_pts[j * 2] = loc_result.plates[i].points[j * 2] * show->width;
-                //     affine_src_pts[j * 2 + 1] = loc_result.plates[i].points[j * 2 + 1] * show->height;
-                // }
+                for (int j = 0; j < 3; ++j)
+                {
+                    affine_src_pts[j * 2] = loc_result.plates[i].points[j * 2] * show->width;
+                    affine_src_pts[j * 2 + 1] = loc_result.plates[i].points[j * 2 + 1] * show->height;
+                }
 
-                // // affine_src_pts[0]  = x2;
-                // // affine_src_pts[1] =  y2;
-                // // affine_src_pts[2] = x1;
-                // // affine_src_pts[3] = y2;
-                // // affine_src_pts[4] = x1;
-                // // affine_src_pts[5]  = y1;
+                // affine_src_pts[0]  = x2;
+                // affine_src_pts[1] =  y2;
+                // affine_src_pts[2] = x1;
+                // affine_src_pts[3] = y2;
+                // affine_src_pts[4] = x1;
+                // affine_src_pts[5]  = y1;
 
                 if (x1 < 0 || y1 < 0 || x1 + w  > disp->width || y1 + h> disp->height)
                 {
                     continue;
                 }
-                // // err = libmaix_cv_image_affine(show, affine_src_pts, affine_dst_pts, reg_h, reg_w, &reg_img);
+                // err = libmaix_cv_image_affine(show, affine_src_pts, affine_dst_pts, reg_h, reg_w, &reg_img);
 
-                libmaix_image_t* crop_temp = libmaix_image_create(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-                err = libmaix_cv_image_crop(show , x1, y1 , w , h , &crop_temp);
-                err = libmaix_cv_image_resize(crop_temp,  reg_w , reg_h ,&reg_img);
-                libmaix_image_destroy(&crop_temp);
+                // libmaix_image_t* crop_temp = libmaix_image_create(w, h, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+                // err = libmaix_cv_image_crop(show , x1, y1 , w , h , &crop_temp);
+                // err = libmaix_cv_image_resize(crop_temp,  reg_w , reg_h ,&reg_img);
+                // libmaix_image_destroy(&crop_temp);
+
+                // printf("affine_src_pts:%d, %d, %d, %d, %d, %d\n", affine_src_pts[0], affine_src_pts[1], affine_src_pts[2], affine_src_pts[3], affine_src_pts[4], affine_src_pts[5]);
+                err = libmaix_cv_image_affine(show, affine_src_pts, affine_dst_pts, reg_h, reg_w, &reg_img);
+                // printf("affine_dst_pts:%d, %d, %d, %d, %d, %d\n", affine_dst_pts[0], affine_dst_pts[1], affine_dst_pts[2], affine_dst_pts[3], affine_dst_pts[4], affine_dst_pts[5]);
 
 
                 reg_input.data = (uint8_t *)reg_img->data;
@@ -462,8 +428,10 @@ void nn_test(struct libmaix_disp *disp)
                 for (int i = 0; i != reg_result.length; i++)
                 {
                     int idx = (int)reg_result.no_repeat_idx[i];
+                    // printf("%d ",idx);
                     strcat(string, labels[idx]);
                 }
+                // printf("\n");
 
 
                 // draw
@@ -474,18 +442,30 @@ void nn_test(struct libmaix_disp *disp)
                     libmaix_cv_image_draw_rectangle(show, x, y, x, y, MaixColor(0, 255, 23), -1);
                 }
                 libmaix_cv_image_draw_rectangle(show, x1, y1, x2, y2, MaixColor(255, 0, 0), 1);
-                libmaix_cv_image_draw_string(show, x1, y1, string, 1.5, MaixColor(255, 0, 0), 2);
+                libmaix_cv_image_draw_rectangle(show, 0, show->height - 30,  show->width -1, show->height-1 , MaixColor(255, 0, 0), -1);
+                libmaix_cv_image_draw_string(show, 0, show->height - 30 , string, 1.5, MaixColor(255, 255, 255), 2);
                 libmaix_cv_image_draw_image(show, 0, 0, reg_img, 1.0);
                 free(string);
-                // libmaix_image_destroy(&crop_temp);
             }
         }
 
         disp->draw_image(disp, show);
+        save_count++;
+        char save_path[50];
+        sprintf(save_path , "/root/running_save/%d.jpg" , save_count);
+        if(save_count %5 == 0)
+        {
+            libmaix_cv_image_save_file(reg_img , save_path);
+        }
     }
 
 end:
     if (cam)
+    {
+        LIBMAIX_DEBUG_PRINTF("--cam destory\n");
+        libmaix_cam_destroy(&cam);
+    }
+    if (cam2)
     {
         LIBMAIX_DEBUG_PRINTF("--cam destory\n");
         libmaix_cam_destroy(&cam);

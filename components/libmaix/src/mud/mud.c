@@ -646,17 +646,27 @@ libmaix_nn_t* libmaix_mud_build_model(mud_info * mud_info_obj ,libmaix_nn_model_
     if(!nn)
     {
         printf("libmaix_nn object create fail\n");
+        return NULL;
     }
     err = nn->init(nn);
-
     if(err != LIBMAIX_ERR_NONE)
     {
         printf("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+        if(nn)
+        {
+            libmaix_nn_destroy(&nn);
+            return NULL;
+        }
     }
     err = nn->load(nn, path, opt);
     if(err != LIBMAIX_ERR_NONE)
     {
         printf("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+        if(nn)
+        {
+            libmaix_nn_destroy(&nn);
+            return NULL;
+        }
     }
     return nn;
 }

@@ -717,7 +717,7 @@ LIBMAIX_IMAGE_MODE_BGR888 -> LIBMAIX_IMAGE_MODE_BGR888   :      2056
       }
       cv::Mat cv_src(src->height, src->width, CV_8UC3, src->data);
       cv::Mat dist(h, w, CV_8UC3, (*dst)->data);
-      printf("w %d h %d \r\n", w, h);
+      // printf("w %d h %d \r\n", w, h);
       cv::resize(cv_src, dist, cv::Size(w, h));
       // memcpy((*dst)->data, dist.data, w * h * 3);
       // (*dst)->width = w;

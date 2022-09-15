@@ -113,6 +113,18 @@ python3 project.py --toolchain /usr/bin --toolchain-prefix x86_64-linux-gnu- con
 
 和 R329 同理，改成 desktop 就行。
 
+## AX620A
+
+cd /home/libmaix/examples/hello-world
+
+python3 project.py --toolchain /usr/bin --toolchain-prefix arm-linux-gnueabihf- config
+
+python3 project.py build
+
+./dist/start_app.sh
+
+cd
+
 ## V83x
 
 python3 project.py --toolchain /opt/toolchain-sunxi-musl/toolchain/bin/ --toolchain-prefix arm-openwrt-linux-muslgnueabi- config

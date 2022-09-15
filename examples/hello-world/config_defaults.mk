@@ -2,6 +2,8 @@
 # Components configuration
 #
 
+CONFIG_COMPONENT_3RD_PARTY_ENABLE=n
+
 #
 # libmaix configuration
 #

@@ -19,7 +19,10 @@ int main(int argc, char **argv)
   struct libmaix_disp *disp = libmaix_disp_create(0);
   if (disp)
   {
-    libmaix_image_t *rgb888 = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    // 240x240 m2dock
+    // libmaix_image_t *rgb888 = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+    // 480x854 ax620a
+    libmaix_image_t *rgb888 = libmaix_image_create(disp->height, disp->width, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     if (rgb888)
     {
       printf("debug w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
@@ -74,6 +77,8 @@ int main(int argc, char **argv)
 
       libmaix_cv_image_draw_string(rgb888, 60, 120, u8"123你好鸭asdにほんご", 2.8, MaixColor(55, 55, 55), 1);
 
+      libmaix_cv_image_rotate(rgb888, -90, 1, &rgb888);
+
       disp->draw_image(disp, rgb888);
 
       // for (int i = 0; i < 60; i++) {
@@ -83,6 +88,7 @@ int main(int argc, char **argv)
       //   libmaix_cv_image_draw_string(rgb888, 0, 0, info, 4, MaixColor(255, 0, 0), 1);
       //   libmaix_cv_image_draw_string(rgb888, 0, 100, info, 4, MaixColor(0, 255, 0), 2);
       //   libmaix_cv_image_draw_string(rgb888, 0, 200, info, 4, MaixColor(0, 0, 255), 3);
+
       //   disp->draw_image(disp, rgb888);
       //   sleep(1);
       // }

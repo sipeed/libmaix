@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     libmaix_image_t *rgb888 = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     if (rgb888)
     {
-      printf("w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
+      printf("debug w %d h %d p %d \r\n", rgb888->width, rgb888->height, rgb888->mode);
 
       libmaix_cv_image_draw_rectangle(rgb888, 0, 0, 240, 240, MaixColor(255, 127, 255), -1);
 
@@ -60,21 +60,32 @@ int main(int argc, char **argv)
 
       libmaix_cv_image_get_string_size(&str_w, &str_h, "[A|B|C|D][]!H/~`_-=", 1.5, 1);
 
-      printf("textSize w %d h %d\r\n", str_w, str_h);
+      printf("debug textSize w %d h %d\r\n", str_w, str_h);
 
       libmaix_cv_image_draw_string(rgb888, 0, 0, "[A|B|C|D][]!H/~`_-=", 1.5, MaixColor(0, 255, 0), 1);
 
-      // libmaix_cv_image_load_freetype("/home/res/sans.ttf");
+      libmaix_cv_image_load_freetype("/home/res/sans.ttf", 12);
 
       libmaix_cv_image_get_string_size(&str_w, &str_h, "[A|B|佬鼠][]!H/~`_-=", 1.5, 1);
 
-      printf("textSize w %d h %d\r\n", str_w, str_h);
+      printf("debug textSize w %d h %d\r\n", str_w, str_h);
 
       libmaix_cv_image_draw_string(rgb888, 0, 0, "[A|B|佬鼠][]!H/~`_-=", 1.5, MaixColor(0, 0, 255), 1);
 
       libmaix_cv_image_draw_string(rgb888, 60, 120, u8"123你好鸭asdにほんご", 2.8, MaixColor(55, 55, 55), 1);
 
       disp->draw_image(disp, rgb888);
+
+      // for (int i = 0; i < 60; i++) {
+      //   libmaix_cv_image_draw_rectangle(rgb888, 0, 0, 480, 854, MaixColor(255, 127, 255), -1);
+      //   char info[64] = "";
+      //   sprintf(info, "时间: %d", time(NULL));
+      //   libmaix_cv_image_draw_string(rgb888, 0, 0, info, 4, MaixColor(255, 0, 0), 1);
+      //   libmaix_cv_image_draw_string(rgb888, 0, 100, info, 4, MaixColor(0, 255, 0), 2);
+      //   libmaix_cv_image_draw_string(rgb888, 0, 200, info, 4, MaixColor(0, 0, 255), 3);
+      //   disp->draw_image(disp, rgb888);
+      //   sleep(1);
+      // }
 
       libmaix_image_destroy(&rgb888);
     }

@@ -44,7 +44,10 @@ project_parser.add_argument('--toolchain',
                         help='toolchain path ( absolute path )',
                         metavar='PATH',
                         default="")
-
+project_parser.add_argument('--board',
+                        help='board type ( type: v831 v833 r329 desktop axpi )',
+                        metavar='BOARD',
+                        default="")
 project_parser.add_argument('--toolchain-prefix',
                         help='toolchain prefix(e.g. mips-elf-',
                         metavar='PREFIX',
@@ -110,6 +113,17 @@ if project_args.toolchain_prefix.strip() != "":
     update_config = True
     project_args.toolchain_prefix = project_args.toolchain_prefix.strip().replace("\\","/")
     config_content += 'CONFIG_TOOLCHAIN_PREFIX="'+project_args.toolchain_prefix+'"\n'
+if project_args.board.strip() != "":
+    update_config = True
+    project_args.board = project_args.board.strip().replace("\\","/")
+    all_board = {
+        'v831':"V831",
+        'v833':"V833",
+        "r329":"R329",
+        'desktop':"DESKTOP",
+        'axpi':"AXPI",
+    }
+    config_content += 'CONFIG_ARCH_' + all_board[project_args.board] +'=y\n'
 config_content += '\n'
 if update_config and config_content != config_content_old:
     with open(config_filename, "w") as f:
@@ -160,7 +174,7 @@ elif project_args.cmd == "clean":
         if res == 0:
             print(output.decode())
     print("clean complete")
-# distclean    
+# distclean
 elif project_args.cmd == "distclean":
     print("clean now")
     if os.path.exists("build"):

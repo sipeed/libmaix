@@ -9,7 +9,7 @@ CONFIG_TOOLCHAIN_PREFIX="x86_64-linux-gnu-"
 #
 # Target chip configuration
 #
-CONFIG_ARCH_Desktop=y
+CONFIG_ARCH_DESKTOP=y
 # CONFIG_ARCH_V831 is not set
 # CONFIG_ARCH_V833 is not set
 # CONFIG_ARCH_R329 is not set

@@ -107,23 +107,27 @@ python3 project.py menuconfig
 
 然后在 menuconfig 勾选 R329 平台的动态链接库 (Target chip configuration  ---> Chip architecture (compile for arch R329)  ---> (X) compile for arch R329)
 
-## Desktop
+## desktop
 
 python3 project.py --toolchain /usr/bin --toolchain-prefix x86_64-linux-gnu- config
 
 和 R329 同理，改成 desktop 就行。
 
-## AX620A
+## axpi
 
-cd /home/libmaix/examples/hello-world
+- axpi 需要使用 fbon 打开 framebuffer 屏幕显示。
 
-python3 project.py --toolchain /usr/bin --toolchain-prefix arm-linux-gnueabihf- config
+```bash
+
+cd examples/display
+
+python3 project.py --board=axpi --toolchain /usr/bin --toolchain-prefix arm-linux-gnueabihf- config
 
 python3 project.py build
 
 ./dist/start_app.sh
 
-cd
+```
 
 ## V83x
 

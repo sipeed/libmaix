@@ -22,8 +22,8 @@ menu "Target chip configuration"
 			bool "compile for arch V833"
 		config ARCH_R329
 			bool "compile for arch R329"
-		config ARCH_AX620
-			bool "compile for arch AX620"
+		config ARCH_AXPI
+			bool "compile for arch AXPI"
 		config ARCH_Desktop
 			bool "compile for arch Linux Desktop"
 	endchoice

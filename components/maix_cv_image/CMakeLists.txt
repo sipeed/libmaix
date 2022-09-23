@@ -12,7 +12,7 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/include)
 
     ############ Add dynamic libs ##################
-    if(CONFIG_ARCH_Desktop)
+    if(CONFIG_ARCH_DESKTOP)
         include_directories(/usr/include/opencv4)
         include_directories(/usr/local/include/opencv4)
         append_srcs_dir(ADD_SRCS "lib/arch/desktop/libmaix_utils")
@@ -27,13 +27,13 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
             "/usr/lib/x86_64-linux-gnu/libopencv_core.so"
             "/usr/lib/x86_64-linux-gnu/libopencv_freetype.so"
         )
-    elseif(CONFIG_ARCH_AX620)
+    elseif(CONFIG_ARCH_AXPI)
         include_directories(/usr/include/opencv4)
         include_directories(/usr/local/include/opencv4)
-        append_srcs_dir(ADD_SRCS "lib/arch/ax620/libmaix_utils")
-        append_srcs_dir(ADD_SRCS "lib/arch/ax620/libmaix_image")
-        append_srcs_dir(ADD_SRCS "lib/arch/ax620/libmaix_cam")
-        append_srcs_dir(ADD_SRCS "lib/arch/ax620/libmaix_disp")
+        append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_utils")
+        append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_image")
+        append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_cam")
+        append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_disp")
         list(APPEND ADD_DYNAMIC_LIB
             "/lib/arm-linux-gnueabihf/libopencv_videoio.so"
             "/lib/arm-linux-gnueabihf/libopencv_highgui.so"

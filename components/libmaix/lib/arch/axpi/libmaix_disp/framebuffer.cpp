@@ -7,6 +7,9 @@ extern "C"
 
 #include <string.h>
 
+#include <opencv2/opencv.hpp>
+#include "opencv2/core/types_c.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -24,29 +27,53 @@ static libmaix_err_t disp_draw_image(struct libmaix_disp *disp, struct libmaix_i
 
   // printf("disp_draw_image %d %d %X \r\n", img->width, img->height, priv->disp_img);
 
-  if (priv->disp_img == NULL) {
-    // bind disp->bpp && LIBMAIX_IMAGE_MODE_RGB565
-    libmaix_image_mode_t mode = LIBMAIX_IMAGE_MODE_INVALID;
-    switch (disp->bpp) {
-      case 4: mode = LIBMAIX_IMAGE_MODE_RGBA8888; break;
-      // case 3: mode = LIBMAIX_IMAGE_MODE_RGB888; break;
-      case 3: mode = LIBMAIX_IMAGE_MODE_BGR888; break; // v83x fb set bgr888 is bug!!!! : (
-      case 2: mode = LIBMAIX_IMAGE_MODE_RGB565; break;
-    }
+  // if (priv->disp_img == NULL) {
+  //   // bind disp->bpp && LIBMAIX_IMAGE_MODE_RGB565
+  //   libmaix_image_mode_t mode = LIBMAIX_IMAGE_MODE_INVALID;
+  //   switch (disp->bpp) {
+  //     case 4: mode = LIBMAIX_IMAGE_MODE_RGBA8888; break;
+  //     // case 3: mode = LIBMAIX_IMAGE_MODE_RGB888; break;
+  //     case 3: mode = LIBMAIX_IMAGE_MODE_BGR888; break; // v83x fb set bgr888 is bug!!!! : (
+  //     case 2: mode = LIBMAIX_IMAGE_MODE_RGB565; break;
+  //   }
 
-    priv->disp_img = libmaix_image_create(disp->width, disp->height, mode, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    if(!priv->disp_img) return LIBMAIX_ERR_NO_MEM;
+  //   priv->disp_img = libmaix_image_create(disp->width, disp->height, mode, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
+  //   if(!priv->disp_img) return LIBMAIX_ERR_NO_MEM;
 
-  }
+  // }
 
-  if (img->mode != priv->disp_img->mode){
-      if (LIBMAIX_ERR_NONE != img->convert(img, priv->disp_img->mode, &priv->disp_img))
-      {
-          return LIBMAIX_ERR_NOT_IMPLEMENT;
+  // if (img->mode != priv->disp_img->mode){
+  //     if (LIBMAIX_ERR_NONE != img->convert(img, priv->disp_img->mode, &priv->disp_img))
+  //     {
+  //         return LIBMAIX_ERR_NOT_IMPLEMENT;
+  //     }
+  //     memcpy((unsigned char *)priv->fbp, priv->disp_img->data, disp->width * disp->height * disp->bpp);
+  // } else {
+  //     memcpy((unsigned char *)priv->fbp, img->data, disp->width * disp->height * disp->bpp);
+  // }
+
+  // printf("%d %d : %d %d \r\n", img->height, img->width, disp->height, disp->width);
+  if (disp->width == img->height && disp->height == img->width) {
+      cv::Mat src = cv::Mat(img->height, img->width, CV_8UC3, img->data);
+      cv::rotate(src, src, cv::ROTATE_90_COUNTERCLOCKWISE);
+      uint8_t *rgb888 = (uint8_t *)src.data; // not is img->data
+      uint32_t *rgba8888 = (uint32_t *)priv->fbp;
+      for (uint32_t *end = rgba8888 + img->width * img->height; rgba8888 != end; rgba8888 += 1, rgb888 += 3) {
+        *rgba8888 = (0xFF000000) | // ax620a abgr set a == 0xff
+        ((rgb888[0] << 16) & 0xFF0000) |
+        ((rgb888[1] << 8) & 0xFF00) |
+        (rgb888[2] & 0xFF);
       }
-      memcpy((unsigned char *)priv->fbp, priv->disp_img->data, disp->width * disp->height * disp->bpp);
   } else {
-      memcpy((unsigned char *)priv->fbp, img->data, disp->width * disp->height * disp->bpp);
+      // normal
+      uint8_t *rgb888 = (uint8_t *)img->data;
+      uint32_t *rgba8888 = (uint32_t *)priv->fbp;
+      for (uint32_t *end = rgba8888 + img->width * img->height; rgba8888 != end; rgba8888 += 1, rgb888 += 3) {
+        *rgba8888 = (0xFF000000) | // ax620a abgr set a == 0xff
+        ((rgb888[0] << 16) & 0xFF0000) |
+        ((rgb888[1] << 8) & 0xFF00) |
+        (rgb888[2] & 0xFF);
+      }
   }
 
   priv->vinfo.yoffset = 0;
@@ -96,9 +123,9 @@ static int priv_devDeinit(struct libmaix_disp *disp)
   {
     munmap(priv->fbp, priv->finfo.smem_len);
     close(priv->fbfd);
-    if(priv->disp_img != NULL) {
-        libmaix_image_destroy(&priv->disp_img);
-    }
+    // if(priv->disp_img != NULL) {
+    //     libmaix_image_destroy(&priv->disp_img);
+    // }
   }
   return 0;
 }
@@ -162,7 +189,7 @@ extern "C"
     disp->draw = disp_draw;
     disp->draw_image = disp_draw_image;
 
-    priv->disp_img = NULL;
+    // priv->disp_img = NULL;
     priv->devInit = priv_devInit;
     priv->devDeinit = priv_devDeinit;
 

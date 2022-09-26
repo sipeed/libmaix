@@ -19,9 +19,7 @@ int main(int argc, char **argv)
   struct libmaix_disp *disp = libmaix_disp_create(0);
   if (disp)
   {
-    // 240x240 m2dock
-    // libmaix_image_t *rgb888 = libmaix_image_create(disp->width, disp->height, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
-    // 480x854 ax620a
+    // 240x240 m2dock(240x240) or 854x480 ax620a(480x854)
     libmaix_image_t *rgb888 = libmaix_image_create(disp->height, disp->width, LIBMAIX_IMAGE_MODE_RGB888, LIBMAIX_IMAGE_LAYOUT_HWC, NULL, true);
     if (rgb888)
     {
@@ -77,7 +75,7 @@ int main(int argc, char **argv)
 
       libmaix_cv_image_draw_string(rgb888, 60, 120, u8"123你好鸭asdにほんご", 2.8, MaixColor(55, 55, 55), 1);
 
-      libmaix_cv_image_rotate(rgb888, -90, 1, &rgb888);
+      // libmaix_cv_image_rotate(rgb888, -90, 1, &rgb888);
 
       disp->draw_image(disp, rgb888);
 

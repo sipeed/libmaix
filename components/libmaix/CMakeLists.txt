@@ -40,11 +40,27 @@ if(CONFIG_LIBMAIX_ENABLED)
     elseif(CONFIG_ARCH_AXPI)
         include_directories(/usr/include/opencv4)
         include_directories(/usr/local/include/opencv4)
+        include_directories(/opt/include)
+        include_directories(lib/arch/axpi/joint)
         append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_utils")
         append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_image")
         append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_cam")
         append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_disp")
         list(APPEND ADD_DYNAMIC_LIB
+            "/opt/lib/libax_npu_cv_kit.so"
+            "/opt/lib/libax_sys.so"
+            "/opt/lib/libax_3a.so"
+            "/opt/lib/libax_ivps.so"
+            "/opt/lib/libax_proton.so"
+            "/opt/lib/libax_interpreter_external.so"
+            "/opt/lib/libax_mipi.so"
+            "/opt/lib/libaxsyslog.so"
+            "/opt/lib/libsns_gc4653.so"
+            "/opt/lib/libsns_os04a10.so"
+            "/opt/lib/libsns_os04a10_master.so"
+            "/opt/lib/libsns_os04a10_slave.so"
+            "/lib/arm-linux-gnueabihf/libm.so"
+            "/lib/arm-linux-gnueabihf/libpthread.so"
             "/lib/arm-linux-gnueabihf/libopencv_videoio.so"
             "/lib/arm-linux-gnueabihf/libopencv_highgui.so"
             "/lib/arm-linux-gnueabihf/libopencv_imgcodecs.so"
@@ -52,6 +68,8 @@ if(CONFIG_LIBMAIX_ENABLED)
             "/lib/arm-linux-gnueabihf/libopencv_core.so"
             "/lib/arm-linux-gnueabihf/libopencv_freetype.so"
         )
+        set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -Wl,--end-group" PARENT_SCOPE)
+        set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -Wl,--start-group libmaix/liblibmaix.a -Wl,--end-group" PARENT_SCOPE)
     elseif(CONFIG_ARCH_V831)
         list(APPEND ADD_DYNAMIC_LIB "lib/arch/v831/libmaix_nn.so"
             "lib/arch/v831/libz.so"

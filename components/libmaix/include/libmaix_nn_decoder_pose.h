@@ -15,7 +15,7 @@ typedef struct
 {
     int cx;
     int cy;
-    int * keypoints;
+    float * keypoints;
 }libmaix_nn_decoder_pose_result_t;
 
 typedef struct
@@ -37,12 +37,16 @@ typedef struct
     int * tmp_reg_x;
     int * tmp_reg_y;
     float * tmp_reg;
+    float * res_x ;
+    float * res_y;
 
 }pose_param_t;
 
 
 /********* direct API **********/
 extern void max_point(float * centers , float * center_weight ,int feature_map_size , libmaix_nn_decoder_pose_result_t* result );
+extern void max_point_without_weight(float * centers , int feature_map_size , libmaix_nn_decoder_pose_result_t* result );
+
 extern libmaix_err_t  pose_decode(libmaix_nn_decoder_pose_config_t * config , libmaix_nn_decoder_pose_result_t * result);
 
 /********* libmaix API ********/

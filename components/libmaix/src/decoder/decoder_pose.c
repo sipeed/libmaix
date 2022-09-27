@@ -10,6 +10,23 @@ extern "C"
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
+#include <math.h>
+extern void max_point_without_weight(float * centers , int feature_map_size , libmaix_nn_decoder_pose_result_t* result )
+{
+    float max = -DBL_MAX;
+    int max_idx = 0;
+    for(int i=0 ; i < feature_map_size * feature_map_size ;i++)
+    {
+        float tmp = centers[i];
+        if (tmp > max)
+        {
+            max = tmp;
+            max_idx = i;
+        }
+    }
+    result->cx = max_idx % feature_map_size;
+    result->cy = max_idx / feature_map_size;
+}
 
 void max_point(float * centers , float * center_weight,int feature_map_size , libmaix_nn_decoder_pose_result_t* result )
 {
@@ -149,10 +166,12 @@ libmaix_err_t libmaix_nn_decoder_pose_decode(struct libmaix_nn_decoder* obj, lib
     int cx = result_object->cx;
     int cy = result_object->cy;
     int feature_map_area = feature_map_size * feature_map_size;
-    for(int i=0 ; i < num_joints ; i++)
+
+    for(int n=0 ; n < num_joints ; n++)
     {
-        int location_x =  feature_map_size * cy  +  cx;
-        int location_y = location_x + feature_map_size;
+        int location_x = n * feature_map_area + cy * feature_map_size + cx;
+        int location_y = location_x + feature_map_area;
+
         int reg_x_origin = regs[location_x];
         int reg_y_origin = regs[location_y];
 
@@ -166,8 +185,38 @@ libmaix_err_t libmaix_nn_decoder_pose_decode(struct libmaix_nn_decoder* obj, lib
         {
             params->tmp_reg_x[i] =(params->range_weight_x[i] - params->repeat_reg_x[i]) * (params->range_weight_x[i] - params->repeat_reg_x[i]);
             params->tmp_reg_y[i] =(params->range_weight_y[i] - params->repeat_reg_y[i]) * (params->range_weight_y[i] - params->repeat_reg_y[i]);
-
         }
+
+        for(int i=0 ; i < feature_map_area ; i++)
+        {
+            float tmp_value =  sqrtf(params->tmp_reg_x[i] + params->tmp_reg_y[i]) + 1.8;
+            params->tmp_reg [i] = heatmaps[n * feature_map_area + i ] / tmp_value;
+        }
+        max_point_without_weight(params->tmp_reg , feature_map_size , result_object);
+
+        if (result_object->cx < 0 )
+            result_object->cx = 0;
+        if (result_object->cy < 0)
+            result_object->cy = 0;
+
+        if (result_object->cx > (feature_map_size -1))
+            result_object->cx = (feature_map_size - 1);
+        if(result_object->cy > (feature_map_size -1))
+            result_object->cy = (feature_map_size - 1);
+
+        float score = heatmaps[n * feature_map_area + result_object->cy * feature_map_size + result_object->cx];
+
+
+        for(int i=0 ; i < feature_map_area ; i++)
+        {
+            params->res_x[i] = result_object->cx +  offsets[n * feature_map_area + result_object->cy * feature_map_size + result_object->cx ] / feature_map_size;
+            params->res_y[i] = result_object->cy +  offsets[(n+1) * feature_map_area + result_object->cy * feature_map_size + result_object->cx ] / feature_map_size;
+            if (params->res_x[i]  < score)
+                params->res_x[i] = -1 ;
+            if(params->res_y[i] < score)
+                params->res_y[i] = -1;
+        }
+
     }
 
 

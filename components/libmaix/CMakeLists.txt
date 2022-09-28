@@ -38,10 +38,11 @@ if(CONFIG_LIBMAIX_ENABLED)
             "/usr/lib/x86_64-linux-gnu/libopencv_freetype.so"
         )
     elseif(CONFIG_ARCH_AXPI)
-        include_directories(/usr/include/opencv4)
-        include_directories(/usr/local/include/opencv4)
-        include_directories(/opt/include)
-        include_directories(lib/arch/axpi/joint)
+        list(APPEND ADD_INCLUDE "lib/arch/axpi/joint"
+                                "/opt/include"
+                                # "/usr/local/include/opencv4"
+                                "/usr/include/opencv4"
+        )
         append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_utils")
         append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_image")
         append_srcs_dir(ADD_SRCS "lib/arch/axpi/libmaix_cam")
@@ -59,6 +60,8 @@ if(CONFIG_LIBMAIX_ENABLED)
             "/opt/lib/libsns_os04a10.so"
             "/opt/lib/libsns_os04a10_master.so"
             "/opt/lib/libsns_os04a10_slave.so"
+            "/opt/lib/libax_run_joint.so"
+            "/opt/lib/libax_npu_cv_kit.so"
             "/lib/arm-linux-gnueabihf/libm.so"
             "/lib/arm-linux-gnueabihf/libpthread.so"
             "/lib/arm-linux-gnueabihf/libopencv_videoio.so"

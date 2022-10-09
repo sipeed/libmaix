@@ -12,6 +12,35 @@ extern "C"
 #include <float.h>
 #include <math.h>
 
+    extern int get_bin_size(char *filename)
+    {
+        int size = 0;
+        FILE *fp = fopen(filename , "rb");
+        if(fp)
+        {
+            fseek(fp, 0, SEEK_END);
+            size = ftell(fp);
+            fclose(fp);
+        }
+        printf("\nfilename=%s,size=%d \n",filename,size);
+        return size;
+    }
+
+    extern libmaix_err_t read_bin(char *path, void *buf, int size)
+    {
+        libmaix_err_t err = LIBMAIX_ERR_NONE;
+        FILE * fp ;
+        if((fp = fopen(path , "rb")) == NULL)
+        {
+            LIBMAIX_DEBUG_PRINTF("\nCan not open the path: %s \n", path);
+            err = LIBMAIX_ERR_NOT_EXEC;
+            return err;
+        }
+        fread(buf , sizeof(char) , size , fp);
+        fclose(fp);
+        return err;
+    }
+
     int float_to_int(float f)
     {
         int *p = (int *)&f;
@@ -46,7 +75,7 @@ extern "C"
         *joint_y = max_idx / feature_map_size;
     }
 
-    void max_point(float *centers, float *center_weight, int feature_map_size, libmaix_nn_decoder_pose_result_t *result)
+    extern void max_point(float *centers, float *center_weight, int feature_map_size, libmaix_nn_decoder_pose_result_t *result)
     {
         // center weight load by exter API
         float max = -DBL_MAX;
@@ -98,20 +127,28 @@ extern "C"
 
     libmaix_err_t libmaix_nn_decoder_pose_init(libmaix_nn_decoder_t *obj, void *config)
     {
+        libmaix_err_t err = LIBMAIX_ERR_NONE;
         if (!config)
-            return LIBMAIX_ERR_PARAM;
+        {
+            err = LIBMAIX_ERR_PARAM;
+            return err;
+        }
         pose_param_t *params = (pose_param_t *)obj->data;
         params->config = (libmaix_nn_decoder_pose_config_t *)config;
         params->result = (libmaix_nn_decoder_pose_result_t *)malloc(sizeof(libmaix_nn_decoder_pose_result_t));
         if (!params->result)
-            return LIBMAIX_ERR_NO_MEM;
+        {
+            err = LIBMAIX_ERR_NO_MEM;
+            return err;
+        }
         params->result->keypoints = (int *)malloc(sizeof(int) * params->config->num_joints * 2);
+        if(! params->result->keypoints)
+        {
+            err = LIBMAIX_ERR_NO_MEM;
+            return err;
+        }
         int feature_map_size = params->config->image_size / 4;
         int feature_map_area = feature_map_size * feature_map_size;
-
-        // init range weight
-        params->range_weight_x = (int *)malloc(sizeof(int) * feature_map_area);
-        params->range_weight_y = (int *)malloc(sizeof(int) * feature_map_area);
 
         for (int i = 0; i < feature_map_area; i++)
         {
@@ -121,12 +158,41 @@ extern "C"
         {
             params->range_weight_y[i] = i / feature_map_size;
         }
-        // init center weight
-        params->cente_weight = (float *)malloc(sizeof(float) * feature_map_size);
-        // TODO
-        //  inti it
+        // create center weight buffer
+        // params->cente_weight = (float *)malloc(sizeof(float) * feature_map_size);
+        float * center_weight = (float *)malloc(sizeof(float) * feature_map_size);
+        // create range weight buffre
+        // params->range_weight_x = (int *)malloc(sizeof(int) * feature_map_area);
+        int * range_weight_x = (int *)malloc(sizeof(int) * feature_map_area);
+        // params->range_weight_y = (int *)malloc(sizeof(int) * feature_map_area);
+        int * range_weight_y = (int *)malloc(sizeof(int) * feature_map_area);
 
-        return LIBMAIX_ERR_NONE;
+        int center_size = get_bin_size(params->config->center_weight);
+        if (center_size == 0)
+        {
+            err = LIBMAIX_ERR_NOT_EXEC;
+            return err;
+        }
+        err = read_bin(params->config->center_weight , center_weight , center_size);
+
+        int range_weight_x_size = get_bin_size(params->config->range_weight_x);
+        int range_weight_y_size = get_bin_size(params->config->range_weight_y);
+        if((range_weight_x_size == 0) || (range_weight_y_size == 0) || (range_weight_x_size != range_weight_y_size))
+        {
+            err = LIBMAIX_ERR_NOT_EXEC;
+            return err;
+        }
+        err = read_bin(params->config->range_weight_x , range_weight_x , range_weight_x_size );
+        if(err != LIBMAIX_ERR_NONE)
+            return err;
+        err = read_bin(params->config->range_weight_y , range_weight_y , range_weight_y_size);
+        if(err != LIBMAIX_ERR_NONE)
+            return err;
+
+        params->cente_weight = (float*) center_size;
+        params->range_weight_x = (int*) range_weight_x;
+        params->range_weight_y = (int*) range_weight_y;
+        return err;
     }
 
     libmaix_err_t libmaix_nn_decoder_pose_deinit(libmaix_nn_decoder_t *obj)
@@ -243,6 +309,7 @@ extern "C"
         }
         return LIBMAIX_ERR_NONE;
     }
+
 
 #ifdef __cplusplus
 }

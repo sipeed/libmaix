@@ -26,7 +26,7 @@ extern "C"
         return size;
     }
 
-    extern libmaix_err_t read_bin(char *path, void *buf, int size)
+    extern libmaix_err_t read_bin(char *path, float *buf, int size)
     {
         libmaix_err_t err = LIBMAIX_ERR_NONE;
         FILE * fp ;
@@ -36,7 +36,8 @@ extern "C"
             err = LIBMAIX_ERR_NOT_EXEC;
             return err;
         }
-        fread(buf , sizeof(char) , size , fp);
+        LIBMAIX_DEBUG_PRINTF();
+        fread(buf , sizeof(float) , size/4  , fp);
         fclose(fp);
         return err;
     }
@@ -78,17 +79,22 @@ extern "C"
     extern void max_point(float *centers, float *center_weight, int feature_map_size, libmaix_nn_decoder_pose_result_t *result)
     {
         // center weight load by exter API
-        float max = -DBL_MAX;
+        float max = -100000;
+        LIBMAIX_DEBUG_PRINTF();
         int max_idx = 0;
         int _feature_map_area = feature_map_size * feature_map_size;
+        printf("feature map area:%d\n",_feature_map_area);
         for (int i = 0; i < _feature_map_area; i++)
         {
-            float tmp = center_weight[i] * centers[i];
-            if (tmp > max)
-            {
-                max = tmp;
-                max_idx = i;
-            }
+            printf("temp\n");
+            printf("heatmap %f , weight %f\n",centers[i] , center_weight[i]);
+            // float tmp = center_weight[i] * centers[i];
+            // printf("temp:%f",tmp);
+            // if (tmp > max)
+            // {
+            //     max = tmp;
+            //     max_idx = i;
+            // }
         }
         result->cx = max_idx % feature_map_size;
         result->cy = max_idx / feature_map_size;
@@ -127,6 +133,7 @@ extern "C"
 
     libmaix_err_t libmaix_nn_decoder_pose_init(libmaix_nn_decoder_t *obj, void *config)
     {
+        LIBMAIX_DEBUG_PRINTF();
         libmaix_err_t err = LIBMAIX_ERR_NONE;
         if (!config)
         {
@@ -142,31 +149,41 @@ extern "C"
             return err;
         }
         params->result->keypoints = (int *)malloc(sizeof(int) * params->config->num_joints * 2);
+        LIBMAIX_DEBUG_PRINTF();
         if(! params->result->keypoints)
         {
             err = LIBMAIX_ERR_NO_MEM;
             return err;
         }
+        LIBMAIX_DEBUG_PRINTF();
         int feature_map_size = params->config->image_size / 4;
         int feature_map_area = feature_map_size * feature_map_size;
+        LIBMAIX_DEBUG_PRINTF();
+
+        params->range_weight_x = (float *)malloc(sizeof(float) * feature_map_area);
+        if(params->range_weight_x == NULL)
+        {
+            err = LIBMAIX_ERR_NO_MEM;
+            return err;
+        }
+        params->range_weight_y = (float *)malloc(sizeof(float) * feature_map_area);
+        if(params->range_weight_y == NULL)
+        {
+            err = LIBMAIX_ERR_NO_MEM;
+            return err;
+        }
+        LIBMAIX_DEBUG_PRINTF();
 
         for (int i = 0; i < feature_map_area; i++)
         {
             params->range_weight_x[i] = i % feature_map_size;
-        }
-        for (int i = 0; i < feature_map_area; i++)
-        {
             params->range_weight_y[i] = i / feature_map_size;
         }
+        LIBMAIX_DEBUG_PRINTF();
         // create center weight buffer
         // params->cente_weight = (float *)malloc(sizeof(float) * feature_map_size);
-        float * center_weight = (float *)malloc(sizeof(float) * feature_map_size);
+        float * center_weight = (float *)malloc(sizeof(float) * feature_map_area);
         // create range weight buffre
-        // params->range_weight_x = (int *)malloc(sizeof(int) * feature_map_area);
-        int * range_weight_x = (int *)malloc(sizeof(int) * feature_map_area);
-        // params->range_weight_y = (int *)malloc(sizeof(int) * feature_map_area);
-        int * range_weight_y = (int *)malloc(sizeof(int) * feature_map_area);
-
         int center_size = get_bin_size(params->config->center_weight);
         if (center_size == 0)
         {
@@ -174,24 +191,15 @@ extern "C"
             return err;
         }
         err = read_bin(params->config->center_weight , center_weight , center_size);
-
-        int range_weight_x_size = get_bin_size(params->config->range_weight_x);
-        int range_weight_y_size = get_bin_size(params->config->range_weight_y);
-        if((range_weight_x_size == 0) || (range_weight_y_size == 0) || (range_weight_x_size != range_weight_y_size))
-        {
-            err = LIBMAIX_ERR_NOT_EXEC;
-            return err;
-        }
-        err = read_bin(params->config->range_weight_x , range_weight_x , range_weight_x_size );
-        if(err != LIBMAIX_ERR_NONE)
-            return err;
-        err = read_bin(params->config->range_weight_y , range_weight_y , range_weight_y_size);
-        if(err != LIBMAIX_ERR_NONE)
-            return err;
-
-        params->cente_weight = (float*) center_size;
-        params->range_weight_x = (int*) range_weight_x;
-        params->range_weight_y = (int*) range_weight_y;
+        // for (int i = 0; i < feature_map_area; i++)
+        // {
+        //     printf("%d ", params->range_weight_y[i]);
+        //     if( i%feature_map_size == feature_map_size -1)
+        //     {
+        //         printf("\n");
+        //     }
+        // }
+        LIBMAIX_DEBUG_PRINTF();
         return err;
     }
 
@@ -223,9 +231,10 @@ extern "C"
 
     libmaix_err_t libmaix_nn_decoder_pose_decode(struct libmaix_nn_decoder *obj, libmaix_nn_layer_t *feature_map, void *result)
     {
+        LIBMAIX_DEBUG_PRINTF();
         if (!result)
             return LIBMAIX_ERR_PARAM;
-
+        LIBMAIX_DEBUG_PRINTF();
         pose_param_t *params = (pose_param_t *)obj->data;
         libmaix_nn_decoder_pose_result_t *result_object = (libmaix_nn_decoder_pose_result_t *)result;
         int num_joints = params->config->num_joints;
@@ -234,12 +243,14 @@ extern "C"
         int feature_map_size = image_size / 4;
 
         // get output buffer
+        LIBMAIX_DEBUG_PRINTF();
         float *heatmaps = (float *)feature_map[0].data;
         float *centers = (float *)feature_map[1].data;
         float *regs = (float *)feature_map[2].data;
         float *offsets = (float *)feature_map[3].data;
-
+        LIBMAIX_DEBUG_PRINTF();
         max_point(centers, params->cente_weight, feature_map_size, result_object);
+        LIBMAIX_DEBUG_PRINTF();
         int cx = result_object->cx;
         int cy = result_object->cy;
         int feature_map_area = feature_map_size * feature_map_size;

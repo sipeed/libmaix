@@ -24,8 +24,8 @@ typedef struct
     int image_size;
     float hm_th;
     char * center_weight;
-    char * range_weight_x;
-    char * range_weight_y;
+    // char * range_weight_x;
+    // char * range_weight_y;
 }libmaix_nn_decoder_pose_config_t;
 
 typedef struct
@@ -42,7 +42,7 @@ typedef struct
 extern void max_point(float * centers , float * center_weight ,int feature_map_size , libmaix_nn_decoder_pose_result_t* result );
 extern void max_point_without_weight(float * centers , int feature_map_size ,  int joint_idx ,  int * joint_x , int * joint_y ,libmaix_nn_decoder_pose_result_t* result );
 extern int get_bin_size(char *filename);
-extern libmaix_err_t read_bin(char *path, void *buf, int size);
+extern libmaix_err_t read_bin(char *path, float *buf, int size);
 extern libmaix_err_t  pose_decode(libmaix_nn_decoder_pose_config_t * config , libmaix_nn_decoder_pose_result_t * result);
 
 /********* libmaix API ********/

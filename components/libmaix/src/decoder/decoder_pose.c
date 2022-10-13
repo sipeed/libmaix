@@ -11,6 +11,7 @@ extern "C"
 #include <string.h>
 #include <float.h>
 #include <math.h>
+#include <unistd.h>
 
     extern int get_bin_size(char *filename)
     {
@@ -86,8 +87,7 @@ extern "C"
         printf("feature map area:%d\n",_feature_map_area);
         for (int i = 0; i < _feature_map_area; i++)
         {
-            printf("temp\n");
-            printf("heatmap %f , weight %f\n",centers[i] , center_weight[i]);
+            printf("heatmap %f \n",*(centers + i));
             // float tmp = center_weight[i] * centers[i];
             // printf("temp:%f",tmp);
             // if (tmp > max)
@@ -95,6 +95,7 @@ extern "C"
             //     max = tmp;
             //     max_idx = i;
             // }
+            break;
         }
         result->cx = max_idx % feature_map_size;
         result->cy = max_idx / feature_map_size;
@@ -184,10 +185,21 @@ extern "C"
         // params->cente_weight = (float *)malloc(sizeof(float) * feature_map_size);
         float * center_weight = (float *)malloc(sizeof(float) * feature_map_area);
         // create range weight buffre
+
+
+        if (0 != access(params->config->center_weight,F_OK)) /*check center weight file is exist or not*/
+        {
+            err = LIBMAIX_ERR_NOT_EXEC;
+            LIBMAIX_ERROR_PRINTF("open center weight file fail: %s\n", libmaix_get_err_msg(err));
+            return err;
+        }
+
+        LIBMAIX_DEBUG_PRINTF();
         int center_size = get_bin_size(params->config->center_weight);
         if (center_size == 0)
         {
             err = LIBMAIX_ERR_NOT_EXEC;
+            LIBMAIX_ERROR_PRINTF("get center weight bin size fail: %s\n", libmaix_get_err_msg(err));
             return err;
         }
         err = read_bin(params->config->center_weight , center_weight , center_size);
@@ -249,7 +261,7 @@ extern "C"
         float *regs = (float *)feature_map[2].data;
         float *offsets = (float *)feature_map[3].data;
         LIBMAIX_DEBUG_PRINTF();
-        max_point(centers, params->cente_weight, feature_map_size, result_object);
+        max_point((float *)feature_map[1].data, params->cente_weight, feature_map_size, result_object);
         LIBMAIX_DEBUG_PRINTF();
         int cx = result_object->cx;
         int cy = result_object->cy;

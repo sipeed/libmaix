@@ -21,37 +21,6 @@
 #include "main.h"
 #include "time_utils.h"
 #include <time.h>
-// #define DEBUG 1
-//load weight from file
-// int get_bin_size(char * filename)
-// {
-//     int size = 0;
-//     FILE * fp = fopen(filename , "rb");
-//     if(fp)
-//     {
-//         fseek(fp , 0 , SEEK_END);
-//         size = ftell(fp);
-//         fclose(fp);
-//     }
-//     LIBMAIX_DEBUG_PRINTF("\nfilename=%s,size=%d \n",filename,siz);
-//     return size;
-// }
-
-// libmaix_err_t read_bin(char *path, void *buf, int size)
-// {
-//     libmaix_err_t err = LIBMAIX_ERR_NONE;
-//     FILE * fp ;
-//     if((fp = fopen(path , "rb")) == NULL)
-//     {
-//         LIBMAIX_DEBUG_PRINTF("\nCan not open the path: %s \n", path);
-//         err = LIBMAIX_ERR_NOT_EXEC;
-//         return err;
-//     }
-//     fread(buf , sizeof(char) , size , fp);
-//     fclose(fp);
-//     return err;
-// }
-
 
 //FPS
 #define CALC_FPS(tips)                                                                                         \
@@ -99,20 +68,20 @@ void nn_test(struct libmaix_disp *disp)
     LIBMAIX_DEBUG_PRINTF();
     if (!cam)
     {
-        LIBMAIX_DEBUG_PRINTF("create cam fail\n");
+        LIBMAIX_ERROR_PRINTF("create cam fail\n");
     }
     err = cam->start_capture(cam);
     LIBMAIX_DEBUG_PRINTF();
     if (err != LIBMAIX_ERR_NONE)
     {
-        LIBMAIX_DEBUG_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
+        LIBMAIX_ERROR_PRINTF("cam capture fail: %s\n", libmaix_get_err_msg(err));
         goto end;
     }
     err = cam2->start_capture(cam2);
     LIBMAIX_DEBUG_PRINTF();
     if (err != LIBMAIX_ERR_NONE)
     {
-        LIBMAIX_DEBUG_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
+        LIBMAIX_ERROR_PRINTF("cam2 capture fail: %s\n", libmaix_get_err_msg(err));
         goto end;
     }
 
@@ -154,22 +123,6 @@ void nn_test(struct libmaix_disp *disp)
         // .range_weight_y = "range_weight_y.bin",
     };
 
-    //decoder object create and init
-    LIBMAIX_DEBUG_PRINTF();
-    libmaix_nn_decoder_t * pose_decoder = libmaix_nn_decoder_pose_create();
-    //check decoder
-    LIBMAIX_DEBUG_PRINTF();
-    err = pose_decoder->init(pose_decoder , &decoder_config);
-    LIBMAIX_DEBUG_PRINTF();
-    if (err != LIBMAIX_ERR_NONE)
-    {
-        LIBMAIX_DEBUG_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
-        goto end;
-    }
-
-    //decoder result object
-    libmaix_nn_decoder_pose_result_t pose_result ;
-
     // nn layer input
     libmaix_nn_layer_t input = {
         .w = input_w,
@@ -185,7 +138,7 @@ void nn_test(struct libmaix_disp *disp)
         int8_t * input_buffer = (int8_t * ) malloc (input.c * input_h  * input_w);
         if(! input_buffer)
         {
-            LIBMAIX_DEBUG_PRINTF("no memory!!!\n");
+            LIBMAIX_ERROR_PRINTF("no memory!!!\n");
             goto end;
         }
         input.buff_quantization = input_buffer;
@@ -234,7 +187,7 @@ void nn_test(struct libmaix_disp *disp)
     float * output_buffer1 = (float *)malloc(outputs[0].c * outputs[0].h * outputs[0].w * sizeof(float));
     if(! output_buffer1)
     {
-        LIBMAIX_DEBUG_PRINTF("no memory!!!\n");
+        LIBMAIX_ERROR_PRINTF("no memory!!!\n");
         goto end;
     }
     outputs[0].data = output_buffer1;
@@ -242,7 +195,7 @@ void nn_test(struct libmaix_disp *disp)
     float * output_buffer2 = (float *)malloc(outputs[1].c * outputs[1].h * outputs[1].w * sizeof(float));
     if(! output_buffer2)
     {
-        LIBMAIX_DEBUG_PRINTF("no memory!!!\n");
+        LIBMAIX_ERROR_PRINTF("no memory!!!\n");
         goto end;
     }
     outputs[1].data = output_buffer2;
@@ -250,7 +203,7 @@ void nn_test(struct libmaix_disp *disp)
     float * output_buffer3 = (float *)malloc(outputs[2].c * outputs[2].h * outputs[2].w * sizeof(float));
     if(! output_buffer3)
     {
-        LIBMAIX_DEBUG_PRINTF("no memory!!!\n");
+        LIBMAIX_ERROR_PRINTF("no memory!!!\n");
         goto end;
     }
     outputs[2].data = output_buffer3;
@@ -258,39 +211,67 @@ void nn_test(struct libmaix_disp *disp)
     float * output_buffer4 = (float *)malloc(outputs[3].c * outputs[3].h * outputs[3].w * sizeof(float));
     if(! output_buffer4)
     {
-        LIBMAIX_DEBUG_PRINTF("no memory!!!\n");
+        LIBMAIX_ERROR_PRINTF("no memory!!!\n");
         goto end;
     }
     outputs[3].data = output_buffer4;
 
-    //model  create / init / load
-    libmaix_nn_t * nn = libmaix_nn_create();
+    //decoder object create and init
+
+
+    //decoder result object
+    libmaix_nn_decoder_pose_result_t pose_result ;
+
+    //model create
+    libmaix_nn_t * nn = NULL;
+    nn = libmaix_nn_create();
     if(! nn)
     {
-        LIBMAIX_DEBUG_PRINTF("libmaix_nn object create fail\n");
+        LIBMAIX_ERROR_PRINTF("libmaix_nn object create fail\n");
         goto end;
     }
 
-    //init
+    ///decoder create
+    LIBMAIX_DEBUG_PRINTF();
+    libmaix_nn_decoder_t * pose_decoder = libmaix_nn_decoder_pose_create();
+    if(!pose_decoder)
+    {
+        err = LIBMAIX_ERR_NOT_EXEC;
+        LIBMAIX_ERROR_PRINTF("pose decoder create fail:%s\n",libmaix_get_err_msg(err));
+        return err;
+    }
+
+    //model init
     LIBMAIX_DEBUG_PRINTF();
     err = nn->init(nn);
     LIBMAIX_DEBUG_PRINTF();
     if (err != LIBMAIX_ERR_NONE)
     {
-        LIBMAIX_DEBUG_PRINTF("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
+        LIBMAIX_ERROR_PRINTF("libmaix_nn init fail: %s\n", libmaix_get_err_msg(err));
         goto end;
     }
 
-    //load
+    //decoder init
+    LIBMAIX_DEBUG_PRINTF();
+    err = pose_decoder->init(pose_decoder , &decoder_config);
+    LIBMAIX_DEBUG_PRINTF();
+    if (err != LIBMAIX_ERR_NONE)
+    {
+        LIBMAIX_ERROR_PRINTF("decoder init  fail: %s\n", libmaix_get_err_msg(err));
+        goto end;
+    }
+
+    //model load
     LIBMAIX_DEBUG_PRINTF();
     err = nn->load(nn , &model , &param);
     LIBMAIX_DEBUG_PRINTF();
     if(err != LIBMAIX_ERR_NONE)
     {
-        LIBMAIX_DEBUG_PRINTF("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
+        LIBMAIX_ERROR_PRINTF("libmaix_nn load fail: %s\n", libmaix_get_err_msg(err));
         goto end;
     }
-    LIBMAIX_DEBUG_PRINTF("start loop\n");
+
+    LIBMAIX_INFO_PRINTF("start loop\n");
     while(!program_exit)
     {
         CALC_FPS("test")
@@ -299,14 +280,14 @@ void nn_test(struct libmaix_disp *disp)
         LIBMAIX_DEBUG_PRINTF();
         if (err != LIBMAIX_ERR_NONE)
         {
-            LIBMAIX_DEBUG_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
+            LIBMAIX_ERROR_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
         err = cam2->capture_image(cam2, &show);
         LIBMAIX_DEBUG_PRINTF();
         if (err != LIBMAIX_ERR_NONE)
         {
-            LIBMAIX_DEBUG_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
+            LIBMAIX_ERROR_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
 
@@ -317,14 +298,14 @@ void nn_test(struct libmaix_disp *disp)
         LIBMAIX_DEBUG_PRINTF();
         if (err != LIBMAIX_ERR_NONE)
         {
-            LIBMAIX_DEBUG_PRINTF("libmaix model  forward fail: %s\n", libmaix_get_err_msg(err));
+            LIBMAIX_ERROR_PRINTF("libmaix model  forward fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
         err = pose_decoder->decode(pose_decoder , outputs , &pose_result);
         LIBMAIX_DEBUG_PRINTF();
         if (err != LIBMAIX_ERR_NONE)
         {
-            LIBMAIX_DEBUG_PRINTF("libmaix model decode fail: %s\n", libmaix_get_err_msg(err));
+            LIBMAIX_ERROR_PRINTF("libmaix model decode fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
         for(int j=0 ; j < decoder_config.num_joints  ; j++)
@@ -338,26 +319,32 @@ void nn_test(struct libmaix_disp *disp)
 end:
     if (cam)
     {
-        LIBMAIX_DEBUG_PRINTF("--cam destory\n");
+        LIBMAIX_INFO_PRINTF("--cam destory\n");
         libmaix_cam_destroy(&cam);
     }
     if (pose_decoder)
     {
         pose_decoder->deinit(pose_decoder);
-        LIBMAIX_DEBUG_PRINTF("--loc decoder destory\n");
+        LIBMAIX_INFO_PRINTF("--decoder destory\n");
         libmaix_nn_decoder_destroy(&pose_decoder);
+        LIBMAIX_INFO_PRINTF("--decoder destory done\n");
     }
     if (nn)
     {
+        LIBMAIX_DEBUG_PRINTF();
         libmaix_nn_destroy(&nn);
     }
     if (show)
     {
+        LIBMAIX_DEBUG_PRINTF();
         libmaix_image_destroy(&show);
+        LIBMAIX_DEBUG_PRINTF();
     }
     if (img)
     {
+        LIBMAIX_DEBUG_PRINTF();
         libmaix_image_destroy(&img);
+        LIBMAIX_DEBUG_PRINTF();
     }
 
     LIBMAIX_DEBUG_PRINTF("--nn module deinit\n");
@@ -381,7 +368,7 @@ int main(int argc , char *argv[])
     struct  libmaix_disp * disp = libmaix_disp_create(0);
     if(disp == NULL)
     {
-        LIBMAIX_DEBUG_PRINTF("create disp object failed\n");
+        LIBMAIX_ERROR_PRINTF("create disp object failed\n");
         return -1;
     }
     signal(SIGINT, handle_signal);

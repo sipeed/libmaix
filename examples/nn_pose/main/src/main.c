@@ -115,10 +115,10 @@ void nn_test(struct libmaix_disp *disp)
     //decoder config
     LIBMAIX_DEBUG_PRINTF();
     libmaix_nn_decoder_pose_config_t decoder_config = {
-        .hm_th = 0.1,
+        .hm_th = 0.5,
         .image_size = 192,
         .num_joints = 17,
-        .center_weight = "./center_weight.bin",
+        .center_weight_path= "./center_weight.bin",
         // .range_weight_x = "range_weight_x.bin",
         // .range_weight_y = "range_weight_y.bin",
     };
@@ -310,11 +310,14 @@ void nn_test(struct libmaix_disp *disp)
         }
         for(int j=0 ; j < decoder_config.num_joints  ; j++)
         {
-            int x = (int)pose_result.keypoints[j*2] * disp->width;
-            int y = (int)pose_result.keypoints[j*2 +1] * disp->height;
+            int x = (int)pose_result.keypoints[j*2] ;
+            int y = (int)pose_result.keypoints[j*2 +1];
+            printf("point%d , (%d ,%d)\n",j , x , y);
             // libmaix_err_t libmaix_cv_image_draw_circle(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness)
             libmaix_cv_image_draw_circle(show , x , y , 2 ,MaixColor(255, 0, 0), 1);
         }
+
+        disp->draw_image(disp, show);
     }
 end:
     if (cam)

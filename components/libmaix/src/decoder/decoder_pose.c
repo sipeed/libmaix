@@ -208,9 +208,7 @@ extern "C"
             return err;
         }
 
-
         err = read_bin(params->config->center_weight_path , params->cente_weight , center_size);
-        printf("center size is %d \n", center_size);
 
         LIBMAIX_DEBUG_PRINTF();
         return err;
@@ -255,21 +253,30 @@ extern "C"
         int image_size = params->config->image_size;
         float hm_th = params->config->hm_th;
         int feature_map_size = image_size / 4;
+        int feature_map_area = feature_map_size * feature_map_size;
 
-        // get output buffer
+
         LIBMAIX_DEBUG_PRINTF();
+        // get output buffer
         float *heatmaps = (float *)feature_map[0].data;
         float *centers = (float *)feature_map[1].data;
         float *regs = (float *)feature_map[2].data;
         float *offsets = (float *)feature_map[3].data;
         LIBMAIX_DEBUG_PRINTF();
-        memset(params->result->keypoints , 0 , 4 * params->config->num_joints *2);
+        //clean heatmap
+        int heatmaps_pixels_number = num_joints * feature_map_area;
+        for(int idx = 0 ; idx < heatmaps_pixels_number ; idx++)
+        {
+            if( *(heatmaps + idx) < hm_th)
+            {
+                *(heatmaps + idx) = 0;
+            }
+        }
+
         max_point((float *)feature_map[1].data, (float*)params->cente_weight, feature_map_size, params->result);
         LIBMAIX_DEBUG_PRINTF();
         int cx = params->result->cx;
         int cy = params->result->cy;
-        int feature_map_area = feature_map_size * feature_map_size;
-
         LIBMAIX_DEBUG_PRINTF();
         for (int n = 0; n < num_joints; n++)
         {

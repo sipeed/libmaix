@@ -24,8 +24,6 @@ typedef struct
     int image_size;
     float hm_th;
     char * center_weight_path;
-    // char * range_weight_x;
-    // char * range_weight_y;
 }libmaix_nn_decoder_pose_config_t;
 
 typedef struct

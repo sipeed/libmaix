@@ -37,6 +37,24 @@
         }                                                                                                      \
     }
 
+
+#define DISPLAY_TIME 0
+
+#if DISPLAY_TIME
+    struct timeval start, end;
+    int64_t interval_s;
+    #define CALC_TIME_START() do{gettimeofday( &start, NULL );}while(0)
+    #define CALC_TIME_END(name)   do{gettimeofday( &end, NULL ); \
+                                interval_s  =(int64_t)(end.tv_sec - start.tv_sec)*1000000ll; \
+                                printf("%s use time: %lld us\n", name, interval_s + end.tv_usec - start.tv_usec);\
+            }while(0)
+#else
+    #define CALC_TIME_START()
+    #define CALC_TIME_END(name)
+#endif
+
+
+
 static volatile bool program_exit = false;
 
 void nn_test(struct libmaix_disp *disp)
@@ -274,16 +292,22 @@ void nn_test(struct libmaix_disp *disp)
     LIBMAIX_INFO_PRINTF("start loop\n");
     while(!program_exit)
     {
-        CALC_FPS("test")
+        // CALC_FPS("test")
         //get camera
+        CALC_TIME_START();
         err = cam->capture_image(cam, &img);
+        CALC_TIME_END("capture1");
         LIBMAIX_DEBUG_PRINTF();
         if (err != LIBMAIX_ERR_NONE)
         {
             LIBMAIX_ERROR_PRINTF("start capture fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
+        CALC_TIME_START();
         err = cam2->capture_image(cam2, &show);
+        CALC_TIME_END("capture2");
+
+
         LIBMAIX_DEBUG_PRINTF();
         if (err != LIBMAIX_ERR_NONE)
         {
@@ -294,6 +318,7 @@ void nn_test(struct libmaix_disp *disp)
         input.data = (uint8_t*)img->data;
         LIBMAIX_DEBUG_PRINTF();
 
+        CALC_TIME_START();
         err = nn->forward(nn , &input , outputs);
         LIBMAIX_DEBUG_PRINTF();
         if (err != LIBMAIX_ERR_NONE)
@@ -301,7 +326,11 @@ void nn_test(struct libmaix_disp *disp)
             LIBMAIX_ERROR_PRINTF("libmaix model  forward fail: %s\n", libmaix_get_err_msg(err));
             goto end;
         }
+        CALC_TIME_END("forward");
+
+        CALC_TIME_START();
         err = pose_decoder->decode(pose_decoder , outputs , &pose_result);
+        CALC_TIME_END("decode");
         LIBMAIX_DEBUG_PRINTF();
         if (err != LIBMAIX_ERR_NONE)
         {
@@ -312,7 +341,7 @@ void nn_test(struct libmaix_disp *disp)
         {
             int x = (int)pose_result.keypoints[j*2] ;
             int y = (int)pose_result.keypoints[j*2 +1];
-            printf("point%d , (%d ,%d)\n",j , x , y);
+            // printf("point%d , (%d ,%d)\n",j , x , y);
             // libmaix_err_t libmaix_cv_image_draw_circle(libmaix_image_t *src, int x, int y, int r, libmaix_image_color_t color, int thickness)
             libmaix_cv_image_draw_circle(show , x , y , 2 ,MaixColor(255, 0, 0), 1);
         }

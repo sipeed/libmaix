@@ -12,7 +12,7 @@ WARNINGS = -Werror -Wall -Wextra \
            -Wtype-limits -Wsizeof-pointer-memaccess -Wpedantic -Wmissing-prototypes -Wno-discarded-qualifiers
 
 #-Wno-unused-value -Wno-unused-parameter
-OPTIMIZATION ?= -O3 -g0
+OPTIMIZATION ?= -O1 -g0
 
 CFLAGS ?= -I$(LVGL_DIR)/ $(DEFINES) $(WARNINGS) $(OPTIMIZATION) -I$(LVGL_DIR) -I.
 

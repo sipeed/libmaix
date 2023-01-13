@@ -1,7 +1,7 @@
 
 if(CONFIG_COMPONENT_MAIX_ENABLE)
 
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -Wno-strict-aliasing")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1 -g -Wno-strict-aliasing")
 
     list(APPEND ADD_INCLUDE "include")
 
@@ -12,7 +12,7 @@ if(CONFIG_COMPONENT_MAIX_ENABLE)
         add_compile_options(-std=c++11)
     endif(CMAKE_COMPILER_IS_GNUCXX)
 
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -Wno-strict-aliasing")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1 -g -Wno-strict-aliasing")
 
     list(APPEND ADD_INCLUDE "include")
 

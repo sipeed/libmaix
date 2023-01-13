@@ -67,7 +67,7 @@ if(CONFIG_COMPONENT_LIBMS_ENABLE)
             )
     endif()
 
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -Wno-strict-aliasing")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1 -g -Wno-strict-aliasing")
 
 register_component(DYNAMIC)
 endif()

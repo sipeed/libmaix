@@ -1,6 +1,6 @@
 # set(CMAKE_VERBOSE_MAKEFILE on)
 # add_definitions("-g")
-add_compile_options(-O3)
+add_compile_options(-O1)
 ############### Add include ###################
 list(APPEND ADD_INCLUDE "include"
     )

@@ -7,7 +7,7 @@ lvgldirname = os.path.basename(lvgldirname)
 lvgldirname = '"' + lvgldirname + '"'
 
 base_defines = '"-DLV_CONF_PATH=' + lvgldirname +'/tests/lv_test_conf.h -DLV_BUILD_TEST"'
-optimization = '"-O3 -g0"'
+optimization = '"-O1 -g0"'
 
 def build(name, defines):
   global base_defines, optimization

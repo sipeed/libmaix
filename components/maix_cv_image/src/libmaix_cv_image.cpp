@@ -155,7 +155,7 @@ public:
   static int fontHeight;
 };
 
-cv::Ptr<cv::freetype::FreeType2> libmaix_font::ft = cv::freetype::createFreeType2();
+cv::Ptr<cv::freetype::FreeType2> libmaix_font::ft;
 bool libmaix_font::is_load = false;
 int libmaix_font::fontHeight = 14;
 
@@ -370,8 +370,7 @@ extern "C"
 
   libmaix_err_t libmaix_cv_image_load_freetype(const char *path, int fontHeight)
   {
-    if (libmaix_font::is_load)
-      libmaix_font::ft = cv::freetype::createFreeType2(); // re-load clear it
+    libmaix_font::ft = cv::freetype::createFreeType2(); // re-load clear it
     libmaix_font::ft->loadFontData(cv::String(path), 0);
     libmaix_font::is_load = true;
     libmaix_font::fontHeight = fontHeight;
@@ -380,8 +379,6 @@ extern "C"
 
   libmaix_err_t libmaix_cv_image_free_freetype()
   {
-    if (libmaix_font::is_load)
-      delete libmaix_font::ft;
     libmaix_font::is_load = false;
     return LIBMAIX_ERR_NONE;
   }

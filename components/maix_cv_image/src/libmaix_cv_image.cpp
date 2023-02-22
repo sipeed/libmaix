@@ -365,6 +365,12 @@ extern "C"
       cv::imwrite(path, save_img);
       return LIBMAIX_ERR_NONE;
     }
+    if (src->mode == LIBMAIX_IMAGE_MODE_RGBA8888)
+    {
+      cv::Mat input(src->height, src->width, CV_8UC4, const_cast<char *>((char *)src->data));
+      cv::imwrite(path, input);
+      return LIBMAIX_ERR_NONE;
+    }
     return LIBMAIX_ERR_NOT_IMPLEMENT;
   }
 

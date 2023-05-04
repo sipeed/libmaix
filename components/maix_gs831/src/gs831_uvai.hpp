@@ -81,7 +81,7 @@ typedef struct
     pthread_mutex_t vi_mutex, ai_mutex, ui_mutex;
     // hw
     struct timeval timeout;
-    int input_event0, dev_ttyS;
+    int input_event0, dev_ttyS1;
     fd_set readfd;
     std::list<gs831_pack_t> recvPacks;
     // vi

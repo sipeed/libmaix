@@ -1,0 +1,5 @@
+config COMPONENT_MAIX_DLS831_ENABLE
+    bool "Enable maix_dls831 component"
+    default n
+    help
+        Select this option to enable use maix_dls831 base on opencv4 with lvgl.

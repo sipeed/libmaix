@@ -43,7 +43,7 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
             "/lib/arm-linux-gnueabihf/libopencv_freetype.so"
         )
     elseif(CONFIG_ARCH_V831)
-        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/v83x/include/opencv4)
+        list(APPEND ADD_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/v83x/include/opencv4)
         list(APPEND ADD_DYNAMIC_LIB
             "../libmaix/lib/arch/v831/libmaix_nn.so"
             "../libmaix/lib/arch/v831/libmaix_image.so"
@@ -102,7 +102,7 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
             # "../libmaix/lib/arch/v83x/opencv4/libopencv_tracking.so"
         )
     elseif(CONFIG_ARCH_V833)
-        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/v83x/include/opencv4)
+        list(APPEND ADD_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/v83x/include/opencv4)
         list(APPEND ADD_DYNAMIC_LIB
             "../libmaix/lib/arch/v831/libmaix_nn.so"
             "../libmaix/lib/arch/v831/libmaix_image.so"
@@ -122,7 +122,7 @@ if(CONFIG_COMPONENT_IMAGE_ENABLE)
             "../libmaix/lib/arch/v83x/opencv4/libopencv_freetype.so"
         )
     elseif(CONFIG_ARCH_R329)
-        include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/r329/include/opencv4)
+        list(APPEND ADD_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/../libmaix/lib/arch/r329/include/opencv4)
         list(APPEND ADD_DYNAMIC_LIB
             "../libmaix/lib/arch/r329/libmaix_image.so"
             "../libmaix/lib/arch/r329/opencv4/libopencv_videoio.so"

@@ -10,7 +10,7 @@ See [README.md](../../README.md) for build instructions and compile `examples/he
 Then build this example:
 
 ```
-python project.py --toolchain /opt//opt/toolchain-sunxi-musl/toolchain/bin --toolchain-prefix arm-openwrt-linux-muslgnueabi- config
+python project.py --toolchain /opt/toolchain-sunxi-musl/toolchain/bin --toolchain-prefix arm-openwrt-linux-muslgnueabi- config
 python project.py build
 ```
 

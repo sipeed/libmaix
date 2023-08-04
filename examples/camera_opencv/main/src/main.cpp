@@ -83,6 +83,27 @@ static void app_handlesig(int signo)
     // exit(0);
 }
 
+#ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
+extern "C"
+{
+    int AW_MPI_ISP_AE_SetMode(int IspDev, int Value);			// [0:auto, 1:manual]
+    int AW_MPI_ISP_AE_SetGain(int IspDev, int Value);			// [0, 65535]
+    int AW_MPI_ISP_AE_SetExposure(int IspDev, int Value);		// [0, 65535*16]
+}
+
+#endif
+
+static void set_exposure()
+{
+#ifdef CONFIG_ARCH_V831 // CONFIG_ARCH_V831 & CONFIG_ARCH_V833
+    // AW_MPI_ISP_AE_SetMode(0, 0); // auto
+
+    AW_MPI_ISP_AE_SetMode(0, 1);
+    AW_MPI_ISP_AE_SetGain(0, 50);
+    AW_MPI_ISP_AE_SetExposure(0, 50);
+#endif
+}
+
 int app_init(int cam_w, int cam_h, int cam2_w, int cam2_h)
 {
 
@@ -105,6 +126,9 @@ int app_init(int cam_w, int cam_h, int cam2_w, int cam2_h)
     if (app.rgb888 == NULL)
         return -3;
 #endif
+
+    // set manual exposure here
+    // set_exposure();
 
     app.disp = libmaix_disp_create(0);
     if (NULL == app.disp)
@@ -216,6 +240,27 @@ void opencv_ops(cv::Mat &rgb)
         }
     }
 
+    // find green point on rgb image
+    cv::Mat mask_green;
+    cv::inRange(hsv, cv::Scalar(35, 43, 46), cv::Scalar(77, 255, 255), mask_green);
+    cv::morphologyEx(mask_green, mask_green, cv::MORPH_OPEN, kernel);
+    // find biggest contour on mask
+    std::vector<std::vector<cv::Point>> contours_green;
+    std::vector<cv::Vec4i> hierarchy_green;
+    cv::findContours(mask_green, contours_green, hierarchy_green, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    // get the largets contour
+    int largest_area_green = 0;
+    int largest_contour_index_green = 0;
+    for (size_t i = 0; i < contours_green.size(); i++)
+    {
+        double area = cv::contourArea(contours_green[i]);
+        if (area > largest_area_green)
+        {
+            largest_area_green = area;
+            largest_contour_index_green = i;
+        }
+    }
+
     // draw points
     // if(hull.size() == 4) // 只在有4个点的时候显示
     {
@@ -229,16 +274,23 @@ void opencv_ops(cv::Mat &rgb)
     }
 
     // get the center point of the largest contour
-    cv::Point2f mc;
+    cv::Point2f mc, mc_green;
     if(contours2.size() > 0)
     {
         cv::Moments mu = cv::moments(contours2[largest_contour_index2], false);
         mc = cv::Point2f(mu.m10 / mu.m00, mu.m01 / mu.m00);
         cv::circle(rgb, mc, 5, cv::Scalar(255, 0, 255), 2);
     }
+    if(contours_green.size() > 0)
+    {
+        cv::Moments mu = cv::moments(contours_green[largest_contour_index_green], false);
+        mc_green = cv::Point2f(mu.m10 / mu.m00, mu.m01 / mu.m00);
+        cv::circle(rgb, mc_green, 5, cv::Scalar(255, 255, 0 ), 2);
+    }
 
     // send result(center point, points) to uart
-    snprintf(uart_buff, sizeof(uart_buff), "red: %d, %d, points: %d, ", (int)mc.x, (int)mc.y, (int)hull.size());
+    snprintf(uart_buff, sizeof(uart_buff), "red: %d, %d, green: %d, %d, points: %d, ",
+                    (int)mc.x, (int)mc.y, (int)mc_green.x, (int)mc_green.y, (int)hull.size());
     for(size_t i = 0; i < hull.size(); i++)
     {
         snprintf(uart_buff + strlen(uart_buff), sizeof(uart_buff) - strlen(uart_buff), "%d, %d, ", (int)hull[i].x, (int)hull[i].y);

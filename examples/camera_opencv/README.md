@@ -5,7 +5,7 @@ This is an example of using OpenCV with libmaix.
 
 by default code use opencv to get balck rectangle line, like this:
 
-![black rectangle](./assets/find_rectangle.jpg)
+![black rectangle](./assets/find_rectangle.jpg) ![black rectangle2](./assets/m2dock_opencv_find_rectangle_red_point.jpg)
 
 ## Build
 

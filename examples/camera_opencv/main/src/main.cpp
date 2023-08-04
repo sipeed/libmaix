@@ -169,6 +169,35 @@ void opencv_ops(cv::Mat &rgb)
     // 从 poly 找到凸出的点
     std::vector<cv::Point> hull;
     cv::convexHull(poly, hull);
+
+
+    // find red point on rgb image
+    cv::Mat hsv;
+    cv::cvtColor(rgb, hsv, cv::COLOR_RGB2HSV);
+    cv::Mat mask, mask2;
+    cv::inRange(hsv, cv::Scalar(0, 43, 46), cv::Scalar(10, 255, 255), mask);
+    cv::inRange(hsv, cv::Scalar(156, 43, 46), cv::Scalar(180, 255, 255), mask2);
+    mask = mask | mask2;
+    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+    cv::morphologyEx(mask, mask, cv::MORPH_OPEN, kernel);
+    // find biggest contour on mask
+    std::vector<std::vector<cv::Point>> contours2;
+    std::vector<cv::Vec4i> hierarchy2;
+    cv::findContours(mask, contours2, hierarchy2, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    // get the largets contour
+    int largest_area2 = 0;
+    int largest_contour_index2 = 0;
+    for (int i = 0; i < contours2.size(); i++)
+    {
+        double area = cv::contourArea(contours2[i]);
+        if (area > largest_area2)
+        {
+            largest_area2 = area;
+            largest_contour_index2 = i;
+        }
+    }
+
+    // draw points
     // if(hull.size() == 4) // 只在有4个点的时候显示
     {
         // 在 rgb 图上画出凸包
@@ -178,6 +207,14 @@ void opencv_ops(cv::Mat &rgb)
         {
             cv::circle(rgb, hull[i], 5, cv::Scalar(0, 0, 255), 2);
         }
+    }
+
+    // get the center point of the largest contour
+    if(contours2.size() > 0)
+    {
+        cv::Moments mu = cv::moments(contours2[largest_contour_index2], false);
+        cv::Point2f mc = cv::Point2f(mu.m10 / mu.m00, mu.m01 / mu.m00);
+        cv::circle(rgb, mc, 5, cv::Scalar(255, 0, 255), 2);
     }
 }
 

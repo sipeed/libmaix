@@ -3,6 +3,10 @@ OpenCV Usage
 
 This is an example of using OpenCV with libmaix.
 
+by default code use opencv to get balck rectangle line, like this:
+
+![black rectangle](./assets/find_rectangle.jpg)
+
 ## Build
 
 See [README.md](../../README.md) for build instructions and compile `examples/hello-world` first.

@@ -1,3 +1,9 @@
+/**
+ * 
+ * @author neucrack@sipeed
+ * @license MIT
+ * 
+*/
 
 #include <unistd.h>
 #include <stdint.h>
@@ -133,8 +139,46 @@ void opencv_ops(cv::Mat &rgb)
 {
     cv::Mat gray;
     cv::cvtColor(rgb, gray, cv::COLOR_RGB2GRAY);
-    cv::Canny(gray, gray, 100, 255, 3, false);
-    cv::cvtColor(gray, rgb, cv::COLOR_GRAY2RGB);
+    cv::Mat blur;
+    cv::GaussianBlur(gray, blur, cv::Size(5, 5), 0, 0);
+    // binary image
+    cv::Mat binary;
+    cv::threshold(blur, binary, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    // invert image
+    cv::Mat invert;
+    cv::bitwise_not(binary, invert);
+    // find contours
+    std::vector<std::vector<cv::Point>> contours;
+    std::vector<cv::Vec4i> hierarchy;
+    cv::findContours(invert, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    // get the largets contour
+    int largest_area = 0;
+    int largest_contour_index = 0;
+    for (int i = 0; i < contours.size(); i++)
+    {
+        double area = cv::contourArea(contours[i]);
+        if (area > largest_area)
+        {
+            largest_area = area;
+            largest_contour_index = i;
+        }
+    }
+    // 多边形包围最大轮廓
+    std::vector<cv::Point> poly;
+    cv::approxPolyDP(contours[largest_contour_index], poly, 3, true);
+    // 从 poly 找到凸出的点
+    std::vector<cv::Point> hull;
+    cv::convexHull(poly, hull);
+    // if(hull.size() == 4) // 只在有4个点的时候显示
+    {
+        // 在 rgb 图上画出凸包
+        cv::polylines(rgb, hull, true, cv::Scalar(0, 255, 0), 2);
+        // 在 rgb 图上画出 hull 点
+        for (int i = 0; i < hull.size(); i++)
+        {
+            cv::circle(rgb, hull[i], 5, cv::Scalar(0, 0, 255), 2);
+        }
+    }
 }
 
 #ifdef CONFIG_IMLIB_ENABLE
@@ -145,27 +189,27 @@ void opencv_ops(cv::Mat &rgb)
 */
 void imlib_ops(libmaix_image_t *img)
 {
-    image_t *mask_img = NULL;
-    image_t img_tmp = {}, *arg_img = &img_tmp;
-    arg_img->w = img->width;
-    arg_img->h = img->height;
-    arg_img->pixels = (uint8_t *)img->data;
-    arg_img->pixfmt = PIXFORMAT_RGB888;
+    // image_t *mask_img = NULL;
+    // image_t img_tmp = {}, *arg_img = &img_tmp;
+    // arg_img->w = img->width;
+    // arg_img->h = img->height;
+    // arg_img->pixels = (uint8_t *)img->data;
+    // arg_img->pixfmt = PIXFORMAT_RGB888;
 
-    list_t thresholds;
-    list_init(&thresholds, sizeof(color_thresholds_list_lnk_data_t));
-    color_thresholds_list_lnk_data_t tmp_ct;
-    tmp_ct.LMin = 50;
-    tmp_ct.LMax = 100;
-    tmp_ct.AMin = -128;
-    tmp_ct.AMax = 127;
-    tmp_ct.BMin = -128;
-    tmp_ct.BMax = 127;
-    list_push_back(&thresholds, &tmp_ct);
+    // list_t thresholds;
+    // list_init(&thresholds, sizeof(color_thresholds_list_lnk_data_t));
+    // color_thresholds_list_lnk_data_t tmp_ct;
+    // tmp_ct.LMin = 50;
+    // tmp_ct.LMax = 100;
+    // tmp_ct.AMin = -128;
+    // tmp_ct.AMax = 127;
+    // tmp_ct.BMin = -128;
+    // tmp_ct.BMax = 127;
+    // list_push_back(&thresholds, &tmp_ct);
 
-    fb_alloc_mark();
-    imlib_binary(arg_img, arg_img, &thresholds, false, false, mask_img);
-    fb_alloc_free_till_mark();
+    // fb_alloc_mark();
+    // imlib_binary(arg_img, arg_img, &thresholds, false, false, mask_img);
+    // fb_alloc_free_till_mark();
 }
 #endif
 

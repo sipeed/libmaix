@@ -14,6 +14,7 @@ append_srcs_dir(ADD_SRCS "src")
 
 ###### Add required/dependent components ######
 list(APPEND ADD_REQUIREMENTS maix_cv_image libmaix)
+list(APPEND ADD_REQUIREMENTS maix_dls831) # uart
 if(CONFIG_IMLIB_ENABLE)
     list(APPEND ADD_REQUIREMENTS third_party)
 endif()

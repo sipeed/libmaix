@@ -7,6 +7,8 @@ by default code use opencv to get balck rectangle line, like this:
 
 ![black rectangle](./assets/find_rectangle.jpg) ![black rectangle2](./assets/m2dock_opencv_find_rectangle_red_point.jpg)
 
+and send result by UART(serial), you can use this board as a module to your project.
+
 ## Build
 
 See [README.md](../../README.md) for build instructions and compile `examples/hello-world` first.

@@ -20,6 +20,10 @@
 #include "libmaix_cv_image.h"
 #include <opencv2/opencv.hpp>
 
+////////// UART(serial) //////////
+#include "linux_uart.h"
+//////////////////////////////////
+
 #ifdef CONFIG_IMLIB_ENABLE
 #include "imlib.h"
 #endif
@@ -41,6 +45,8 @@
 #include "sys/time.h"
 
 static struct timeval old, now;
+static int uart_fd = -1;
+static char uart_buff[1024] = {0};
 
 static void cap_set()
 {
@@ -111,6 +117,16 @@ int app_init(int cam_w, int cam_h, int cam2_w, int cam2_h)
     imlib_init_all();
 #endif
 
+    // uart init
+    // /dev/ttyS1, for maix-ii-dock(v831) TX pin is PG6, RX pin is PG7
+    uart_t uart_conf;
+    uart_conf.baud = 115200;
+    uart_conf.data_bits = 8;
+    uart_conf.stop_bits = 1;
+    uart_conf.parity = 'N';
+
+    uart_fd = linux_uart_init((char*)"/dev/ttyS1", &uart_conf);
+
     app.running = 1;
 
     return 0;
@@ -118,6 +134,9 @@ int app_init(int cam_w, int cam_h, int cam2_w, int cam2_h)
 
 void app_exit()
 {
+    // uart deinit
+    if(uart_fd > 0)
+        linux_uart_deinit(uart_fd);
 
     if (NULL != app.cam0)
         libmaix_cam_destroy(&app.cam0);
@@ -154,7 +173,7 @@ void opencv_ops(cv::Mat &rgb)
     // get the largets contour
     int largest_area = 0;
     int largest_contour_index = 0;
-    for (int i = 0; i < contours.size(); i++)
+    for (size_t i = 0; i < contours.size(); i++)
     {
         double area = cv::contourArea(contours[i]);
         if (area > largest_area)
@@ -187,7 +206,7 @@ void opencv_ops(cv::Mat &rgb)
     // get the largets contour
     int largest_area2 = 0;
     int largest_contour_index2 = 0;
-    for (int i = 0; i < contours2.size(); i++)
+    for (size_t i = 0; i < contours2.size(); i++)
     {
         double area = cv::contourArea(contours2[i]);
         if (area > largest_area2)
@@ -203,19 +222,29 @@ void opencv_ops(cv::Mat &rgb)
         // 在 rgb 图上画出凸包
         cv::polylines(rgb, hull, true, cv::Scalar(0, 255, 0), 2);
         // 在 rgb 图上画出 hull 点
-        for (int i = 0; i < hull.size(); i++)
+        for (size_t i = 0; i < hull.size(); i++)
         {
             cv::circle(rgb, hull[i], 5, cv::Scalar(0, 0, 255), 2);
         }
     }
 
     // get the center point of the largest contour
+    cv::Point2f mc;
     if(contours2.size() > 0)
     {
         cv::Moments mu = cv::moments(contours2[largest_contour_index2], false);
-        cv::Point2f mc = cv::Point2f(mu.m10 / mu.m00, mu.m01 / mu.m00);
+        mc = cv::Point2f(mu.m10 / mu.m00, mu.m01 / mu.m00);
         cv::circle(rgb, mc, 5, cv::Scalar(255, 0, 255), 2);
     }
+
+    // send result(center point, points) to uart
+    snprintf(uart_buff, sizeof(uart_buff), "red: %d, %d, points: %d, ", (int)mc.x, (int)mc.y, (int)hull.size());
+    for(size_t i = 0; i < hull.size(); i++)
+    {
+        snprintf(uart_buff + strlen(uart_buff), sizeof(uart_buff) - strlen(uart_buff), "%d, %d, ", (int)hull[i].x, (int)hull[i].y);
+    }
+    snprintf(uart_buff + strlen(uart_buff), sizeof(uart_buff) - strlen(uart_buff), "\r\n");
+    write(uart_fd, uart_buff, strlen(uart_buff));
 }
 
 #ifdef CONFIG_IMLIB_ENABLE
